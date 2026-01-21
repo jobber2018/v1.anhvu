@@ -1841,7 +1841,11 @@ class AdminController extends SuldeAdminController
 
             $sellOrder = $this->sellManager->getSellOrderById($orderId);
             foreach ($sellOrder->getGrocery()->getSellOrder() as $sellOrderItem){
-                if($sellOrderItem->getStatus()==1 || $sellOrderItem->getStatus()==11 || $sellOrderItem->getStatus()==111){
+                if($sellOrderItem->getStatus()==1
+                    || $sellOrderItem->getStatus()==11
+                    || $sellOrderItem->getStatus()==111
+                    || $sellOrderItem->getId()==$sellOrder->getId())
+                {
                     if($option==1){
                         $sellOrderItem->setDeliveryCar($car);
                         $sellOrderItem->setDeliveryCarTime($time);
