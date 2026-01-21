@@ -1,0 +1,149 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Sản phẩm bán trong ngày";
+$this->headTitle($title);
+?>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+
+</head>
+<body>
+    <!-- END BREADCRUMB -->
+    <div class="page-title">
+        <h3><span class="fa fa-arrow-circle-o-left"></span> Sản phẩm bán trong ngày <?=date("d/m/Y")?></h3>
+    </div>
+
+    <!-- PAGE CONTENT WRAPPER -->
+    <div class="page-content-wrap">
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table" id="tblProduct">
+                    <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Mã SP</th>
+                        <th>Tên SP</th>
+                        <th nowrap="true">Số lượng ban</th>
+                        <th>Tồn kho</th>
+                        <th>Kiểm kho</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    foreach ($this->proArr as $key=>$value){
+                        echo '<tr style="color:'.($value['inventory']==0?'red':'black').'">';
+                        echo '<td nowrap="true">'.$value['sort'].'</td>';
+                        echo '<td nowrap="true">'.$value['code'].'</td>';
+                        echo '<td style="width: 60%">'.$value['name'].'</td>';
+                        echo '<td nowrap="true">'.getPack($value['qty'],$value['pack_unit'],$value['unit_name']).'</td>';
+                        echo '<td nowrap="true">'.getPack($value['inventory'],$value['pack_unit'],$value['unit_name']).'</td>';
+                        echo '<td style="width: 30%"></td>';
+                        echo '</tr>';
+                    }
+                    ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<?php
+ function getPack($qty,$pack_unit,$unit_name){
+    $sQc='';
+    if($qty==0) $sQc='0';
+    //so luong tinh theo quy cach
+    $qc=floor($qty/$pack_unit);
+    if($qc>0) $sQc=$qc.' Thùng ';
+    //so luong tinh don vi
+    $dv=$qty%$pack_unit;
+    if($dv>0) $sQc.=$dv.' '.$unit_name;
+    return $sQc;
+}
+?>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    table{width: 100%}
+    table th{text-align: left;}
+    table th,td{border-bottom: 1px solid #E5E5E5; border-left:1px solid #E5E5E5; padding-left: 5px}
+    table th{border-top: 1px solid #E5E5E5; padding-left: 5px}
+    table th:last-child,td:last-child{border-right: 1px solid #E5E5E5;}
+
+    input[type="search"] {
+        border: 1px solid gray;
+        padding: .2em .4em;
+        border-radius: .2em;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+
+<script type="text/javascript" src="//cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"></script>
+<script type="text/javascript" src="//cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        let table = new DataTable('#tblProduct',{
+            paging: false,
+            pageLength:50,
+            ordering: false,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            // scrollX: true,
+            language: {
+                searchPlaceholder: ""
+            }
+        });
+        sortTable();
+    });
+    function sortTable() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("tblProduct");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[0];
+                y = rows[i + 1].getElementsByTagName("TD")[0];
+                //check if the two rows should switch place:
+                if (parseInt(x.innerHTML.toLowerCase()) > parseInt(y.innerHTML.toLowerCase())) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+                //console.log(x.innerHTML.toLowerCase());
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+
+        //sap xem lai stt
+        for (i = 1; i < (rows.length); i++) {
+            x = rows[i].getElementsByTagName("TD")[0].innerHTML=i;
+            // console.log(x)
+        }
+    }
+</script>

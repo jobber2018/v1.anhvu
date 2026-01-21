@@ -1,0 +1,122 @@
+<?php
+$this->headTitle("Vị trí cửa hàng trên bản đồ");
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+
+$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li class="active">Thêm mới cửa hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Ví trí cửa hàng <?=$this->grocery->getGroceryName()?> trên bản đồ</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <?=$this->form()->openTag($form)?>
+            <div class="form-group">
+                <div class="col-md-12">
+                <?=$this->formElement($form->get('lat'));?>
+                <?=$this->formElement($form->get('lng'));?>
+                    Nếu vị trí đánh dấu trên bản đồ không đúng, bạn có thể nhấn dữ và di chuyển biểu tượng <img alt="" src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi3_hdpi.png" draggable="false" style="width: 16px;"> đến đúng vị trí cửa hàng.
+                </div>
+            </div>
+
+            <div style="height: 300px">
+                <div id="google_map" style="width: 100%; height: 100%; border: 1px solid #cccccc"></div>
+            </div>
+
+
+            <div class="form-group" style="padding-top: 10px">
+                <div class="col-md-12">
+                    <input type="submit" name="btnSubmit" disabled  id="btnSubmit" class="btn btn-success" value="Cập nhật vị trí">
+                </div>
+            </div>
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+</div>
+<script type="application/javascript">
+    var map;
+    var myLatlng = {lat: 1, lng: 1};
+    var groceryName = '<?=$this->grocery->getGroceryName()?>';
+    var lat, lng;
+    var myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        }
+    ];
+
+    function initMap() {
+        run_waitMe();
+        // console.log("init map");
+        map = new google.maps.Map(document.getElementById('google_map'), {
+            // disableDefaultUI: true,
+            zoom: 17,
+            styles: myStyles,
+            disableDefaultUI: true
+        });
+
+        marker = new google.maps.Marker({
+            map: map,
+            // position: myLatlng,
+            draggable: true,
+            title:groceryName,
+            animation: google.maps.Animation.DROP
+        });
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                lat = position.coords.latitude;
+                lng = position.coords.longitude;
+                var pos = {lat: lat,lng: lng};
+                map.setCenter(pos);
+                marker.setPosition(new google.maps.LatLng(lat,lng));
+                $('#lat').val(lat);
+                $('#lng').val(lng);
+                $('#btnSubmit').prop('disabled', false);
+                stop_waitMe();
+            }, function() {
+                handleLocationError(true, infowindow, map.getCenter());
+                stop_waitMe();
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infowindow, map.getCenter());
+            stop_waitMe();
+        }
+
+        marker.addListener('mouseup', function() {
+            lat = marker.position.lat();
+            lng = marker.position.lng()
+            $('#lat').val(lat);
+            $('#lng').val(lng);
+
+        });
+
+        var infowindow = new google.maps.InfoWindow({
+            content:groceryName
+        });
+        infowindow.open(map,marker);
+    }
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>

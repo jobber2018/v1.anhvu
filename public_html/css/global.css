@@ -1,0 +1,284 @@
+
+html, body, div, p, table, tr, th, td, input {
+    font-family: Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+@media (max-width:420px){
+    .ml-m-15{margin-left: 15px}
+    .pl-m-15{padding-left: 15px}
+}
+/* ---------------------------------------------------
+    GOLOBAL STYLE
+----------------------------------------------------- */
+.icon{width: 24px;height: 24px}
+.icon-lg{width: 30px;height: 30px}
+.padding-left-0{padding-left: 0px}
+.padding-left-15{padding-left: 15px}
+.pl-15{padding-left: 15px}
+.padding-left-5{padding-left: 5px}
+.padding-left-25{padding-left: 25px}
+.margin-bottom-15{margin-bottom: 15px;}
+.margin-top-15{margin-top: 15px;}
+.padding-bottom-5{padding-bottom: 5px}
+.padding-right-10{padding-right: 10px}
+.padding-right-15{padding-right: 15px}
+.padding-right-0{padding-right: 0px}
+.padding-top-15{padding-top: 15px}
+.padding-bottom-15{padding-bottom: 15px}
+.bg-none{background-color: unset}
+.mt-30{margin-top: 30px}
+.mt-15{margin-top: 15px}
+.mb-20 {margin-bottom: 20px !important;}
+.mb-15 {margin-bottom: 15px}
+.ml-15 {margin-left: 15px}
+.mr-15 {margin-right: 15px}
+.pl-0 {padding-left: 0 !important;}
+.pr-0 {padding-right: 0 !important;}
+.pb-0 {padding-bottom: 0 !important;}
+.pt-0 {padding-top: 0 !important;}
+.ml-0 {margin-left: 0 !important;}
+.mr-0 {margin-right: 0 !important;}
+.mt-0 {margin-top: 0 !important;}
+.mb-0 {margin-bottom: 0 !important;}
+.mb-10 {margin-bottom: 10px !important;}
+.bg-star-1{
+    background-color:#dc3545;
+}
+.bg-star-2{
+    background-color:#ffc107;
+}
+.bg-star-3{
+    background-color:#17a2b8;
+}
+.bg-star-4{
+    background-color:#28a745;
+}
+.bg-star-5{
+    background-color:#28a745;
+}
+.fs-12{font-size: 12px}
+#content{height: inherit}
+
+.error{color: red}
+.error li{
+    display:table;
+    margin-left: -40px;
+}
+.success{color: #0d5bdd}
+.success li{
+    display:table;
+    margin-left: -40px;
+}
+/*------------------------Modal hotel information----------------------*/
+.alZPUd {
+    border: 1px solid #1A73E8;
+    border-radius: 50%;
+    padding: 10px;
+}
+.fTCcEc {
+    color: #1A73E8;
+}
+
+.modal-header-action{
+    padding-bottom: 15px;
+}
+.modal-header-action .action{
+    padding: 30px 0 0 0;
+    text-align: center;
+}
+.modal-header-action .action p{
+    padding-top: 15px;
+    color: #1A73E8;
+    text-transform: uppercase;
+}
+#call, #copyURL, #directions, #bookmark {cursor: pointer}
+
+.model-header-name-address{
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1rem;
+}
+.model-header-name-address .modal-title{font-weight: bold}
+.model-header-name-address span{ padding-right: 10px}
+.model-header-name-address .address{
+    padding-top: 10px;
+    color: #545454;
+    padding-bottom:10px;
+}
+.model-header-name-address .address div:first-child {
+    padding-bottom: 5px;
+}
+.model-header-name-address .address div:nth-child(2) {
+    padding-bottom: 5px;
+}
+
+
+/*Information tab*/
+.tab-content-hotel{}
+
+/*Tong quan*/
+.tab-header li:first-child {
+    margin-left: 15px;
+}
+.tab-content-hotel .tab-content {
+    padding-top: 15px;
+}
+
+.module .collapse, .module .collapsing {
+    height: 3rem;  /* [NUM_OF_LINES] x [LINE_HEIGHT] */
+}
+
+.module .collapse {
+    position: relative;  /* For ...'s content absolute positioning */
+    display: block;
+    overflow: hidden;
+}
+
+.module .collapse.show {
+    height: auto;  /* You need to reset the height when not collapsed */
+}
+
+.module .collapse.show:before {
+    display: none;  /* Of course you don't want to display ... */
+}
+
+.module a.collapsed:after {
+    content: '+ Đọc thêm';
+}
+
+.module a:not(.collapsed):after {
+    content: '- Thu gọn';
+}
+
+.image-size{height: 250px; border-right:5px solid #727272
+}
+
+/*Datetimepicker*/
+.bootstrap-datetimepicker-widget table td.disabled, .bootstrap-datetimepicker-widget table td.disabled:hover{
+    background-color: #f5f7fa;
+}
+.bootstrap-datetimepicker-widget table td, .bootstrap-datetimepicker-widget table th{border-radius:0px}
+
+/*amenities*/
+/*.amenities{min-height: 150px}*/
+.amenities div{padding-bottom: 20px}
+.amenities span{padding-left: 5px}
+
+/*landmarks*/
+.landmarks{}
+.landmarks .list-group-item{
+    border: 0px;
+    border-bottom:1px solid rgba(0,0,0,.5)!important;
+}
+.landmarks .list-group-item:last-child{border-bottom: 0px!important;}
+.landmarks i{width: 30px}
+
+/*Slide upload file*/
+.avatar-wrapper {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+    box-shadow: 1px 1px 15px -5px black;
+    transition: all 0.3s ease;
+}
+.avatar-wrapper:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+.avatar-wrapper:hover .profile-pic {
+    opacity: 0.8;
+}
+
+.avatar-wrapper.profile-pic {
+    height: 100%;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.profile-pic:after {
+    font-family: "Font Awesome";
+    content: "\f030";
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    font-size: 90px;
+    background: #ecf0f1;
+    color: #34495e;
+    text-align: center;
+    padding-top: 50px;
+}
+
+.avatar-wrapper .upload-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+.upload-button .fa-arrow-circle-up {
+    position: absolute;
+    font-size: 90px;
+    left: 0;
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: #34495e;
+    height: 100%;
+    width: 100%;
+    padding-top: 80px;
+}
+.upload-button:hover .fa-arrow-circle-up {
+    opacity: 0.9;
+}
+
+
+/*Rating*/
+.star-yellow{
+    color: #f5920f;
+}
+
+
+#collapseBookroom .row{
+    padding-bottom: 5px!important;
+}
+/*------------------------END modal hotel information----------------------*/
+
+/*Loading page*/
+#circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 50px;
+    height: 50px;
+}
+
+.loader {
+    width: calc(100% - 0px);
+    height: calc(100% - 0px);
+    border: 3px solid #162534;
+    border-top: 3px solid #09f;
+    border-radius: 50%;
+    animation: rotate 5s linear infinite;
+}
+
+@keyframes rotate {
+    100% {transform: rotate(360deg);}
+}
+
+/*end loading*/
+#location{
+    background: white;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+    padding: 5px;
+}
+
+.bd-processing-modal-lg .modal-dialog{
+    display: table;
+    position: relative;
+    margin: 0 auto;
+    top: calc(50% - 24px);
+}

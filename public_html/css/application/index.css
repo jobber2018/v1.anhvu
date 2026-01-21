@@ -1,0 +1,317 @@
+@media only screen
+    and (max-device-width: 480px)
+    and (max-device-width: 736px)
+{
+    #logoNavBar{
+        display: none;
+    }
+}
+
+.gm-style .controls {
+    font-size: 28px;  /* this adjusts the size of all the controls */
+
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+    box-sizing: border-box;
+    border-radius: 2px;
+    cursor: pointer;
+    font-weight: 300;
+    height: 1em;
+    margin: 6px;
+    text-align: center;
+    user-select: none;
+    padding: 2px;
+    width: 1em;
+}
+.gm-style .controls button {
+    border: 0;
+    background-color: white;
+    color: rgba(0, 0, 0, 0.6);
+}
+.gm-style .controls button:hover {
+    color: rgba(0, 0, 0, 0.9);
+}
+
+.gm-style .controls.zoom-control {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+}
+.gm-style .controls.zoom-control button {
+    font: 0.85em Arial;
+    margin: 1px;
+    padding: 0;
+}
+
+.gm-style .controls.maptype-control {
+    display: flex;
+    flex-direction: row;
+    width: auto;
+}
+.gm-style .controls.maptype-control button {
+    display: inline-block;
+    font-size: 0.5em;
+    margin: 0 1px;
+    padding: 0 6px;
+}
+.gm-style .controls.maptype-control.maptype-control-is-map .maptype-control-map {
+    font-weight: 700;
+}
+.gm-style .controls.maptype-control.maptype-control-is-satellite .maptype-control-satellite {
+    font-weight: 700;
+}
+
+.gm-style .controls.fullscreen-control button {
+    display: block;
+    font-size: 1em;
+    height: 100%;
+    width: 100%
+}
+.gm-style .controls.fullscreen-control .fullscreen-control-icon {
+    border-style: solid;
+    height: 0.25em;
+    position:absolute;
+    width: 0.25em;
+}
+.gm-style .controls.fullscreen-control .fullscreen-control-icon.fullscreen-control-top-left {
+    border-width: 2px 0 0 2px;
+    left: 0.1em;
+    top: 0.1em;
+}
+.gm-style .controls.fullscreen-control.is-fullscreen .fullscreen-control-icon.fullscreen-control-top-left {
+    border-width: 0 2px 2px 0;
+}
+.gm-style .controls.fullscreen-control .fullscreen-control-icon.fullscreen-control-top-right {
+    border-width: 2px 2px 0 0;
+    right: 0.1em;
+    top: 0.1em;
+}
+.gm-style .controls.fullscreen-control.is-fullscreen .fullscreen-control-icon.fullscreen-control-top-right {
+    border-width: 0 0 2px 2px;
+}
+.gm-style .controls.fullscreen-control .fullscreen-control-icon.fullscreen-control-bottom-left {
+    border-width: 0 0 2px 2px;
+    left: 0.1em;
+    bottom: 0.1em;
+}
+.gm-style .controls.fullscreen-control.is-fullscreen .fullscreen-control-icon.fullscreen-control-bottom-left {
+    border-width: 2px 2px 0 0;
+}
+.gm-style .controls.fullscreen-control .fullscreen-control-icon.fullscreen-control-bottom-right {
+    border-width: 0 2px 2px 0;
+    right: 0.1em;
+    bottom: 0.1em;
+}
+.gm-style .controls.fullscreen-control.is-fullscreen .fullscreen-control-icon.fullscreen-control-bottom-right {
+    border-width: 2px 0 0 2px;
+}
+#page-content-wrapper{width: 100%}
+.icon{width: 24px;height: 24px}
+.icon-lg{width: 30px;height: 30px}
+.padding-left-0{padding-left: 0px}
+.padding-left-15{padding-left: 15px}
+.padding-left-25{padding-left: 25px}
+.margin-bottom-15{margin-bottom: 15px;}
+.margin-top-15{margin-top: 15px;}
+.padding-bottom-5{padding-bottom: 5px}
+.padding-right-15{padding-right: 15px}
+.padding-right-0{padding-right: 0px}
+.padding-top-15{padding-top: 15px}
+.padding-bottom-15{padding-bottom: 15px}
+
+.bg-star-1{
+    background-color:#dc3545;
+}
+.bg-star-2{
+    background-color:#ffc107;
+}
+.bg-star-3{
+    background-color:#17a2b8;
+}
+.bg-star-4{
+    background-color:#28a745;
+}
+.bg-star-5{
+    background-color:#28a745;
+}
+
+#navbar .input-group-text{background-color: white}
+
+/*------------------------Modal hotel information----------------------*/
+.alZPUd {
+    border: 1px solid #1A73E8;
+    border-radius: 50%;
+    padding: 10px;
+}
+.fTCcEc {
+    color: #1A73E8;
+}
+
+.modal-header-action{
+    padding-bottom: 15px;
+}
+.modal-header-action .action{
+    padding: 30px 0 0 0;
+    text-align: center;
+}
+.modal-header-action .action p{
+    padding-top: 15px;
+    color: #1A73E8;
+    text-transform: uppercase;
+}
+#call, #price, #directions, #bookmark {cursor: pointer}
+
+.model-header-name-address{
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1rem;
+}
+.model-header-name-address .modal-title{font-weight: bold}
+.model-header-name-address span{ padding-right: 10px}
+.model-header-name-address .address{
+    padding-top: 10px;
+    color: #545454;
+    padding-bottom:10px;
+}
+.model-header-name-address .address div:first-child {
+    padding-bottom: 5px;
+}
+.model-header-name-address .address div:nth-child(2) {
+    padding-bottom: 5px;
+}
+
+
+/*Information tab*/
+.tab-content-hotel{}
+
+/*Tong quan*/
+.tab-header li:first-child {
+    margin-left: 15px;
+}
+.tab-content-hotel .tab-content {
+    padding-top: 15px;
+}
+
+.module .collapse, .module .collapsing {
+    height: 3rem;  /* [NUM_OF_LINES] x [LINE_HEIGHT] */
+}
+
+.module .collapse {
+    position: relative;  /* For ...'s content absolute positioning */
+    display: block;
+    overflow: hidden;
+}
+
+.module .collapse.show {
+    height: auto;  /* You need to reset the height when not collapsed */
+}
+
+.module .collapse.show:before {
+    display: none;  /* Of course you don't want to display ... */
+}
+
+.module a.collapsed:after {
+    content: '+ Đọc thêm';
+}
+
+.module a:not(.collapsed):after {
+    content: '- Thu gọn';
+}
+
+.image-size{height: 250px; border-right:5px solid #727272
+}
+
+/*Datetimepicker*/
+.bootstrap-datetimepicker-widget table td.disabled, .bootstrap-datetimepicker-widget table td.disabled:hover{
+    background-color: #f5f7fa;
+}
+.bootstrap-datetimepicker-widget table td, .bootstrap-datetimepicker-widget table th{border-radius:0px}
+
+/*amenities*/
+/*.amenities{min-height: 150px}*/
+.amenities div{padding-bottom: 20px}
+.amenities span{padding-left: 5px}
+
+/*landmarks*/
+.landmarks{}
+.landmarks .list-group-item{
+    border: 0px;
+    border-bottom:1px solid rgba(0,0,0,.5)!important;
+}
+.landmarks .list-group-item:last-child{border-bottom: 0px!important;}
+.landmarks i{width: 30px}
+
+/*Slide upload file*/
+.avatar-wrapper {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+    box-shadow: 1px 1px 15px -5px black;
+    transition: all 0.3s ease;
+}
+.avatar-wrapper:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+.avatar-wrapper:hover .profile-pic {
+    opacity: 0.8;
+}
+
+.avatar-wrapper.profile-pic {
+    height: 100%;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.profile-pic:after {
+    font-family: "Font Awesome";
+    content: "\f030";
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    font-size: 90px;
+    background: #ecf0f1;
+    color: #34495e;
+    text-align: center;
+    padding-top: 50px;
+}
+
+.avatar-wrapper .upload-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+.upload-button .fa-arrow-circle-up {
+    position: absolute;
+    font-size: 90px;
+    left: 0;
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    color: #34495e;
+    height: 100%;
+    width: 100%;
+    padding-top: 80px;
+}
+.upload-button:hover .fa-arrow-circle-up {
+    opacity: 0.9;
+}
+
+/*slick slide*/
+.slick-next{right: 10px}
+.slick-prev{
+    left: 10px;
+    z-index: 10;}
+/*Rating*/
+.star-yellow{
+    color: #f5920f;
+}
+
+
+#collapseBookroom .row{
+    padding-bottom: 5px!important;
+}
+/*------------------------END modal hotel information----------------------*/

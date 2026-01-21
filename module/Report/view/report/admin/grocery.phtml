@@ -1,0 +1,117 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Khách hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3 style="margin-bottom: 0px"><span class="fa fa-arrow-circle-o-left"></span> 20 khách hàng có doanh thu tốt nhất</h3>
+    <small class="label label-danger" style="margin-left: 20px">Tính từ ngày bắt đầu đến ngày kết thúc</small>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fdate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->tdate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="morris-bar-grocery" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display datatable_simple" style="width:100%" id="tblOrder">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        foreach ($this->arrGrocery as $k=>$value){
+                            echo '<tr>';
+                            echo '<td>'.$i++.'</td>';
+                            echo '<td><a href="'.$this->url('grocery-admin',['action'=>'detail','id'=>$value['id']]).'">'.$value['name'].'</a></td>';
+                            echo '<td>'.Common::formatMoney($value['revenue']) .' đ</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+
+        Morris.Bar({
+            element: 'morris-bar-grocery',
+            data: [<?php
+                foreach ($this->arrGrocery as $k=>$value){
+                    echo "{ y: '".$value['name']."', revenue: ". $value['revenue'] .", profit: 0 },";
+                }
+                ?>],
+            xkey: 'y',
+            ykeys: ['revenue'],
+            labels: ['Doanh thu'],
+            barColors: ['#0f85d9', '#781ee8'],
+            hoverCallback: function (index, options, content, row) {
+                var hover = "<div class='morris-hover-row-label'>"+row.y+"</div><div class='morris-hover-point'><p style='color:#0f85d9; padding-bottom: 5px; margin-bottom:0px; padding-top: 10px'>Doanh thu: "+formatCurrency(row.revenue.toString())+" đ</p></div>";
+                return hover;
+            },
+        });
+
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'grocery'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+    })
+</script>

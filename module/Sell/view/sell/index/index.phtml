@@ -1,0 +1,74 @@
+<?php
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('sell-front')?>">Home</a></li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Danh sách đơn hàng</h3>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <a href="<?=$this->url('sell-front',['action'=>'map'])?>" class="btn btn-success">
+                <span class="fa fa-map-marker"></span>
+                Bản đồ
+            </a>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng đơn</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        foreach ($this->sellOrder as $order){
+                            echo '<tr>';
+                            echo '<td>'.$i++.'</td>';
+                            echo '<td><a class="title" href="'.$this->url('sell-front',['action'=>'detail-order','id'=>$order->getId()]).'">'.$order->getGrocery()->getGroceryName().'</a><br><i>('.$order->getGrocery()->getAddress().')</i></td>';
+                            echo '<td>'.Common::formatMoney(round($order->getTotalPrice()/1000)*1000).' đ</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    table .title{font-weight: bold}
+</style>

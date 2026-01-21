@@ -1,0 +1,165 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$title='Chi tiết đơn đang đóng gói';
+$this->headTitle($title);
+?>
+<!-- START BREADCRUMB -->
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-admin',['action'=>'packing'])?>">Danh sách đơn hàng</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<div class="page-title">
+    <h2>
+        <span class="fa fa-dropbox"></span>
+        <?=$title?>
+    </h2>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading" id="btnActions">
+                    <a class="btn btn-info" href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" >
+                        <span class="fa fa-print"></span>In đơn
+                    </a>
+                    <button onclick="showModalSelectProduct()" class="btn btn-success">
+                        <span class="fa fa-plus-circle"></span>
+                        Thêm sản phẩm
+                    </button>
+                    <ul class="panel-controls">
+                        <li>
+                            <button type="button" class="btn btn-success packed">
+                                <span class="fa fa-dropbox"></span>
+                                Xác nhận đã đóng gói
+                            </button>
+                            <button type="button" class="btn btn-warning delivery">
+                                <span class="fa fa-truck"></span>
+                                Chuyển giao hàng
+                            </button>
+
+                            <button type="button" class="btn btn-danger cancel">
+                                <span class="fa fa-trash-o"></span>
+                                Huỷ đơn
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <?=$this->partial('sell/partial/order-edit-product', ['order'=>$this->sellOrder,'action'=>['edit','delete'],'url'=>'do-packing']);?>
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-note', ['order'=>$this->sellOrder,'userInfo'=>$this->userInfo]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/customer-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/car-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-timeline', ['order'=>$this->sellOrder]);?>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#btnActions')
+            .on('click', '.delivery', function () {
+                let orderId=<?=$this->sellOrder->getId()?>;
+                let customerName='<?=$this->sellOrder->getGrocery()->getGroceryName()?>';
+
+                if(!orderId) return ;
+
+                let text = 'Chuyển sang chế độ giao hàng?\n'+customerName;
+                if (confirm(text) === true) {
+                    run_waitMe();
+                    $.ajax({
+                        method: "POST",
+                        url: '<?=$this->url('sell-admin',['action'=>'delivery'])?>',
+                        data: {oid:orderId}
+                    }).done(function (response) {
+                        if(response.status){
+                            noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                            window.location.href = "<?=$this->url('sell-admin',['action'=>'packing'])?>";
+                        }
+                        else{
+                            noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                        }
+                        stop_waitMe();
+                    });
+                }else {
+                    return true;
+                }
+            })
+            .on('click', '.packed', function () {
+                let orderId=<?=$this->sellOrder->getId()?>;
+                let customerName='<?=$this->sellOrder->getGrocery()->getGroceryName()?>';
+
+                if(!orderId) return ;
+                let text = 'Đã đóng gói xong đơn hàng?\n'+customerName;
+                if (confirm(text) === true) {
+                    run_waitMe();
+                    var url = "<?=$this->url('sell-admin',['action'=>'packed-order'])?>";
+                    $.ajax({
+                        headers: {Accept: "application/json; charset=utf-8"},
+                        method: "POST",
+                        url: url,
+                        data: {oid:orderId}
+                    }).done(function (response) {
+                        if(response.status){
+                            noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                            window.location.href = "<?=$this->url('sell-admin',['action'=>'packing'])?>";
+                        }
+                        else{
+                            noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                        }
+                        stop_waitMe();
+                    })
+                } else {
+                    return false;
+                }
+            })
+            .on('click', '.cancel', function () {
+                let orderId=<?=$this->sellOrder->getId()?>;
+                let customerName='<?=$this->sellOrder->getGrocery()->getGroceryName()?>';
+
+                if(!orderId) return ;
+                let text = 'Bạn chắc chắn muốn huỷ đơn?\n'+customerName;
+                if (confirm(text) === true) {
+                    run_waitMe();
+                    var url = "<?=$this->url('sell-admin',['action'=>'cancel-order'])?>";
+                    $.ajax({
+                        headers: {Accept: "application/json; charset=utf-8"},
+                        method: "POST",
+                        url: url,
+                        data: {oid:orderId}
+                    }).done(function (response) {
+                        if(response.status){
+                            noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                            window.location.href = "<?=$this->url('sell-admin',['action'=>'packing'])?>";
+                        }
+                        else{
+                            noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                        }
+                        stop_waitMe();
+                    })
+                } else {
+                    return false;
+                }
+            });
+    });
+</script>
+<?=$this->partial('sell/partial/order-add-product');?>

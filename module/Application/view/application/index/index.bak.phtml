@@ -1,0 +1,43 @@
+<link rel="stylesheet" type="text/css" href="/css/application/index.css"/>
+<div class="row">
+    <div id="google_map" style="width: 100%;height: 600px"></div>
+    <!-- Hide controls until they are moved into the map. -->
+    <div style="display:none">
+        <div class="controls zoom-control">
+            <button class="zoom-control-in" title="Zoom In">+</button>
+            <button class="zoom-control-out" title="Zoom Out">−</button>
+        </div>
+        <div class="controls maptype-control maptype-control-is-map">
+            <button class="maptype-control-map"
+                    title="Show road map">Map</button>
+            <button class="maptype-control-satellite"
+                    title="Show satellite imagery">Satellite</button>
+        </div>
+        <div class="controls fullscreen-control">
+            <button title="Toggle Fullscreen">
+                <div class="fullscreen-control-icon fullscreen-control-top-left"></div>
+                <div class="fullscreen-control-icon fullscreen-control-top-right"></div>
+                <div class="fullscreen-control-icon fullscreen-control-bottom-left"></div>
+                <div class="fullscreen-control-icon fullscreen-control-bottom-right"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade bottom" id="modalHotelInfo" tabindex="-1" role="dialog" aria-labelledby="modalHotelInfo" aria-hidden="true">
+        <div class="modal-dialog modal-bottom" role="document">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+</div>
+
+
+<script type="application/javascript">
+    var url = "<?=$this->url('application',['action'=>'markers'])?>";
+    var p_lat = parseFloat('<?=$this->p_lat?>');
+    var p_lng = parseFloat('<?=$this->p_lng?>');
+    var p_if = '<?=$this->p_hotelId?>';
+    // console.log(p_lat+'='+p_lng+'='+p_if);
+</script>
+<script type="application/javascript" src="/js/application/index.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap&libraries=places"></script>

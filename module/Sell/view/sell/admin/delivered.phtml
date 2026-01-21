@@ -1,0 +1,459 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn hàng";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Đơn hàng đã giao</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs nav-justified">
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'draft'])?>">
+                            Chờ xử lý
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="draft_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'customer'])?>">
+                            Khách tạo
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="cus_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin')?>">
+                            Chờ đóng gói
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="new_order_number"></div>
+                        </a>
+                    </li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packing'])?>">Đang đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packed'])?>">Đã đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivering'])?>">Đang giao</a></li>
+                    <li class="active"><a href="#">Đã giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>">Chưa thanh toán</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'paid-order'])?>">Hoàn thành</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active">
+                        <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>STT</th>
+                                <th>Mã đơn</th>
+                                <th class="text-filter">Khách hàng</th>
+                                <th class="text-filter">Ngày giao</th>
+                                <th class="select-filter">Người giao</th>
+                                <th class="select-filter">Xe giao</th>
+                                <th class="select-filter">Thanh toán</th>
+                                <th>Tổng đơn</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                            <tr>
+                                <th colspan="9" style="text-align:right">Tổng cộng:</th>
+                                <th></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+
+<?=$this->partial('sell/partial/order-back-status', ['order'=>$this->sellOrder]);?>
+
+<script type="text/html" id="order-pay-info-template">
+    <style>
+        .tplOrderPayInfo tr:first-child td{border-top: 0px}
+        .tplOrderPayInfo td:first-child{font-weight: bold}
+        .tplOrderPayInfo{margin-bottom: 0px}
+    </style>
+    <table class="table nowrap table-hover display tplOrderPayInfo">
+        <tr>
+            <td>Khách hàng:</td>
+            <td class="title">{{customer_name}}</td>
+        </tr>
+        <tr>
+            <td>Mã đơn hàng:</td>
+            <td>{{order_code}}</td>
+        </tr>
+        <tr>
+            <td>Số tiền:</td>
+            <td><span class="highlight" style="font-size: 10pt">{{total_amount_payable}}</span> [{{order_payment_method_name}}]</td>
+        </tr>
+        <tr>
+            <td>Ngày giao:</td>
+            <td>{{delivered_date}}</td>
+        </tr>
+        <tr>
+            <td>Người giao:</td>
+            <td class="price">{{delivered_by}}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <label class="check">
+                    <input type="radio" class="iradio" name="payMethod" value="1" checked="checked"/>Hoàn thành
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <label class="check">
+                    <input type="radio" class="iradio" name="payMethod" value="2"/>Chưa thanh toán hoặc Thanh toán một phần
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <textarea type="text" class="form-control" id="orderNote" name="orderNote" placeholder="Ghi chú" rows="3"></textarea>
+            </td>
+        </tr>
+    </table>
+</script>
+<div class="modal fade" id="modalPayConfirm" tabindex="-1" role="dialog" aria-labelledby="modalPayConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <input type="hidden" id="orderId" name="orderId" value="0">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modalPayConfirmLabel">Xác nhận thanh toán</h4>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="btnConfirmPayment" type="button" class="btn btn-success">
+                        <span class="fa fa-credit-card"></span>
+                        Xác nhận
+                    </button>
+                </div>
+            </div>
+    </div>
+</div>
+<div class="modal" id="modalShowImage" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" id="previewImg">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let table;
+    $(document).ready(function () {
+        table=$('#tblOrder').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: true,
+            searching: true,
+            dom:'<"pull-left"f><"pull-right"l>tip',
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name: 'no', width: 10, targets: 1,className: 'dt-body-center'},
+                { name: 'name', targets: 3,
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name='<a href="<?=$this->url('sell-admin',['action'=>'do-delivered'])?>/'+rowData[0].order_id+'" class="title">'+cellData+'</a>';
+                        name+=' '+rowData[0].order_message;
+                        name+='<p><i>'+rowData[0].customer_address+'</i></p>';
+                        $(td).html(name);
+                    }
+                },
+                {
+                    name: 'total_amount',
+                    targets: 8,
+                    className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        if ( cellData <= 0 ) {
+                            $(td).css('color', 'red');
+                            $(td).css('font-weight', 'bold');
+                        }
+                        $(td).html(formatMoney(cellData));
+                    }
+                },{
+                    name: 'button',
+                    targets: 9,
+                    className: 'dt-body-nowrap',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let button='<button style="margin-right: 5px" data-toggle="tooltip" data-placement="bottom" title="Xác nhận thanh toán" onclick="showModalPayConfirm('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                            button+='<span class="fa fa-credit-card"></span>';
+                            button+='</button>';
+
+                        if(rowData[0].is_invoice_image>0){
+                            button+='<button style="margin-right: 5px" data-toggle="tooltip" data-original-title="Hình ảnh hoá đơn" onclick="showImg('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                            button+='<span class="fa fa-picture-o"</span>';
+                            button+='</button>';
+                        }else{
+                            button+='<button style="margin-right: 5px" type="button" disabled class="btn btn-default btn-rounded">';
+                            button+='<span class="fa fa-picture-o"</span>';
+                            button+='</button>';
+                        }
+                        button+='<button data-toggle="tooltip" data-placement="bottom" title="Trở lại trạng thái đang giao" onclick="showModalConfirmBack('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                        button+='<span class="fa fa-fast-backward"></span>';
+                        button+='</button>';
+
+                        $(td).html(button);
+                    }
+                }
+            ],
+            ajax: {
+                url: '<?=$this->url('sell-admin',['action'=>'delivered'])?>',
+                type: 'POST',
+                beforeSend: function(){
+                    $('#tblOrder > tbody').html(
+                        '<tr class="odd">' +
+                        '<td valign="top" colspan="10" style="font-size: 9pt" class="dataTables_empty">Đang tải dữ liệu&hellip;</td>' +
+                        '</tr>'
+                    );
+                },
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=1;
+                    // let name ='';
+                    $.each( json.data, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(i++);
+                        dataItem.push(value.order_code);
+
+                        //name='<a href="<?php //=$this->url('sell-admin',['action'=>'do-delivered'])?>///'+value.order_id+'" class="title">'+value.customer_name+'</a>';
+                        // name+=' '+value.order_message;
+                        // name+='<p><i>'+value.customer_address+'</i></p>';
+                        dataItem.push(value.customer_name);
+
+                        dataItem.push(value.delivered_date);
+                        dataItem.push(value.delivered_by);
+                        dataItem.push(value.delivery_car);
+                        dataItem.push(value.pay_method_name);
+                        dataItem.push(value.total_amount_paid);
+                        dataItem.push(value.order_id);
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+                // Total over this page
+                pageTotal = api
+                    .column(8, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+
+                // Update footer
+                $(api.column(8).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+            },
+            initComplete: function () {
+                this.api()
+                    .columns('.text-filter')
+                    .every(function () {
+                        let column = this;
+                        let title = column.header().textContent;
+                        // Create input element
+                        let input = document.createElement('input');
+                        input.placeholder = title;
+                        column.header().replaceChildren(input);
+                        // Event listener for user input
+                        input.addEventListener('keyup', () => {
+                            if (column.search() !== this.value) {
+                                column.search(input.value).draw();
+                            }
+                        });
+                        // Restore state saved values
+                        var state = this.state.loaded();
+                        if (state) {
+                            var val = state.columns[this.index()];
+                            input.value=val.search.search;
+                        }
+                    })
+                    .columns('.select-filter')
+                    .every(function () {
+                        var column = this;
+                        let title = column.header().textContent;
+                        var select = document.createElement("select");
+                        select.add(new Option(title,''));
+                        column.header().replaceChildren(select);
+                        select.addEventListener('change',() => {
+                            column.search(select.value, { exact: true }).draw();
+                        });
+                        // Get the search data for the first column and add to the select list
+                        this.cache('search')
+                            .sort()
+                            .unique()
+                            .each(function (d) {
+                                select.add(new Option(d,d));
+                            });
+                        // Restore state saved values
+                        var state = this.state.loaded();
+                        if (state) {
+                            var val = state.columns[this.index()];
+                            select.value=val.search.search;
+                        }
+                        // console.log(state.columns[this.index()])
+                    });
+            },
+            fnDrawCallback : function() {
+                $(".popover-dismiss").popover({trigger:'hover',html:true});
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                table.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+        $('#btnConfirmPayment').click(function() {
+            let orderId = $("#orderId").val();
+            let orderNote = $("#orderNote").val();
+            let payMethod = $("input[name='payMethod']:checked").val();
+
+            let data ={
+                oid:orderId,
+                payMethod:payMethod,
+                note:orderNote
+            };
+
+            run_waitMe('.modal-dialog');
+            let url = "<?=$this->url('sell-admin',['action'=>'payment-confirmation'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: data
+            }).done(function (response) {
+                if(response.status){
+                    table.ajax.reload();
+                    noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                    $('#modalPayConfirm').modal('hide');
+                }else{
+                    noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    stop_waitMe('.modal-dialog');
+                }
+            });
+        });
+
+        showNotifyOrderCustomerAndNew();
+    });
+    function showModalPayConfirm(sellOrderId){
+        $('#modalPayConfirm').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        }).on('shown.bs.modal', function (e) {
+            $('#orderId').val(sellOrderId);
+        });
+        run_waitMe('.modal-dialog');
+        $('#modalPayConfirm .modal-body').html('');
+        var url = '<?=$this->url('sell-admin',['action'=>'detail-order'])?>';
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {id:sellOrderId}
+        }).done(function (response) {
+            if(response.status){
+                let orderPayInfoTemplate = $('#order-pay-info-template').text();
+                let orderPayInfoContent = Mustache.render(orderPayInfoTemplate, response);
+                $('#modalPayConfirm .modal-body').append(orderPayInfoContent);
+                $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'});
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe('.modal-dialog');
+        });
+    }
+    function showImg(orderId){
+        run_waitMe();
+        let url='<?=$this->url('sell-staff',['action'=>'invoice-image'])?>';
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "GET",
+            data: {id:orderId},
+            url: url
+        }).done(function(res) {
+            if(res.status==1){
+                $('#previewImg').empty();
+                $.each(res.data, function(key,value) {
+                    let img = $('<img />').attr({
+                        'src': value,
+                        'alt': 'JSFiddle logo',
+                        'title': 'JSFiddle logo',
+                        'width': "100%"
+                    }).appendTo('#previewImg');
+                });
+                $('#modalShowImage').modal('show');
+            }else{
+                noty({text: res.message, layout: 'topRight', type: 'warning',timeout: 4000});
+            }
+            stop_waitMe();
+        });
+    }
+</script>

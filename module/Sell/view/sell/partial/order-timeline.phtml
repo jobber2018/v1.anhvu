@@ -1,0 +1,45 @@
+<div class="panel panel-default">
+    <div class="panel-body" style="background: rgba(223, 226, 226, 0.74)">
+        <!-- START TIMELINE -->
+        <div class="timeline timeline-right">
+            <!-- START TIMELINE ITEM -->
+            <div class="timeline-item timeline-main">
+                <div class="timeline-date">Activity</div>
+            </div>
+            <!-- END TIMELINE ITEM -->
+            <?php
+
+            use Sulde\Service\Common\Common;
+
+            foreach ($order->getActivity() as $activityItem){
+
+                ?>
+                <!-- START TIMELINE ITEM -->
+                <div class="timeline-item timeline-item-right">
+                    <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
+                    <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
+                    <div class="timeline-item-content">
+                        <div class="timeline-body">
+                            <b><?=$activityItem->getActionBy()?></b><br>
+                            <i><?=$activityItem->getAction()?></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- END TIMELINE ITEM -->
+                <?php
+            }
+            ?>
+            <!-- START TIMELINE ITEM -->
+            <div class="timeline-item timeline-main">
+                <div class="timeline-date"><?=Common::formatDateTime($order->getCreatedDate())?></div>
+            </div>
+            <!-- END TIMELINE ITEM -->
+        </div>
+        <!-- END TIMELINE -->
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+
+    })
+</script>

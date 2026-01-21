@@ -1,0 +1,441 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li class="active">Report</li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Report</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="col-md-2">
+                        <select id="cboRoute" class="form-control select">
+                            <option value="0" data="<?=$this->url('report-user',['action'=>'index'])?>">Select...</option>
+                            <?php
+                            $catSelected = 0;
+                            if($this->groceryCat) $catSelected = $this->groceryCat->getId();
+
+                            foreach ($this->groceryCatList as $k => $groceryCatItem) {
+                                if($groceryCatItem->getId()==$catSelected)
+                                    echo '<option selected value="'.$groceryCatItem->getId().'" data="'.$this->url('report-user',['action'=>'index','id'=>$groceryCatItem->getId()]).'">'.$this->escapeHtml($groceryCatItem->getName()).'</option>';
+                                else
+                                    echo '<option value="'.$groceryCatItem->getId().'" data="'.$this->url('report-user',['action'=>'index','id'=>$groceryCatItem->getId()]).'">'.$this->escapeHtml($groceryCatItem->getName()).'</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=date("Y-m-d", strtotime("first day of this month"))?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=date("Y-m-d")?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <figure class="highcharts-figure">
+                    <div id="chart-order-number"></div>
+                </figure>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <figure class="highcharts-figure">
+                    <div id="chart-customer-number"></div>
+                </figure>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .odd{background-color:rgb(247, 247, 247)}
+    .odd td:first-child{padding-left: 20px}
+    .even td:first-child{padding-left: 20px}
+    #tblGroceryCatList a{color: #067fad; font-weight: bold}
+    tr.group td{padding-left: 10px;}
+    tr th:first-child{padding-left: 10px}
+    tr th{background-color: rgb(4, 143, 210); color: white; padding-top: 10px; padding-bottom: 10px}
+
+    td{padding-bottom: 5px; padding-top: 5px}
+    tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+
+    tr.group,
+    tr.group:hover {
+        background-color: #dbdcdd !important;
+        font-weight: bold;
+    }
+    tr.group{padding-left: 10px}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-user',['action'=>'index'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+
+        $('#cboRoute').on('change', function() {
+            var url = $(this).find(':selected').attr('data')+'?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        });
+
+        <?php
+        if($this->groceryCat){
+            foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+                //data for chart order
+                $owner=$analyticItem->getOrderOwnerCreated();
+                if(!$owner) $owner=0;
+
+                $admin=$analyticItem->getOrderAdminCreated();
+                if(!$admin) $admin=0;
+
+                $customer=$analyticItem->getOrderCustomerCreated();
+                if(!$customer) $customer=0;
+
+                $orderValue=$analyticItem->getTotalOrderValue();
+                if(!$orderValue) $orderValue=0;
+
+                $date[]=$analyticItem->getCreatedDate()->format('d/M');
+                $arr['owner'][]=$owner;
+                $arr['admin'][]=$admin;
+                $arr['customer'][]=$customer;
+                $arr['order-value'][]=$orderValue;
+
+                //data for chart customer number
+                $arr['customer-number'][]=$analyticItem->getCustomerNumber();
+                $arr['checkined'][]=$analyticItem->getMoningCheckined()+$analyticItem->getAfternoonCheckined();
+                $arr['time-on-route'][]=$analyticItem->getTotalDiffTimeOnRoute();
+            }
+
+            ?>
+            Highcharts.chart('chart-order-number', {
+                chart: {
+                    zoomType: 'xy'
+                },
+                title: {
+                    text: 'Biều đồ số lượng / Giá trị đơn hàng',
+                    align: 'left'
+                },
+                xAxis: {
+                    categories: <?=json_encode($date)?>
+                },
+                yAxis: [{ // Primary yAxis
+                    labels: {
+                        format: '{value} đ',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    title: {
+                        text: 'Giá trị',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    }
+                }, { // Secondary yAxis
+                    title: {
+                        text: 'Số đơn',
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    labels: {
+                        format: '{value}',
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    opposite: true
+                }],
+                legend: {
+                    align: 'center',
+                    x: 10,
+                    verticalAlign: 'top',
+                    y: 20,
+                    floating: true,
+                    backgroundColor:
+                        Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                    borderColor: '#CCC',
+                    borderWidth: 1,
+                    shadow: false
+                },
+                tooltip: {
+                    headerFormat: '<b>{point.x}</b><br/>',
+                    // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                    crosshairs: true,
+                    shared: true
+                },
+                plotOptions: {
+                    column: {
+                        stacking: 'normal',
+                        dataLabels: {
+                            enabled: true
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name:"Nhân viên tạo đơn",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($arr['owner'])?>
+                    },{
+                        name:"Admin tạo đơn",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($arr['admin'])?>
+                    },{
+                        name:"Khách hàng tạo đơn",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($arr['customer'])?>
+                    },
+                    {
+                        name:"Giá trị đơn hàng",
+                        type: 'spline',
+                        data:<?=json_encode($arr['order-value'])?>
+                    }
+                ],
+
+            });
+
+            Highcharts.chart('chart-customer-number', {
+
+                title: {
+                    text: 'Biểu đồ khách hàng và chăm sóc khách hàng',
+                    align: 'left'
+                },
+
+                yAxis: {
+                    title: {
+                        text: ''
+                    }
+                },
+
+                xAxis: {
+                    categories: <?=json_encode($date)?>
+                },
+                tooltip: {
+                    headerFormat: '<b>{point.x}</b><br/>',
+                    crosshairs: true,
+                    shared: true
+                },
+                legend: {
+                    align: 'center',
+                    x: 10,
+                    verticalAlign: 'top',
+                    y: 20,
+                    floating: true,
+                    backgroundColor:
+                        Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                    borderColor: '#CCC',
+                    borderWidth: 1,
+                    shadow: false
+                },
+
+                series: [{
+                    name: 'Khách hàng',
+                    data:<?=json_encode($arr['customer-number'])?>
+                },{
+                    name: 'Checkin',
+                    data:<?=json_encode($arr['checkined'])?>
+                },{
+                    name: 'Thời gian trên tuyến (h)',
+                    data:<?=json_encode($arr['time-on-route'])?>
+                }],
+
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 500
+                        },
+                        chartOptions: {
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+
+            });
+        <?php
+        }else{
+            foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+                $catId = $analyticItem->getGroceryCat()->getId();
+                $catDay = $analyticItem->getGroceryCat()->getDay();
+                $catName = $analyticItem->getGroceryCat()->getName();
+                $staffName = $analyticItem->getGroceryCat()->getUser()->getFullname();
+                $arr[$catDay][$catId]["route_name"]=$catName;
+                $arr[$catDay][$catId]["staff"]=$staffName;
+                $arr[$catDay][$catId]["total_order_number"]=@$arr[$catDay][$catId]["total_order_number"]+$analyticItem->getTotalOrderNumber();
+                $arr[$catDay][$catId]["total_order_value"]=@$arr[$catDay][$catId]["total_order_value"]+$analyticItem->getTotalOrderValue();
+
+                $arr[$catDay][$catId]['time-on-route']=@$arr[$catDay][$catId]['time-on-route']+$analyticItem->getTotalDiffTimeOnRoute();
+            }
+
+            foreach ($arr as $k=>$arr1){
+                foreach ($arr1 as $k1=>$value){
+                    if($value['total_order_number']){
+                        $chartCategories[]=$value['route_name'];
+                        $chartSeriesTotalOrderNumber[]=$value['total_order_number'];
+                        $chartSeriesTotalOrderValue[]=$value['total_order_value'];
+                        $chartTimeOnRoute[]=round($value['time-on-route'],1);
+                    }
+                }
+            }
+        ?>
+        Highcharts.chart('chart-order-number', {
+            chart: {
+                zoomType: 'xy'
+            },
+            title: {
+                text: 'Biều đồ số lượng / Giá trị đơn hàng theo tuyến',
+                align: 'left'
+            },
+            subtitle: {
+                text: 'Số liệu tính tất cả các đơn hàng',
+                align: 'left'
+            },
+            xAxis: {
+                categories: <?=json_encode($chartCategories)?>
+            },
+            yAxis: [{ // Primary yAxis
+                labels: {
+                    format: '{value} đ',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                },
+                title: {
+                    text: 'Giá trị',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                }
+            }, { // Secondary yAxis
+                title: {
+                    text: 'Số đơn',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                labels: {
+                    format: '{value}',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                opposite: true
+            }],
+            legend: {
+                align: 'center',
+                x: 10,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                borderColor: '#CCC',
+                borderWidth: 1,
+                shadow: false
+            },
+            tooltip: {
+                headerFormat: '<b>{point.x}</b><br/>',
+                // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                crosshairs: true,
+                shared: true
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true
+                    }
+                }
+            },
+            series: [
+                {
+                    name:"Số đơn hàng",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($chartSeriesTotalOrderNumber)?>
+                },{
+                    name: 'Thời gian trên tuyến (h)',
+                    type: 'spline',
+                    yAxis: 1,
+                    data:<?=json_encode($chartTimeOnRoute)?>
+                },{
+                    name:"Giá trị đơn hàng",
+                    type: 'spline',
+                    data:<?=json_encode($chartSeriesTotalOrderValue)?>
+                }
+            ],
+
+        });
+        <?php
+        }
+        ?>
+    });
+</script>

@@ -1,0 +1,326 @@
+<?php
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$this->headTitle("Thêm mới sản ");
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+$form->prepare();
+?>
+<style>
+    .error{color: red}
+</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin',["action"=>'product'])?>">Danh sách sản phẩm</a></li>
+    <li class="active">Thêm mới sản phẩm</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Thêm mới sản phẩm </h3>
+</div>
+<div id="camera-view-container" style="width: 100%; height: 720px; background: #eee; display: none"></div>
+<span id="lib-load" style="display: none">Loading Library...</span>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <?=$this->form()->openTag($form)?>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="block">
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('name'));?>
+                            <div class="col-md-9">
+                                <?php
+                                echo $this->formElement($form->get('name'));
+                                echo $this->formElementErrors($form->get('name'),['class' => 'error']);
+                                ?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('code'));?>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <?=$this->formElement($form->get('code'));?>
+                                    <span class="input-group-btn">
+                                <button data-result="code" class="btn btn-default scan-barcode" type="button">
+                                    <i class="fa fa-barcode"></i>
+                                </button>
+                            </span>
+                                </div>
+                                <?=$this->formElementErrors($form->get('code'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('pack_code'));?>
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <?=$this->formElement($form->get('pack_code'));?>
+                                    <span class="input-group-btn">
+                                <button data-result="pack_code" class="btn btn-default scan-barcode" type="button">
+                                    <i class="fa fa-barcode"></i>
+                                </button>
+                            </span>
+                                </div>
+                                <?=$this->formElementErrors($form->get('pack_code'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('product_cat'));?>
+                            <div class="col-md-5">
+                                <?=$this->formElement($form->get('product_cat'));?>
+                                <?=$this->formElementErrors($form->get('product_cat'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('product_unit'));?>
+                            <div class="col-md-5">
+                                <?=$this->formElement($form->get('product_unit'));?>
+                                <?=$this->formElementErrors($form->get('product_unit'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('weight'));?>
+                            <div class="col-md-2">
+                                <?=$this->formElement($form->get('weight'));?>
+                                <?=$this->formElementErrors($form->get('weight'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('box_unit'));?>
+                            <div class="col-md-2">
+                                <?=$this->formElement($form->get('box_unit'));?>
+                                <?=$this->formElementErrors($form->get('box_unit'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('active'));?>
+                            <div class="col-md-2">
+                                <label class="check"><?=$this->formElement($form->get('active'));?></label>
+                                <?=$this->formElementErrors($form->get('active'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <!-- Image -->
+                        <div class="form-group">
+                            <label class="col-md-3 control-label"><?=$this->translate('Image')?></label>
+                            <div class="col-md-4">
+                                <?php
+                                echo $this->formElement($form->get('imageFile'));
+                                echo $this->formElementErrors($form->get('imageFile'),['class' => 'error']);
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="block">
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('price'));?>
+                            <div class="col-md-4">
+                                <?=$this->formElement($form->get('price'));?>
+                                <?=$this->formElementErrors($form->get('price'),['class' => 'error']);?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('norm'));?>
+                            <div class="col-md-4">
+                                <?=$this->formElement($form->get('norm'));?>
+                                <?=$this->formElementErrors($form->get('norm'),['class' => 'error']);?>
+                            </div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Tồn kho bé hơn định mức hệ thống sẽ thông bảo để nhập hàng"> </span>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('norm_input'));?>
+                            <div class="col-md-4">
+                                <?=$this->formElement($form->get('norm_input'));?>
+                                <?=$this->formElementErrors($form->get('norm_input'),['class' => 'error']);?>
+                            </div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Định mức 1 lần nhập"> </span>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('exchange_unit'));?>
+                            <div class="col-md-2">
+                                <?=$this->formElement($form->get('exchange_unit'));?>
+                                <?=$this->formElementErrors($form->get('exchange_unit'),['class' => 'error']);?>
+                            </div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Áp dụng cho những sản phẩm bán theo lốc, vĩ...VD: dầu gội dây 1 vĩ=6 dây thì mức áp dụng là 6"> </span>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('note_order'));?>
+                            <div class="col-md-8"><?=$this->formElement($form->get('note_order'));?></div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="VD: 1 vĩ 6 dây, bán theo vĩ"> </span>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('label_name'));?>
+                            <div class="col-md-4"><?=$this->formElement($form->get('label_name'));?></div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Tên nhãn hiển thị trên app (VD: 1.5l, Cửa trước, Hương hoa hồng...)"> </span>
+                        </div>
+                        <div class="form-group">
+                            <?=$this->formLabel($form->get('group_id'));?>
+                            <div class="col-md-4"><?=$this->formElement($form->get('group_id'));?></div>
+                            <span class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Những sản phẩm cùng nhóm sẽ hiển thị theo nhóm trên app"> </span>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-4 col-md-offset-3">
+                                <button type="submit" name="btnSubmit"  id="btnSubmit" class="btn btn-info active">
+                                    <i class="fa fa-save"></i>
+                                    Thêm mới
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?=$this->form()->closeTag()?>
+    </div>
+</div>
+<style>
+    #camera-view-container {
+        width: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        /*height: calc(100% - 80px);*/
+        /*text-align: unset;*/
+        font-size: medium;
+        z-index: 10000;
+    }
+</style>
+<script src="/vendor/dynamsoft-barcode-reader/dist/dbr.bundle.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<script>
+
+    $( document ).ready(function() {
+        $("#imageFile").fileinput({
+            showUpload: false,
+            showCaption: false,
+            browseClass: "btn btn-danger",
+            fileType: "any"
+        });
+
+        Dynamsoft.License.LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMTAzMzUxMDA2LU1UQXpNelV4TURBMkxYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20iLCJvcmdhbml6YXRpb25JRCI6IjEwMzM1MTAwNiIsInN0YW5kYnlTZXJ2ZXJVUkwiOiJodHRwczovL3NkbHMuZHluYW1zb2Z0b25saW5lLmNvbSIsImNoZWNrQ29kZSI6MTUxMjA5NjAyMn0=");
+        /**
+         * You can visit https://www.dynamsoft.com/customer/license/trialLicense?utm_source=samples&product=dbr&package=js to get your own trial license good for 30 days.
+         * Note that if you downloaded this sample from Dynamsoft while logged in, the above license key may already be your own 30-day trial license.
+         * For more information, see https://www.dynamsoft.com/barcode-reader/docs/web/programming/javascript/user-guide/index.html?ver=10.4.2002&cVer=true#specify-the-license&utm_source=samples or contact support@dynamsoft.com.
+         * LICENSE ALERT - THE END
+         */
+
+        // Preload "BarcodeReader" module for reading barcodes. It will save time on the initial decoding by skipping the module loading.
+        Dynamsoft.Core.CoreModule.loadWasm(["DBR"]);
+
+
+        const loadingIndicator = document.getElementById("lib-load");
+        const cameraViewContainer = document.getElementById("camera-view-container");
+
+        const init = async () => {
+
+            loadingIndicator.style.display = "";
+
+            // Create a `CameraEnhancer` instance for camera control and a `CameraView` instance for UI control.
+            const cameraView = await Dynamsoft.DCE.CameraView.createInstance();
+            const cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance(cameraView);
+            document.querySelector("#camera-view-container").append(cameraView.getUIElement()); // Get default UI and append it to DOM.
+
+            // Create a `CaptureVisionRouter` instance and set `CameraEnhancer` instance as its image source.
+            const cvRouter = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
+            cvRouter.setInput(cameraEnhancer);
+
+            // Filter out unchecked and duplicate results.
+            const filter = new Dynamsoft.Utility.MultiFrameResultCrossFilter();
+            // Filter out unchecked barcodes.
+            filter.enableResultCrossVerification("barcode", true);
+            // Filter out duplicate barcodes within 3 seconds.
+            filter.enableResultDeduplication("barcode", true);
+            await cvRouter.addResultFilter(filter);
+
+            // Define a callback for results.
+            cvRouter.addResultReceiver({
+                onDecodedBarcodesReceived: async (result) => {
+                    const resultItems = result.barcodeResultItems;
+                    if (!resultItems.length) return;
+                    Dynamsoft.DCE.Feedback.beep(); // Trigger a beep.
+                },
+            });
+
+            loadingIndicator.style.display = "none";
+
+            return { cameraEnhancer, cvRouter, cameraView };
+        };
+
+        let pInit; // promise of init
+
+        const allInputs = document.getElementsByClassName("scan-barcode");
+        for (let input of allInputs) {
+            input.addEventListener("click", async function () {
+                try {
+                    const { cameraEnhancer, cvRouter, cameraView } = await (pInit = pInit || init());
+                    // Define a callback for results.
+                    const resultReceiver = {
+                        onDecodedBarcodesReceived: async (result) => {
+                            const resultItems = result.barcodeResultItems;
+                            if (!resultItems.length) return;
+
+                            // this.value = resultItems[0].text;
+                            cvRouter.stopCapturing();
+                            cameraEnhancer.close();
+                            cameraViewContainer.style.display = "none";
+
+                            cvRouter.removeResultReceiver(resultReceiver);
+
+
+                            $('#'+input.dataset.result).val(resultItems[0].text);
+                        },
+                    };
+                    cvRouter.addResultReceiver(resultReceiver);
+
+                    cameraViewContainer.style.display = "";
+
+                    // Open camera and start scanning single barcode.
+                    await cameraEnhancer.open();
+                    cameraView.setScanLaserVisible(true);
+                    await cvRouter.startCapturing("ReadSingleBarcode");
+                } catch (ex) {
+                    let errMsg = ex.message || ex;
+                    alert(errMsg);
+                }
+            });
+        }
+    })
+
+</script>

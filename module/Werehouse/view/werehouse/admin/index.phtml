@@ -1,0 +1,141 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn nhập kho";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách đơn đã nhập</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('werehouse-admin',['action'=>'choice-supplier'])?>" class="btn btn-info pull-left">Tạo đơn nhập</a>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblWerehouse">
+                        <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>NCC</th>
+                            <th style="text-align: right">Số sản phẩm</th>
+                            <th style="text-align: right">Tổng đơn</th>
+                            <th>Người nhập</th>
+                            <th>Ngày nhập</th>
+                            <th>Trạng thái</th>
+                            <th style="text-align: right">Thanh toán</th>
+                            <th>Ngày thanh toán</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->allOrder as $order){
+                            ?>
+                            <tr>
+                                <td>
+                                    <a href="<?=$this->url('werehouse-admin',['action'=>'view','id'=>$this->escapeHtml($order->getId())])?>">
+                                        <?=$order->getCodeOrder()?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="<?=$this->url('werehouse-admin',['action'=>'view','id'=>$this->escapeHtml($order->getId())])?>">
+                                        <?=$order->getSupplier()->getName()?>
+                                    </a>
+                                </td>
+                                <td style="text-align: right"><?=count($order->getWerehouse())?></td>
+                                <td style="text-align: right"><?=Common::formatMoney($order->getTotalPrice())?></td>
+                                <td><?=$order->getUser()->getFullname()?></td>
+                                <td><?=Common::formatDateTime($order->getCreatedDate())?></td>
+                                <td>
+                                    <?php
+                                    if($order->getStatus()==0)
+                                        echo '<a href="'.$this->url('werehouse-admin',['action'=>'edit-draft','id'=>$this->escapeHtml($order->getId())]).'"><span class="fa fa-edit"> Sửa bản nháp</span></a>';
+                                    else
+                                        echo '<span class="fa fa-check-circle"> Đã nhập kho</span>';
+                                    ?>
+                                </td>
+                                <?php
+                                $difference=$order->getPay()-$order->getTotalPrice();
+                                if($difference>0) $clsColor='#f82c4b';//thanh toan thua tien
+                                elseif($difference==0) $clsColor=''; //da thanh toan het
+                                else $clsColor='#f8732c';//chua thanh toan het
+                                ?>
+                                <td style="text-align: right; background-color: <?=$clsColor?>">
+                                    <?=Common::formatMoney($order->getPay())?>
+                                </td>
+                                <td><?=Common::formatDateTime($order->getPayDate())?></td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblWerehouse').DataTable({
+            paging: true,
+            pageLength:50,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+
+    });
+</script>

@@ -1,0 +1,168 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$this->headTitle("Danh sách sản phẩm cần nhập");
+$form = $this->form;
+/*$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);*/
+//$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('werehouse-admin')?>">Danh sách đơn nhập</a></li>
+    <li class="active">Danh sách sản phẩm cần nhập</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Danh sách sản phẩm cần nhập</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- CONTACT LIST WIDGET -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"> Danh sách sản phẩm</h3>
+                    <a href="<?=$this->url('werehouse-admin',['action'=>'export-norm'])?>" class="btn btn-danger pull-right"><i class="fa fa-bars"></i> Export Data</a>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-body">
+                        <table class="table table-hover display" id="tblProduct">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th></th>
+                                <th>Mã </th>
+                                <th>Tên sản phẩm</th>
+                                <th>Số lượng nhập</th>
+                                <th>Tồn kho</th>
+                                <th>Quy cách</th>
+                                <th>Giá dự kiến nhập</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $i=1;
+                            foreach ($this->product as $k=>$product){
+                                $arrSupplier=array();
+                                foreach ($product->getWerehouse() as $werehouse){
+                                    $arrSupplier[$werehouse->getWerehouseOrder()->getSupplier()->getId()]=$werehouse->getWerehouseOrder()->getSupplier()->getName();
+                                }
+                            ?>
+                                <tr>
+                                    <td><?=$i++?></td>
+                                    <td>
+                                        <?php
+                                        if(is_null($product->getImg()))
+                                            echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                        else
+                                            echo '<img src="'.$product->getImg().'" style="max-width:40px; max-height:40px">';
+                                        ?>
+                                    </td>
+                                    <td><?=$product->getCode()?></td>
+                                    <td>
+                                        <a target="_blank" href="<?=$this->url('product-admin',['action'=>'price','id'=>$product->getId()])?>"><span style="font-weight: bold"><?=$product->getName()?> | <?=$product->getWeight();?></span></a>
+                                        <p><b>NCC: </b><?=implode(", ",$arrSupplier)?></p>
+                                    </td>
+                                    <td style="text-align: center"><b><?=$product->getNormInput()/$product->getBoxUnit()?></b></td>
+                                    <td style="text-align: center"> <?=$product->getInventory()?></td>
+                                    <td> <?=$product->getBoxUnit(). " ". $product->getUnit()->getName()?>/Thùng</td>
+                                    <td><?= Common::formatMoney($product->getLastInputPrice()->getPrice())?> đ</td>
+                                </tr>
+                                <?php
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                <!-- END CONTACT LIST WIDGET -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .file-preview-image{width: 100%!important;}
+</style>
+    <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tblProduct').DataTable({
+                paging: false,
+                // pageLength:50,
+                ordering: false,
+                info: false,
+                // order: [[ 1, "desc" ]],
+                language: {
+                    searchPlaceholder: "Tìm kiếm sản phẩm"
+                },
+                initComplete: function () {
+                    $('.dataTables_filter label input').focus();
+                }
+            });
+        });
+    </script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/tableExport.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/jquery.base64.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/html2canvas.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/jspdf/libs/sprintf.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/jspdf/jspdf.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/tableexport/jspdf/libs/base64.js"></script>
+<script>
+    $(document).ready(function() {
+        $.fn.tableExport.charset = "charset=utf-8";
+        $.fn.tableExport.defaultFileName = "myDownload";
+    })
+
+    function exportCsv() {
+        console.log('start export');
+        // $('#customers2').tableExport.prototype.charset = "charset=utf-8";
+
+        $('#tblProduct').tableExport({type:'csv',escape:'false',fileName: "id"});
+    }
+</script>

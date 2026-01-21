@@ -1,0 +1,72 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->grocery->getId()])?>">Chức năng</a></li>
+    <li class="active">Đơn hàng đã tạo</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Danh sách đơn hàng</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
+                    <thead>
+                    <tr>
+                        <th style="width: 20px; text-align: center">STT</th>
+                        <th>Ngày tạo</th>
+                        <th>Tổng đơn</th>
+                        <th>Trạng thái</th>
+
+                    </tr>
+                    </thead>
+                    <tbody>
+                <?php
+                $i=1;
+                foreach ($this->grocery->getSellOrder() as $sellOrder){
+//                    if($sellOrder->getStatus()>=0){
+                        $url = $this->url('sell-user',['action'=>'order-detail','id'=>$sellOrder->getId()]);
+                        if($sellOrder->getStatus()<0)
+                            $url=$this->url('sell-user', ['action' => 'order-detail-draft', 'id' => $sellOrder->getId()]);
+
+                        echo '<tr>';
+                        echo '<td style="text-align: center">'.$i++.'</td>';
+                        echo '<td><a href="'. $url .'">'.Common::formatDateTime($sellOrder->getCreatedDate()).'</a></td>';
+                        echo '<td>'.Common::formatMoney($sellOrder->getTotalPrice()).' đ</td>';
+                        echo '<td><small class="label label-info">'.ConfigManager::getOrderStatus()[$sellOrder->getStatus()].'</small></td>';
+
+//                        if($sellOrder->getStatus()==1) {
+//                            echo '<td><a href="' . $url . '"><span class="fa fa-edit"> Sửa đơn</span></a></td>';
+//                        }else echo '<td></td>';
+
+                        echo '</tr>';
+//                    }
+                }
+                ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblOrder').DataTable({
+            paging: true,
+            pageLength:25,
+            ordering: true,
+            info: false,
+            searching:false
+        });
+    });
+</script>

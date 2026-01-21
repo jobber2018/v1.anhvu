@@ -1,0 +1,293 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Đơn đã thanh toán";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Đơn hàng đã hoàn thành</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs nav-justified">
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'draft'])?>">
+                            Chờ xử lý
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="draft_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'customer'])?>">
+                            Khách tạo
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="cus_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin')?>">
+                            Chờ đóng gói
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="new_order_number"></div>
+                        </a>
+                    </li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packing'])?>">Đang đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packed'])?>">Đã đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivering'])?>">Đang giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivered'])?>">Đã giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>">Chưa thanh toán</a></li>
+                    <li class="active"><a href="#">Hoàn thành</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab8">
+                        <table class="table display" id="tblOrder">
+                            <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã đơn</th>
+                                <th class="text-filter">Khách hàng</th>
+                                <th class="text-filter">Ngày giao</th>
+                                <th class="select-filter">Người giao</th>
+                                <th class="text-filter">Hoàn thành</th>
+                                <th class="select-filter">Người hoàn thành</th>
+                                <th>Tổng đơn</th>
+                                <th class="select-filter">Thanh toán</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $i=1;
+                            foreach ($this->sellOrder as $order){
+                                $odn=$order->getOrderCode();
+
+//                                $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span> Admin':$order->getUser()->getFullname());
+
+                                if($order->getMethod()>0)
+                                    $method='<span class="fa fa-phone-square"></span> Admin';
+                                else if($order->getMethod()==-1)
+                                    $method='<span class="glyphicon glyphicon-user"></span> Customer';
+                                else
+                                    $method=$order->getUser()->getFullname();
+
+                                $deliveredBy='';
+                                $deliveredDate='';
+                                if($order->getDeliveredBy()){
+                                    $deliveredBy = $order->getDeliveredBy()->getFullname();
+                                    $deliveredDate=Common::formatDateTime($order->getDeliveredDate());
+                                }
+
+                                $payMethod = ($order->getPayMethod()==2?'Tiền mặt':'Chuyển khoản');
+
+                                $btnInvoice='';
+                                $invoices = $order->getInvoice();
+                                if(count($order->getInvoice())){
+                                    $btnInvoice ='<button class="btn btn-info" onclick="showImg(\''.$order->getId().'\')"><span class="fa fa-picture-o"></span>Hình ảnh</button>';
+                                }
+
+                                $orderTotal=round($order->getTotalAmountToPaid()/1000)*1000;
+                                $profit=$order->getProfit();
+
+                                echo '<tr>';
+                                echo '<td>'.$i++.'</td>';
+                                echo '<td>'.$odn.'</td>';
+
+                                echo '<td nowrap=""><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$order->getId()]).'"><b>'.$order->getGrocery()->getGroceryName().'</b></a><br>';
+                                echo '<i>('.Common::substrwords($order->getGrocery()->getAddress(),40).')</i>';
+                                echo '<span class="help-block">'.$method.' tạo '.Common::formatDateTime($order->getCreatedDate()).'</span>';
+                                echo '</td>';
+
+                                echo '<td><br>'.$deliveredDate.'</td>';
+                                echo '<td nowrap="">'.$deliveredBy.'</td>';
+                                echo '<td>'.Common::formatDateTime($order->getPayDate()).'</td>';
+                                echo '<td>'.$order->getCompletedBy().'</td>';
+                                echo '<td>'.Common::formatMoney($orderTotal).'</small></td>';
+                                echo '<td>'.$payMethod.'</td>';
+                                echo '<td>'.$btnInvoice.'</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th colspan="7" style="text-align:right">Tổng cộng:</th>
+                                <th colspan="3"></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+<div class="modal" id="modal_no_head" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" id="previewImg">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .panel-body table td{vertical-align: center !important;}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .dt-layout-end {
+        display: none;
+    }
+</style>
+<script type="text/javascript" src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblOrder').DataTable({
+            paging: false,
+            pageLength:100,
+            ordering: false,
+            info: true,
+            scrollX: false,
+            stateSave: true,
+            initComplete: function () {
+                this.api()
+                    .columns('.text-filter')
+                    .every(function () {
+                        let column = this;
+                        let title = column.header().textContent;
+                        // Create input element
+                        let input = document.createElement('input');
+                        input.placeholder = title;
+                        column.header().replaceChildren(input);
+                        // Event listener for user input
+                        input.addEventListener('keyup', () => {
+                            if (column.search() !== this.value) {
+                                column.search(input.value).draw();
+                            }
+                        });
+                        // Restore state saved values
+                        var state = this.state.loaded();
+                        if (state) {
+                            var val = state.columns[this.index()];
+                            input.value=val.search.search;
+                        }
+                    })
+                    .columns('.select-filter')
+                    .every(function () {
+                        var column = this;
+                        let title = column.header().textContent;
+                        var select = document.createElement("select");
+                        select.add(new Option(title,''));
+                        column.header().replaceChildren(select);
+                        select.addEventListener('change',() => {
+                            column.search(select.value, { exact: true }).draw();
+                        });
+                        // Get the search data for the first column and add to the select list
+                        this.cache('search')
+                            .sort()
+                            .unique()
+                            .each(function (d) {
+                                select.add(new Option(d,d));
+                            });
+                        // Restore state saved values
+                        var state = this.state.loaded();
+                        if (state) {
+                            var val = state.columns[this.index()];
+                            select.value=val.search.search;
+                        }
+                        // console.log(state.columns[this.index()])
+                    });
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+                // Total over all pages
+                // total = api
+                //     .column(7)
+                //     .data()
+                //     .reduce(function (a, b) {
+                //         return intVal(a) + intVal(b);
+                //     }, 0);
+                // $(api.column(7).footer()).html(formatCurrency(total.toString()));
+                // Total over this page
+                pageTotal = api
+                    .column(7, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                // Update footer
+                $(api.column(7).footer()).html(formatCurrency(pageTotal.toString()));
+            }
+        });
+        showNotifyOrderCustomerAndNew();
+    });
+
+    function showImg(orderId){
+        run_waitMe();
+        let url='<?=$this->url('sell-staff',['action'=>'invoice-image'])?>';
+        $.ajax({
+            method: "GET",
+            data: {id:orderId},
+            url: url
+        }).done(function(res) {
+            if(res.status==1){
+                $('#previewImg').empty();
+                $.each(res.data, function(key,value) {
+                    let img = $('<img />').attr({
+                        'src': value,
+                        'alt': 'JSFiddle logo',
+                        'title': 'JSFiddle logo',
+                        'width': "100%"
+                    }).appendTo('#previewImg');
+                });
+                $('#modal_no_head').modal('show');
+            }else{
+                noty({text: res.message, layout: 'topRight', type: 'warning',timeout: 4000});
+            }
+            stop_waitMe();
+        });
+    }
+</script>

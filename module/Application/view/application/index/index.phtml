@@ -1,0 +1,346 @@
+<!--map-->
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=<?=$this->geoKey?>&client=gme-addictive&channel=geocoder-tool&libraries=places"></script>
+<script src="/map/mustache-bundle.js"></script>
+<script src="/map/constants.js"></script>
+<script src="/map/state.js"></script>
+<script src="/map/util.js"></script>
+<script src="/map/geocoder-tool.js"></script>
+<link rel="stylesheet" type="text/css" href="/map/styles.css">
+
+<script type="text/html" id="quick-view-body-hotel-template">
+    <div class="scoll mCustomScrollbar" style="margin-left: -20px; margin-right: -20px; border-top: 1px solid rgba(0,0,0,.1)" data-mcs-theme="minimal-dark" data-mcs-auto-hide-scrollbar="true">
+        <div id="quick-view-slider" class="slider variable-width">
+            {{#photos}}
+            <div class="image">
+                <img class="image-size" src="{{path}}" />
+            </div>
+            {{/photos}}
+        </div>
+
+        <div style="padding: 10px 20px 0 20px">
+            <h5>
+                <?=$this->translate('About {{name}}')?>
+            </h5>
+            <div class="module">
+                <section class="collapse" style="line-height: 1rem" id="collapseSummary" aria-expanded="false"></section>
+                <a role="button" class="collapsed" data-toggle="collapse" href="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary"></a>
+            </div>
+        </div>
+
+        <hr>
+        <div style="padding: 0px 20px 0 20px">
+            <h5><?=$this->translate('Price room')?></h5>
+            <div id="priceList"></div>
+        </div>
+        <hr>
+        <div style="padding: 0px 20px 0 20px">
+            <h5>
+                <?=$this->translate('Amenities')?>
+            </h5>
+            <p><?=$this->translate('Amenities and services at <b>{{name}}</b>')?></p>
+            <div class="row">
+                {{#amenities}}
+                <div class="col-md-6 col-6">
+                    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#{{icon}}"></use></svg>
+                    <label class="padding-left-15">{{name}}</label>
+                </div>
+                {{/amenities}}
+            </div>
+        </div>
+
+        <hr>
+        <div style="padding: 0px 20px 0 20px">
+            <h5><?=$this->translate('The nearest famous landmarks')?></h5>
+            <p><?=$this->translate('Do not miss the famous landmarks when you come here.')?></p>
+            <div id="landmarks"></div>
+        </div>
+
+        <hr>
+        <div style="padding: 0px 20px 0 20px">
+            <div id="review"></div>
+        </div>
+    </div>
+    <div id="quick-view-action" class="row padding-right-15 padding-left-15" style="margin-bottom: -10px">
+        <div class="col-md-2 col-2 action">
+            <span id="call">
+                <span class="alZPUd">
+                    <i class="fa fa-phone fTCcEc fa-lg"></i>
+                </span>
+                <p><?= $this->translate('Call') ?></p>
+            </span>
+        </div>
+
+        <div class="col-md-3 col-3 action">
+            <span id="directions">
+                <span class="alZPUd">
+                    <i class="fa fa-directions fTCcEc fa-lg"></i>
+                </span>
+                <p><?= $this->translate('Direction') ?></p>
+            </span>
+        </div>
+
+        <div class="col-md-2 col-2 action">
+            <span id="copyURL" data-content="Copied!" data-placement="top">
+                <span class="alZPUd">
+                    <i class="fa fa-copy fTCcEc fa-lg"></i>
+                </span>
+                <p><?= $this->translate('Copy') ?></p>
+            </span>
+        </div>
+
+        <div class="col-md-5 col-5" style="padding:0px; margin-top:10px">
+            <span id="booking">
+                <button type="button" data-toggle="modal" data-target="#bookingModal" class="btn btn-success" style="padding: 5px"><?= $this->translate('Request a booking') ?></button>
+            </span>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="quick-view-body-bounds-template">
+    <div class="accordion md-accordion" id="accordionEx1" role="tablist" aria-multiselectable="true">
+        <!-- Accordion card -->
+        <div class="card">
+            <div class="card-header" role="tab" id="headingTwo1">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx1" href="#collapseTwo1"
+                   aria-expanded="false" aria-controls="collapseTwo1">
+                    <h5 class="mb-0">
+                        <?=$this->translate('Landmarks')?> <i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+            <div id="collapseTwo1" class="collapse" role="tabpanel" aria-labelledby="headingTwo1"
+                 data-parent="#accordionEx1">
+                <div class="card-body scoll mCustomScrollbar" style="height: 150px" data-mcs-theme="minimal-dark" data-mcs-auto-hide-scrollbar="true">
+                    <p><?=$this->translate('Famous places not to be missed when traveling in {{place}}')?></p>
+                    {{#landmarks}}
+                    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg> {{name}} <br>
+                    {{/landmarks}}
+                </div>
+            </div>
+
+        </div>
+        <!-- Accordion card -->
+
+        <!-- Accordion card -->
+        <div class="card">
+            <div class="card-header" role="tab" id="headingTwo2">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx1" href="#collapseTwo21"
+                   aria-expanded="false" aria-controls="collapseTwo21">
+                    <h5 class="mb-0">
+                        <?=$this->translate('Cuisine')?> <i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapseTwo21" class="collapse" role="tabpanel" aria-labelledby="headingTwo21"
+                 data-parent="#accordionEx1">
+                <div class="card-body">
+                    <p><?=$this->translate('Enjoying the food that only in {{place}} is great')?></p>
+                    {{#cuisine}}
+                    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg> {{name}} <br>
+                    {{/cuisine}}
+                </div>
+            </div>
+
+        </div>
+        <!-- Accordion card -->
+
+        <!-- Accordion card -->
+        <div class="card">
+            <div class="card-header" role="tab" id="headingThree31">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx1" href="#collapseThree31"
+                   aria-expanded="false" aria-controls="collapseThree31">
+                    <h5 class="mb-0">
+                        <?=$this->translate('Shopping')?> - <?=$this->translate('Entertainment')?> <i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+            <div id="collapseThree31" class="collapse" role="tabpanel" aria-labelledby="headingThree31"
+                 data-parent="#accordionEx1">
+                <div class="card-body">
+                    <p><?=$this->translate('The major shopping - entertainment spots in {{place}}')?></p>
+                    {{#shopping}}
+                    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg> {{name}} <br>
+                    {{/shopping}}
+                    <hr>
+                    {{#entertainment}}
+                    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg> {{name}} <br>
+                    {{/entertainment}}
+                </div>
+            </div>
+
+        </div>
+        <!-- Accordion card -->
+
+        <!-- Accordion card -->
+        <div class="card">
+            <div class="card-header" role="tab" id="headingThree4">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx1" href="#collapseThree4"
+                   aria-expanded="false" aria-controls="collapseThree4">
+                    <h5 class="mb-0">
+                        <?=$this->translate('Guide the tour {{place}}')?> <i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+            <div id="collapseThree4" class="collapse" role="tabpanel" aria-labelledby="headingThree4"
+                 data-parent="#accordionEx1">
+                <div class="card-body">
+                    <p>Comming soon...</p>
+                </div>
+            </div>
+
+        </div>
+        <!-- Accordion card -->
+
+    </div>
+    <!-- Accordion wrapper -->
+</script>
+
+<script type="text/html" id="quick-view-header-info-template">
+    <h3 id="quick-view-header-title">{{name}}</h3>
+    <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg>
+    <span class="text-muted">{{address}}</span>
+    <div class="price">
+        <svg viewBox="0 0 24 24" class="icon"><use xlink:href="#save-money"></use></svg> {{price}}/ <?=$this->translate('Night')?>
+        <span class="badge badge-pill badge-success">{{promotion}}</span>
+    </div>
+</script>
+
+<script type="text/html" id="quick-view-header-locality-template">
+    <h3 id="quick-view-header-title"><?=$this->translate('Plan a trip')?></h3>
+    <div>
+        <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg>
+        <a class="text-muted"><?=$this->translate("There are <span id='accommodations_number'>{{accommodations_number}}</span> accommodations in {{place}}")?> </a>
+    </div>
+    <div>
+        <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg>
+        <a class="text-muted"><?=$this->translate('Where to go? What to eat when traveling in {{place}}')?> </a>
+    </div>
+</script>
+
+<div class="card" id="search-control-ui">
+    <div class="card-body">
+        <div class="input-group border rounded-pill p-1">
+            <span class="input-group-prepend">
+                <div class="input-group-text transparent border-right-di"><i class="fa fa-bars fa-lg" id="menu-toggle"></i></div>
+            </span>
+            <?php
+            $name ='';
+            if($this->userInfo) $name = substr(strrchr($this->userInfo->getFullname() , ' '), 1). '! ';
+            ?>
+            <input type="search" id="query-input" placeholder="<?php printf('%s'. $this->translate('Where are you going?'),$name)?>" aria-describedby="geocode-button" class="form-control bg-none border-0">
+            <div class="input-group-append border-0">
+                <button id="geocode-button" type="button" class="btn"><i class="fa fa-search"></i></button>
+            </div>
+        </div>
+
+        <!--<div id="show-hide-options-div">
+            <a id="show-options-link">Show options</a>
+            <a id="hide-options-link" class="hidden">Hide options</a>
+        </div>
+        <div id="search-options-div" class="hidden">Search option</div>-->
+    </div>
+</div>
+
+<div class="card" id="results-control-ui" style="max-width: 100px; max-height: 500px; border: 1px solid rgba(0,0,0,.125); border-radius:.25rem ">
+    <div class="card-body">
+        <div id="quick-view-header" class="d-flex justify-content-between">
+            <div id="quick-view-header-info">
+                <h3 id="quick-view-header-title">{{name}}</h3>
+                <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg>
+                <span class="text-muted">{{address}}</span>
+            </div>
+            <div id="quick-view-status" class="clearfix">
+                <i id="icon-show-down" class="fa fa-chevron-down"></i>
+            </div>
+        </div>
+        <div id="quick-view-body" class=""></div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<!-- Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalTitle"><?=$this->translate('Submit a booking request')?></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="padding-bottom-15"><?=$this->translate('Please provide the information below to help us better assist you.')?></p>
+                <div class="row padding-bottom-5">
+                    <span class='col-md-3 col-3'><?=$this->translate('Your phone')?></span>
+                    <div class='col-md-9 col-9'>
+                        <?php
+                        if($this->userInfo) $mobile=$this->userInfo->getMobile();
+                        ?>
+                        <input type='number' value="<?=$mobile?>" maxlength="11" min="0" step="1" data-bind="value:replyNumber" class="form-control" name="phone" id='phone' data-container="body" data-toggle="popover" data-placement="top" data-content="<?=$this->translate('Please input your phone number.');?>" />
+                    </div>
+                </div>
+                <div class="row padding-bottom-5">
+                    <span class='col-md-3 col-3'><?=$this->translate('Check in')?></span>
+                    <div class='col-md-9 col-9'>
+                        <input type='text' class="form-control" data-container="body" data-toggle="popover" data-placement="top" data-content="<?=$this->translate('Please enter check in date');?>" name="datepicker-start" id='datepicker-start' />
+                    </div>
+                </div>
+                <div class="row padding-bottom-5">
+                    <span class='col-md-3 col-3'><?=$this->translate('Check out')?></span>
+                    <div class='col-md-9 col-9'>
+                        <input type='text' class="form-control" data-container="body" data-toggle="popover" data-placement="top" data-content="<?=$this->translate('Please enter check out date');?>" name="datepicker-end" id='datepicker-end' />
+                    </div>
+                </div>
+                <div class="row padding-bottom-5">
+                    <span class='col-md-3 col-3'><?=$this->translate('Number of adults')?></span>
+                    <div class='col-md-3 col-3'>
+                        <input type='number' class="form-control" name="adults" id='adults' maxlength="3" min="0" step="1" data-bind="value:replyNumber" />
+                    </div>
+                    <span class='col-md-3 col-3'><?=$this->translate('Children')?></span>
+                    <div class='col-md-3 col-3'>
+                        <input type='number' class="form-control" name="childrens" id='childrens' maxlength="3" min="0" step="1" data-bind="value:replyNumber" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="sendRequestBooking" class="btn btn-success"><?=$this->translate('Book now')?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('#datepicker-start').datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+
+        // End date date and time picker
+        $('#datepicker-end').datetimepicker({
+            useCurrent: false,
+            format: 'DD/MM/YYYY'
+        });
+
+        // start date picke on chagne event [select minimun date for end date datepicker]
+        $("#datepicker-start").on("dp.change", function (e) {
+            $('#datepicker-end').data("DateTimePicker").minDate(e.date);
+        });
+        // Start date picke on chagne event [select maxmimum date for start date datepicker]
+        $("#datepicker-end").on("dp.change", function (e) {
+            $('#datepicker-start').data("DateTimePicker").maxDate(e.date);
+        });
+
+
+        /*var positionBoxResult = function(){
+            if($('#results-box').length){
+                $('#results-box').css('z-index','100000000');
+                $('#results-box').css('bottom','0');
+                clearInterval(setIntervalPositionBoxResult);
+            }
+        };
+        var setIntervalPositionBoxResult = setInterval(positionBoxResult, 300);*/
+    });
+</script>

@@ -1,0 +1,529 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$this->headTitle("Thông tin sản phẩm");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('product-admin')?>">Danh sách sản phẩm</a></li>
+    <li class="active">Thông tin sản phẩm</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Thông tin sản phẩm <?=$this->product->getName()?> </h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Thông tin sản phẩm</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Tên sản phẩm:</label>
+                                <div class="col-md-9 font-weight-bold">
+                                    <a href="<?=$this->url('product-admin',['action'=>'edit-price','id'=>$this->product->getId()])?>">
+                                    <?=$this->product->getName()?>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Mã sản phẩm:</label>
+                                <div class="col-md-9"><?=$this->product->getCode()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Mã thùng:</label>
+                                <div class="col-md-9"><?=$this->product->getPackCode()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Mã sản phẩm 1:</label>
+                                <div class="col-md-9"><?=$this->product->getCode1()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Mã sản phẩm 2:</label>
+                                <div class="col-md-9"><?=$this->product->getCode2()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Mã sản phẩm 3:</label>
+                                <div class="col-md-9"><?=$this->product->getCode3()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Loại:</label>
+                                <div class="col-md-9"><?=$this->product->getProductCat()->getName()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Đơn vị:</label>
+                                <div class="col-md-9"><?=$this->product->getUnit()->getName()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Trọng lượng:</label>
+                                <div class="col-md-9"><?=$this->product->getWeight()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Quy cách:</label>
+                                <div class="col-md-9"><?=$this->product->getBoxUnit() .' '.$this->product->getUnit()->getName()?></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Giá vốn:</label>
+                                <div class="col-md-9"><?=Common::formatMoney($this->product->getAveragePrice())?></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" >
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right text-info">Giá bán:</label>
+                                <div class="col-md-9 text-info font-weight-bold"><?=Common::formatMoney($this->product->getActivePriceValue())?> đ</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Giảm giá lẻ:</label>
+                                <div class="col-md-9 text-danger">
+                                    <?=$this->product->getUnitSaleValueString()?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right text-info">Giá lẻ sau giảm:</label>
+                                <div class="col-md-9">
+                                    <span class="text-info font-weight-bold"><?=Common::formatMoney($this->product->getUnitPriceAfterSale())?> đ</span>
+                                    <small class="help-block">= Giá bán - Giảm giá lẻ</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" >
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Giá thùng:</label>
+                                <div class="col-md-9"><?=Common::formatMoney($this->product->getPackPrice())?> đ</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Giảm giá thùng:</label>
+                                <div class="col-md-9 text-danger">
+                                    <?=$this->product->getPackSaleValueString()?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right text-info">Giá thùng sau giảm:</label>
+                                <div class="col-md-9">
+                                    <span class="text-info font-weight-bold"><?=Common::formatMoney($this->product->getPackPriceAfterSale())?> đ</span>
+                                    <small class="help-block">= Giá thùng - Giảm giá thùng</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Tồn kho:</label>
+                                <div class="col-md-9"><?=$this->product->getInventory().' '.$this->product->getUnit()->getName()?></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Bán lẻ tối thiếu:</label>
+                                <div class="col-md-9"><?=$this->product->getExchangeUnit().' '.$this->product->getUnit()->getName()?></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Định mức:</label>
+                                <div class="col-md-9">
+                                    <?=$this->product->getNorm()?>
+                                    <small class="help-block">Tồn kho thấp hơn định mức thì hệ thống sẽ đưa sản phẩm vào danh sách cần nhập</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 control-label text-right">Định mức nhập:</label>
+                                <div class="col-md-9">
+                                    <?=$this->product->getNormInput()?>
+                                    <small class="help-block">Định mức nhập tối thiểu</small>
+                                </div>
+                            </div>
+                        </div>
+                        <?php if($this->product->getImg()){ ?>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-12"><img src="<?=$this->product->getImg()?>" width="90%"></div>
+                                </div>
+                            </div>
+                        <?php }?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử giá</h3>
+                </div>
+                <div class="panel-body">
+                        <?php
+                        foreach ($this->product->getPrice() as $price){
+                            ?>
+                                <div class="row">
+                                    <div class="col-md-4" style="padding: 5px; border-bottom: 1px solid #f5f5f5">
+                                        <?php
+                                        if($price->getActive()==1)
+                                            echo '<i class="fa fa-check-circle-o" style="color: #00e25b; font-size: large"></i>';
+                                        else
+                                            echo '<i class="fa fa-check-circle-o" style="color: #f5f5f5; font-size: large"></i>';
+                                        ?>
+                                        <?=Common::formatMoney($price->getPrice());?>
+                                    </div>
+                                    <div class="col-md-4" style="padding: 5px; border-bottom: 1px solid #f5f5f5"><?=Common::formatDateTime($price->getCreatedDate());?></div>
+                                    <div class="col-md-4" style="padding: 5px; border-bottom: 1px solid #f5f5f5"><?=$price->getUser()->getFullname();?></div>
+                                </div>
+
+                        <?php
+                        }
+                        ?>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử tồn kho</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblActivity">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Thay đổi</th>
+                            <th>Ngày thay đổi</th>
+                            <th>Người thay đổi</th>
+                            <th>Nghi chú</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        foreach ($this->product->getActivity() as $activityItem){
+                            if($activityItem->getChange()<0) $csl='red';
+                            else $csl='';
+                            ?>
+                            <tr>
+                                <td><?=$i++?></td>
+                                <td style="color: <?=$csl?>"><?=$activityItem->getChange()?></td>
+                                <td><?=Common::formatDateTime($activityItem->getCreatedDate())?></td>
+                                <td><?=$activityItem->getUser()->getFullname()?></td>
+                                <td nowrap=""><?=$activityItem->getNote()?></td>
+                            </tr>
+                            <?php
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử kiểm kho</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblInventoryHistory">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Trước khi đổi </th>
+                            <th>Sau khi đổi</th>
+                            <th>Thay đổi</th>
+                            <th>Ngày thay đổi</th>
+                            <th>Người đổi</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                    <?php
+                    $i=1;
+                    foreach ($this->product->getInventoryHistory() as $inventoryItem){
+                        ?>
+                            <tr>
+                                <td><?=$i++?></td>
+                                <td><?=$inventoryItem->getBeforeChange()?></td>
+                                <td><?=$inventoryItem->getAfterChange()?></td>
+                                <td><?=$inventoryItem->getAfterChange()-$inventoryItem->getBeforeChange()?></td>
+                                <td><?=Common::formatDateTime($inventoryItem->getCreatedDate())?></td>
+                                <td><?=$inventoryItem->getUser()->getFullname()?></td>
+                                <td nowrap=""><?=$inventoryItem->getNote()?></td>
+                            </tr>
+                        <?php
+                    }
+                    ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử nhập sản phẩm</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover" id="tblByHistory">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Trạng thái</th>
+                            <th>NCC</th>
+                            <th>Ngày nhập</th>
+                            <th>Giá nhập /Thùng</th>
+                            <th>Số lượng /Thùng</th>
+                            <th>Quy cách</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                    <?php
+                    $i=1;
+                    $total=0;
+                    foreach ($this->werehouse as $werehouse){
+                        $total+=$werehouse->getQuantity();
+//                        if($werehouse->getWerehouseOrder()->getStatus()==1){
+                        $werehouseStatus = $werehouse->getWerehouseOrder()->getStatus();
+                        $cls='';
+                        if($werehouseStatus ==0) $cls='warning';
+                    ?>
+
+                        <tr class="<?=$cls?>">
+                            <td><?=$i++?></td>
+                            <td>
+                                <?php
+
+                                if($werehouseStatus ==0){
+                                    echo '<a href="' . $this->url('werehouse-admin', ['action' => 'edit-draft', 'id' => $this->escapeHtml($werehouse->getWerehouseOrder()->getId())]) . '"><span class="fa fa-edit"> Sửa bản nháp</span></a>';
+                                }else{
+                                    ?>
+                                <a href="<?=$this->url('werehouse-admin',['action'=>'view','id'=>$this->escapeHtml($werehouse->getWerehouseOrder()->getId())])?>">
+                                    <?php echo '<span class="fa fa-check-circle"> Đã nhập kho</span>'?>
+                                </a>
+                                <?php
+                                }
+                                ?>
+
+                            </td>
+                            <td><?=$werehouse->getWerehouseOrder()->getSupplier()->getName()?></td>
+                            <td><?=Common::formatDateTime($werehouse->getWerehouseOrder()->getCreatedDate())?></td>
+                            <td><?=Common::formatMoney($werehouse->getPrice())?></td>
+                            <td><?=$werehouse->getQuantity()?></td>
+                            <td><?=$werehouse->getBoxUnit()?></td>
+                            <td><?=Common::formatMoney($werehouse->getPrice()*$werehouse->getQuantity())?></td>
+                        </tr>
+
+                    <?php
+//                        }
+                    }
+                    ?>
+                        </tbody>
+                    </table>
+                    <div style="font-weight: bold">Tổng nhập: <?=$total?> Thùng</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử bán sản phẩm</h3>
+                </div>
+                <div class="panel-body">
+                    <div id="morris-bar-grocery" style="max-height: 300px; max-width: 100%"></div>
+                    <table class="table table-hover display" id="tblSellHistory">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày bán</th>
+                            <th>Giá bán</th>
+                            <th>Số lượng</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        $total=0;
+                        $historySale=array();
+                        foreach ($this->sell as $sell){
+                            $total+=$sell->getQuantity();
+                            $orderStatus = $sell->getSellOrder()->getStatus();
+                            $createDate=$sell->getSellOrder()->getCreatedDate()->format('m/Y');
+                            if($orderStatus==0) $cls='label-danger';
+                            elseif($orderStatus==111 || $orderStatus==11 || $orderStatus==1){
+                                $cls='label-warning';
+                                $historySale[$createDate]['qty']=@$historySale[$createDate]['qty']+$sell->getQuantity();
+                                $historySale[$createDate]['unit']=$sell->getProduct()->getUnit()->getName();
+                            }
+                            else {
+                                $cls='label-success';
+                                $historySale[$createDate]['qty']=@$historySale[$createDate]['qty']+$sell->getQuantity();
+                                $historySale[$createDate]['unit']=$sell->getProduct()->getUnit()->getName();
+                            }
+
+                            $priceValue = $sell->getPriceValue();
+                            $qty=$sell->getQuantity();
+                            $packUnit=$sell->getPackUnit();
+                            $discount=$sell->getDiscount();
+                            //mua theo thung
+                            if($sell->isPack()){
+                                $qtySale=$sell->isPack();
+                                $unitSale='Thùng';
+                                $price=$packUnit*$priceValue;//gia ban theo thung
+                            }else{
+                                $qtySale=$qty;
+                                $unitSale=$sell->getProduct()->getUnit()->getName();
+                                $price=$priceValue;//gia ban le
+                            }
+                            ?>
+                            <tr>
+                                <td><?=$i++?></td>
+                                <td>
+                                    <small class="label <?=$cls?>"><?=ConfigManager::getOrderStatus()[$sell->getSellOrder()->getStatus()]?></small>
+                                    <a href="<?=$this->url('sell-admin',['action'=>'detail-order','id'=>$sell->getSellOrder()->getId()])?>">
+                                        <?=$sell->getSellOrder()->getGrocery()->getGroceryName()?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <?=Common::formatDateTime($sell->getSellOrder()->getCreatedDate())?>
+                                </td>
+                                <td><?=Common::formatMoney($price)?></td>
+                                <td><?=$qtySale?> <?=$unitSale?></td>
+
+                                <td><?=Common::formatMoney($price*$qtySale)?></td>
+                            </tr>
+
+                            <?php
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                    <div style="font-weight: bold">Tổng bán: <?=floor($total/$this->product->getBoxUnit())?> Thùng <?=$total%$this->product->getBoxUnit()?> <?=$this->product->getUnit()->getName()?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .font-weight-bold{font-weight: bold}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#tblInventoryHistory').DataTable({
+            paging: true,
+            pageLength:10,
+            ordering: true,
+            info: false,
+            searching:false,
+            // order: [[ 0, "ASC" ]]
+        });
+
+        $('#tblSellHistory').DataTable({
+            paging: true,
+            pageLength:10,
+            ordering: true,
+            info: false,
+            searching:false,
+            // order: [[ 0, "DESC" ]]
+        });
+
+        $('#tblByHistory').DataTable({
+            paging: true,
+            pageLength:10,
+            ordering: true,
+            info: false,
+            searching:false,
+            // order: [[ 0, "DESC" ]]
+        });
+
+        $('#tblActivity').DataTable({
+            paging: true,
+            pageLength:10,
+            ordering: true,
+            info: false,
+            searching:false,
+            // order: [[ 0, "DESC" ]]
+        });
+
+        <?php
+        if(count($historySale)>0){
+        ?>
+        Morris.Bar({
+            element: 'morris-bar-grocery',
+            data: [<?php
+                foreach ($historySale as $month=>$value){
+                    echo "{ y: '".$month."', qty: ". $value['qty'] .",unit:'".$value['unit']."'},";
+                }
+                ?>],
+            xkey: 'y',
+            ykeys: ['qty'],
+            labels: ['Số lượng bán'],
+            barColors: ['#0f85d9', '#781ee8'],
+            hoverCallback: function (index, options, content, row) {
+                var hover = "<div class='morris-hover-row-label'>"+row.y.toString()+"</div><div class='morris-hover-point'><p style='color:#0f85d9; padding-bottom: 5px; margin-bottom:0px; padding-top: 10px'>Đã bán: "+row.qty+' '+row.unit+"</p></div>";
+                return hover;
+            },
+        });
+        <?php }?>
+    });
+</script>

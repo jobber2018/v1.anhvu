@@ -1,0 +1,85 @@
+<?php
+$title = 'User Login';
+$this->headTitle($title);
+
+$form = $this->form;
+$form->setName('login');
+$form->setAttributes([
+    'class'=>'form-horizontal',
+    'id'=>'login-form',
+    'action'=>'#'
+]);
+
+$form->prepare();
+
+?>
+<style>
+    .remember{margin-left: 10px;}
+
+    .col-md-12 ul li {
+        color: red;
+    }
+
+    .login-container .login-box .login-logo1 {
+        background: url("/img/logo_small_bestay.svg") top center no-repeat;
+        width: 100%;
+        height: 50px;
+        float: left;
+        margin-bottom: 10px;
+    }
+</style>
+<div class="login-container">
+
+    <div class="login-box animated fadeInDown">
+        <div class="login-logo1"></div>
+        <div class="login-body">
+            <div class="login-title"><strong>Welcome</strong>, Please login</div>
+            <div style="color: red"><?=isset($this->flashMessenger()->getErrorMessages()[0])?></div>
+            <?php echo $this->form()->openTag($form); //<form>?>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <?php
+                        echo $this->formElement($form->get('mobile'));
+                        echo $this->formElementErrors($form->get('mobile'));
+                        ?>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <?php
+                        echo $this->formElement($form->get('password'));
+                        echo $this->formElementErrors($form->get('password'));
+                        ?>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-6">
+                        <?php
+                        echo $this->formElement($form->get('remember'));
+                        echo $this->formLabel($form->get('remember'));
+                        ?>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-info btn-block">Log In</button>
+                    </div>
+                </div>
+            <?php
+            echo $this->form()->closeTag(); //</form>
+            ?>
+        </div>
+        <div class="login-footer">
+            <div class="pull-left">
+                &copy; 2019 THD Group
+            </div>
+            <div class="pull-right">
+                <a href="#" class="btn btn-link btn-block">Forgot your password?</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+

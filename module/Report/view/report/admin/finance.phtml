@@ -1,0 +1,171 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Tài chính</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fdate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->tdate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Doanh thu/Lợi nhuận 6 tháng gần nhất</h3>
+                </div>
+                <div class="panel-body">
+                    <div id="bar-revenue-profit" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Lợi nhuận trừ chi phí 6 tháng gần nhất</h3>
+                </div>
+                <div class="panel-body">
+                    <div id="chart-4" style="height: 300px;"><svg></svg></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/nvd3/lib/d3.v3.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/nvd3/nv.d3.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'finance'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+
+        Morris.Bar({
+            element: 'bar-revenue-profit',
+            data: [<?php
+                foreach ($this->arrRevenueProfit as $k=>$value){
+                    echo "{ y: '".$k."', revenue: ". $value['revenue'] .", profit: ".$value['profit'] ." },";
+                }
+                ?>],
+            xkey: 'y',
+            ykeys: ['revenue', 'profit'],
+            labels: ['Doanh thu', 'Lợi nhuận'],
+            barColors: ['#0f85d9', '#781ee8'],
+        });
+
+        var nvd3Charts = function() {
+            var myColors = ["#0f85d9"];
+            d3.scale.myColors = function() {
+                return d3.scale.ordinal().range(myColors);
+            };
+
+            var startChart4 = function() {
+                nv.addGraph(function() {
+                    var chart = nv.models.discreteBarChart().x(function(d) {
+                        return d.label;
+                    })//Specify the data accessors.
+                        .y(function(d) {
+                            // console.log(d.l);
+                            return d.value;
+                        }).staggerLabels(true)//Too many bars and not enough room? Try staggering labels.
+                        // .tooltips(true)//Show tooltips
+                        .showValues(true)//...instead, show the bar value right on top of each bar.
+                        .transitionDuration(350)
+                        .color(d3.scale.myColors().range());
+
+                    chart.tooltipContent(function(key,d,s,x) {
+                        var html='';
+                        html+='<h3 style="font-size: 14px; font-weight: bold">' + d + '</h3>';
+                        html+='<table style="font-size: 14px;">';
+                        html+='<tr><td>Lợi nhuận: </td><td>'+formatCurrency(x.point.total_profit.toString())+'</td></tr>';
+                        html+='<tr><td style="border-bottom: 1px solid #cccccc;">Chi phí: </td><td style="border-bottom: 1px solid #cccccc;">'+formatCurrency(x.point.total_expense.toString())+'</td></tr>';
+                        html+='<tr><td>154:Chi phí nhân công: </td><td>'+formatCurrency(x.point.nc.toString())+'</td></tr>';
+                        html+='<tr><td>641:Thuê kho: </td><td>'+formatCurrency(x.point.bh.toString())+'</td></tr>';
+                        html+='<tr><td>211:Khấu hao tài sản: </td><td>'+formatCurrency(x.point.ts.toString())+'</td></tr>';
+                        html+='<tr><td>642:Chi phí quản lý: </td><td>'+formatCurrency(x.point.ql.toString())+'</td></tr>';
+                        html+='<tr><td>3339:Xăng xe: </td><td>'+formatCurrency(x.point.xx.toString())+'</td></tr>';
+                        html+='</table>';
+                        return html;
+                    });
+
+                    d3.select('#chart-4 svg').datum(exampleData()).call(chart);
+
+                    nv.utils.windowResize(chart.update);
+
+                    return chart;
+                });
+
+                //Each bar represents a single discrete quantity.
+                function exampleData() {
+                    return [{
+                        key : "Chi tiết",
+                        values : [
+                            <?php
+                            foreach ($this->arrRevenueProfit as $k=>$value){
+                                $totalProfit = (@$value["profit"])?$value["profit"]:0;
+                                $totalExpense = (@$value["expense"]["total"])?$value["expense"]["total"]:0;
+                                $nc = (@$value["expense"]["154"])?$value["expense"]["154"]:0;
+                                $bh = (@$value["expense"]["641"])?$value["expense"]["641"]:0;
+                                $ts = (@$value["expense"]["211"])?$value["expense"]["211"]:0;
+                                $ql = (@$value["expense"]["642"])?$value["expense"]["642"]:0;
+                                $xx = (@$value["expense"]["3339"])?$value["expense"]["3339"]:0;
+
+                                $v=($totalProfit-$totalExpense)/1000000;
+                                echo '{"label":"'.$k.'","value":'.$v.',"total_profit":'.$totalProfit.',"total_expense":'.$totalExpense.',"nc":'.$nc.',"bh":'.$bh.',"ts":'.$ts.',"ql":'.$ql.',"xx":'.$xx.'},';
+                            }
+                            ?>
+                        ]
+                    }];
+
+                }
+
+            };
+
+            return {
+                init : function() {
+                    startChart4();
+                }
+            };
+        }();
+        nvd3Charts.init();
+    })
+</script>

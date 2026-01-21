@@ -1,0 +1,55 @@
+<?php
+
+use Sulde\Service\Common\ConfigManager;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Role manage</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="btn-group">
+                        <h3><?=$this->translate('Role group')?></h3>
+                    </div>
+                </div>
+                <div class="panel-body list-group">
+                    <?php
+                    foreach ($this->roles as $role)
+                        echo '<a href="'.$this->url('roles-admin',['action'=>'privileges','id'=>$role->getId()]).'" class="list-group-item"><i class="fa fa-ticket"></i>'.$role->getName().' <span class="badge badge-info">'.count($role->getPrivileges()).' privileges </span></a>';
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

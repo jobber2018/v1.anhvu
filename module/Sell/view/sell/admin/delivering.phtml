@@ -1,0 +1,229 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn hàng";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Đơn hàng đang giao</h3>
+</div>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs nav-justified">
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'draft'])?>">
+                            Chờ xử lý
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="draft_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'customer'])?>">
+                            Khách tạo
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="cus_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin')?>">
+                            Chờ đóng gói
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="new_order_number"></div>
+                        </a>
+                    </li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packing'])?>">Đang đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packed'])?>">Đã đóng gói</a></li>
+                    <li class="active"><a href="#">Đang giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivered'])?>">Đã giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>">Chưa thanh toán</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'paid-order'])?>">Hoàn thành</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab8">
+                        <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblOrder">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>STT</th>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Xe giao</th>
+                                <th>Ngày tạo</th>
+                                <th>Người tạo</th>
+                                <th>Tổng đơn</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                            <tr>
+                                <th colspan="7" style="text-align:right">Tổng cộng:</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+
+    </div>
+</div>
+
+
+<?=$this->partial('sell/partial/order-back-status', ['order'=>$this->sellOrder]);?>
+
+<script>
+    let table;
+    $(document).ready(function () {
+        table=$('#tblOrder').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: true,
+            searching: true,
+            dom:'<"pull-left"f><"pull-right"l>tip',
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name: 'name', targets: 3,
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name='<a href="<?=$this->url('sell-admin',['action'=>'do-delivering'])?>/'+rowData[0].order_id+'" class="title">'+cellData+'</a>';
+                        name+=' '+rowData[0].order_message;
+                        name+='<p><i>'+rowData[0].customer_address+'</i></p>';
+                        $(td).html(name);
+                    }
+                },{
+                    name: 'total_amount',
+                    targets: 7,
+                    className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        if ( cellData <= 0 ) {
+                            $(td).css('color', 'red');
+                            $(td).css('font-weight', 'bold');
+                        }
+                        $(td).html(formatMoney(cellData));
+                    }
+                },{
+                    name: 'button',
+                    targets: 8,
+                    // className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let button='';
+                        if(cellData>0){
+                            button='<button data-toggle="tooltip" data-placement="bottom" title="Trở lại trạng thái đã đóng gói" onclick="showModalConfirmBack('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                            button+='<span class="fa fa-fast-backward"></span>';
+                            button+='</button>';
+                        }
+                        $(td).html(button);
+                    }
+                }
+            ],
+            ajax: {
+                url: '<?=$this->url('sell-admin',['action'=>'delivering'])?>',
+                type: 'POST',
+                beforeSend: function(){
+                    $('#tblOrder > tbody').html(
+                        '<tr class="odd">' +
+                        '<td valign="top" colspan="8" style="font-size: 9pt" class="dataTables_empty">Đang tải dữ liệu&hellip;</td>' +
+                        '</tr>'
+                    );
+                },
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=1;
+                    let name ='';
+                    $.each( json.data, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(i++);
+                        dataItem.push(value.order_code);
+                        dataItem.push(value.customer_name);
+
+                        dataItem.push(value.delivery_car);
+                        dataItem.push(value.created_date);
+                        dataItem.push(value.created_by);
+                        dataItem.push(value.total_amount_paid);
+                        dataItem.push(value.order_id);
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+                // Total over this page
+                pageTotal = api
+                    .column(7, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+
+                // Update footer
+                $(api.column(7).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+            },
+            fnDrawCallback : function() {
+                $(".popover-dismiss").popover({trigger:'hover',html:true});
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                table.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+
+        showNotifyOrderCustomerAndNew();
+    });
+</script>

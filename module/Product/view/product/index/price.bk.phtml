@@ -1,0 +1,161 @@
+<html lang="en">
+<head>
+    <title>NPP Anh Vũ: Báo giá sản phẩm</title>
+    <meta name="description" content="Phân phối các sản phẩm Unilever, P&G, Xmen, Pantene, Dove  và hàng tiêu dùng thiết yếu..."/>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:site_name" content="anhvu.store"/>
+    <meta property="og:rich_attachment" content="true"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" itemprop="url" content="https://anhvu.store"/>
+    <meta property="og:image" itemprop="thumbnailUrl" content="/img/logo1.png"/>
+    <meta property="og:image:width" content="470"/>
+    <meta property="og:image:height" content="415"/>
+    <!-- END META SECTION -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+</head>
+<body>
+<?php
+use Sulde\Service\Common\Common;
+?>
+<div style="margin-top: 10px" >
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="col-md-6" style="margin-bottom:0px; padding-left: 0px">
+                        <h4 style="padding-bottom: 0px; margin-bottom: 5px">
+                            <a style="font-weight: bold; font-size: 13px; color: #000000; text-decoration:unset" href="#">NHÀ PHÂN PHỐI ANH VŨ - BẢNG BÁO GIÁ SẢN PHẦM</a>
+                        </h4>
+                        <div style="padding-bottom: 3px"><b>Địa chỉ:</b> KĐT Thanh Hà, Hà Đông, TP. Hà Nội</div>
+                    </div>
+                    <div class="col-md-6" style="padding-left: 0px">
+                        <div style="padding-bottom: 3px">Điện thoại: <b>0946 021 021</b> Zalo: <b>0877 427 569</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="info-order">
+                    <table id="tblPrice">
+                        <tr>
+                            <th style="text-align: center; width: 30px">STT<br><small style="font-weight: normal"><i>(No.)</i></small></th>
+                            <th style="text-align: center; width: 40px">Hình ảnh<br><small style="font-weight: normal"><i>(Picture)</i></small></th>
+                            <th style="text-align: left; width: 100%">Tên sản phẩm<br><small style="font-weight: normal"><i>(Product name)</i></small></th>
+                            <th style="text-align: center;" nowrap="">Giá bán<br><small style="font-weight: normal"><i>(Price)</i></small></th>
+                        </tr>
+                        <?php
+                        $i=1;
+                        foreach ($this->product as $product){
+                            if($product->getActive()==1){
+                        ?>
+                            <tr id="<?=$product->getId()?>">
+                                <td style="text-align: center;"><?=$i++?></td>
+                                <td style="text-align: center">
+                                    <?php
+                                    if(is_null($product->getImg()))
+                                        echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                    else
+                                        echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                    ?>
+                                </td>
+                                <td><?=$product->getName()." | ". $product->getWeight()?></td>
+                                <td style="text-align: right" nowrap=""><?=Common::formatMoney($product->getActivePrice()->getPrice())?> đ</td>
+                            </tr>
+                        <?php
+                            }
+                        }
+                        ?>
+                    </table>
+                </div>
+                <div class="info-sender" style="text-align: right; padding-top: 15px">
+                    <i>RẤT HÂN HẠNH ĐƯỢC PHỤC VỤ QUÝ KHÁCH!</i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    table{
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+    .selected
+    {
+        background-color: #1d79f1;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    /*loading*/
+    .modal {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .8 )
+        url('/img/logo.png')
+        50% 50%
+        no-repeat;
+    }
+
+    /* When the body has the loading class, we turn
+       the scrollbar off with overflow:hidden */
+    body.loading {
+        overflow: hidden;
+    }
+
+    /* Anytime the body has the loading class, our
+       modal element will be visible */
+    body.loading .modal {
+        display: block;
+    }
+</style>
+</body>
+</html>

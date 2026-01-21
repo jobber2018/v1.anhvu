@@ -1,0 +1,43 @@
+<link rel="stylesheet" type="text/css" id="theme" href="/css/footer.css"/>
+<footer class="footer" id="footer">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4  footer-copyright">
+                <span class="text-muted"> © 2022 BESTAY</span>
+                <?php
+                if(!$userInfo){
+                    ?>
+                    <a class="text-muted float-right m-list" href="<?=$this->url('user-login')?>">
+                        <svg viewBox="0 0 24 24" class="icons-list"><use style="fill:#6c757d" xlink:href="#user-avatar"></use></svg>
+                    </a>
+                <?php
+                }else{
+                    if($userInfo->getAvatar())
+                        $avatar = $userInfo->getAvatar();
+                    else
+                        $avatar='avatar.png';
+                    ?>
+                    <a class="float-right text-muted m-list" href="<?=$this->url('hotel-user',['action'=>'list'])?>"><img class="avarar icon" src="/img/users/<?=$avatar?>"></a>
+                <?php
+                }
+                ?>
+
+                <a class="float-right text-muted m-list mr-15" href="<?=$this->url('hotel-front-dashboard')?>">
+                    <svg viewBox="0 0 24 24" class="icons-list"><use style="fill:#6c757d" xlink:href="#list"></use></svg>
+                </a>
+
+            </div>
+            <div class="col-md-8 footer-menu">
+                <ul>    
+                  	<li><a href="/"><?=$this->translate('Home')?></a></li>
+                    <li><a href="<?=$this->url('hotel-front-dashboard')?>"><?=$this->translate('Homestay list')?></a></li>
+                    <li><a href="<?=$this->url('html-guest',['action'=>'view','key'=>'about-us'])?>"><?=$this->translate('About Us')?></a></li>
+                    <li><a href="<?=$this->url('html-guest',['action'=>'view','key'=>'terms-conditions'])?>"><?=$this->translate('Terms & conditions')?></a></li>
+                    <li><a href="<?=$this->url('news-group')?>">Tin tức</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-149579515-1"></script>

@@ -1,0 +1,59 @@
+<?= $this->doctype() ?>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <?= $this->headTitle('BESTAY')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+        <?= $this->headMeta()
+            ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+            ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+        ?>
+
+        <!-- Le styles -->
+        <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/img/favicon-32x32.png'])?>
+			<!-- Font Awesome Icons -->
+			  <link href="/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
+			  <!-- Google Fonts -->
+			  <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,700" rel="stylesheet">
+			  <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic' rel='stylesheet' type='text/css'>
+		<!-- Plugin CSS -->
+		<link href="/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+
+		<!-- Theme CSS - Includes Bootstrap -->
+		<link href="/css/creative.css" rel="stylesheet">
+			
+        <link href="/css/ger.css" media="screen" rel="stylesheet" type="text/css">
+
+    </head>
+    <body>
+
+        <header style="background: #0f6674">Header Admin</header>
+
+
+        <hr>
+
+        <div class="container">
+            <?= $this->content ?>
+        </div>
+
+        <hr>
+        <footer>
+            <p>&copy; 2019 - <?= date('Y') ?> by TruongHM. All rights reserved.</p>
+        </footer>
+
+
+
+	    <!-- Bootstrap core JavaScript -->
+	    <script src="/vendor/jquery/jquery.min.js"></script>
+	    <script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+	    <!-- Plugin JavaScript -->
+	    <script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+		
+        <?= $this->inlineScript() ?>
+	    <!-- Custom scripts for this template -->
+	    <script src="/js/creative.js"></script>
+    </body>
+</html>

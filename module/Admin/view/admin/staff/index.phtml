@@ -1,0 +1,71 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$title="Staff dashboard";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12" id="panelButton">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <?php
+                    $username=strtoupper($this->userInfo->getUsername());
+                    if($username=='TOANTQ' || $username=='THAINV'){
+                    ?>
+                        <a href="<?=$this->url('sell-admin')?>" class="btn btn-default">
+                            <i class="fa fa-shopping-cart" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn hàng</p>
+                        </a>
+                        <a href="<?=$this->url('werehouse-admin',['action'=>'inventory-sheet'])?>" class="btn btn-default">
+                            <i class="fa fa-check-square-o" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Phiếu kiểm kho</p>
+                        </a>
+
+                        <a href="<?=$this->url('sell-admin',['action'=>'product-buy-of-day'])?>" class="btn btn-default">
+                            <i class="fa fa-barcode" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">SP bán trong ngày</p>
+                        </a>
+
+                        <a href="<?=$this->url('report-admin',['action'=>'user'])?>" class="btn btn-default">
+                            <i class="fa fa-bar-chart-o" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Báo cáo</p>
+                        </a>
+                        <a href="<?=$this->url('werehouse-staff')?>" class="btn btn-default">
+                            <i class="fa fa-tags" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Danh sách đơn nhập</p>
+                        </a>
+                        <a href="<?=$this->url('sell-admin',['action'=>'delivery-route'])?>" class="btn btn-default">
+                            <i class="fa fa-code-fork" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Tuyến giao hàng</p>
+                        </a>
+
+                        <a href="<?=$this->url('sell-check-admin')?>" class="btn btn-default">
+                            <i class="fa fa-check-circle" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Kiểm đơn</p>
+                        </a>
+                    <?php
+                    }
+                    ?>
+                    <a href="<?=$this->url('sell-staff',['action'=>'select-delivery-car'])?>" class="btn btn-default">
+                        <i class="fa fa-truck" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn đang giao</p>
+                    </a>
+                    <a href="<?=$this->url('user-dashboard')?>" class="btn btn-default">
+                        <span class="fa fa-share-square-o" style="font-size: 20pt; padding-top: 10px"></span>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sang Seller</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,225 @@
+<div class="modal fade bottom" id="modalEditBarcode" tabindex="-1" role="dialog" aria-labelledby="modalEditBarcode" aria-hidden="true">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h3 class="modal-title" id="modalEditBarcodeLabel">Sửa mã sản phẩm</h3>
+            </div>
+            <div class="modal-body">
+                <form method="POST" name="product-update-barcode" class="form-horizontal" enctype="multipart/form-data" id="product-version">
+                    <input type="hidden" id="barcode-product-id" name="barcode-product-id" value="0">
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Mã sản phẩm</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <input type="text" name="product-code" id="product-code" class="form-control"  value="">
+                                <span class="input-group-btn">
+                                    <button data-result="product-code" class="btn btn-default scan-barcode" type="button">
+                                        <i class="fa fa-barcode"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <small class="error" id="errorMessage-productCode"></small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">Mã thùng</label>
+                        <div class="col-md-9">
+                            <div class="input-group">
+                                <input type="text" name="pack-code" id="pack-code" class="form-control"  value="">
+                                <span class="input-group-btn">
+                                    <button data-result="pack-code" class="btn btn-default scan-barcode" type="button">
+                                        <i class="fa fa-barcode"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <small class="error" id="errorMessage-packCode"></small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnUpdateBarcode" type="button" class="btn btn-success">
+                    <span class="fa fa-save"></span>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    #camera-view-container {
+        width: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        /*height: calc(100% - 80px);*/
+        /*text-align: unset;*/
+        font-size: medium;
+        z-index: 10000;
+    }
+</style>
+<div id="camera-view-container" style="width: 100%; height: 720px; background: #eee; display: none"></div>
+<span id="lib-load" style="display: none">Loading Library...</span>
+<script src="https://cdn.jsdelivr.net/npm/dynamsoft-barcode-reader-bundle@10.4.2002/dist/dbr.bundle.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#btnUpdateBarcode').on('click', function(e){
+            if(!$('#barcode-product-id').val()){
+                noty({text: 'Không tìm thấy mã sản phẩm. Vui lòng refresh trang!', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }
+            let dataObj={
+                id:$('#barcode-product-id').val(),
+                product_code:$('#product-code').val(),
+                pack_code:$('#pack-code').val(),
+            }
+            run_waitMe('.modal-dialog');
+            $('#errorMessage-productCode').html('');
+            $('#errorMessage-packCode').html('');
+            $.ajax({
+                type: "POST",
+                headers: {Accept: "application/json; charset=utf-8"},
+                url: '<?=$this->url("product-admin",["action"=>"update-barcode"])?>',
+                data: dataObj,
+                success: function(res) {
+                    if(res.status==1){
+                        noty({text: 'Cập nhật thành công!', layout: 'topRight', type: 'success',timeout: 4000});
+                        location.reload();
+                    }else{
+                        if(res.data){
+                            $.each(res.data, function(key,val) {
+                                $('#errorMessage-'+val.code).html(val.message);
+                            });
+                        }else noty({text: res.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    }
+                    stop_waitMe('.modal-dialog');
+                }
+            });
+        });
+
+
+        Dynamsoft.License.LicenseManager.initLicense("DLS2eyJoYW5kc2hha2VDb2RlIjoiMTAzMzUxMDA2LU1UQXpNelV4TURBMkxYZGxZaTFVY21saGJGQnliMm8iLCJtYWluU2VydmVyVVJMIjoiaHR0cHM6Ly9tZGxzLmR5bmFtc29mdG9ubGluZS5jb20iLCJvcmdhbml6YXRpb25JRCI6IjEwMzM1MTAwNiIsInN0YW5kYnlTZXJ2ZXJVUkwiOiJodHRwczovL3NkbHMuZHluYW1zb2Z0b25saW5lLmNvbSIsImNoZWNrQ29kZSI6MTUxMjA5NjAyMn0=");
+        /**
+         * You can visit https://www.dynamsoft.com/customer/license/trialLicense?utm_source=samples&product=dbr&package=js to get your own trial license good for 30 days.
+         * Note that if you downloaded this sample from Dynamsoft while logged in, the above license key may already be your own 30-day trial license.
+         * For more information, see https://www.dynamsoft.com/barcode-reader/docs/web/programming/javascript/user-guide/index.html?ver=10.4.2002&cVer=true#specify-the-license&utm_source=samples or contact support@dynamsoft.com.
+         * LICENSE ALERT - THE END
+         */
+
+        // Preload "BarcodeReader" module for reading barcodes. It will save time on the initial decoding by skipping the module loading.
+        Dynamsoft.Core.CoreModule.loadWasm(["DBR"]);
+
+
+        const loadingIndicator = document.getElementById("lib-load");
+        const cameraViewContainer = document.getElementById("camera-view-container");
+
+        const init = async () => {
+
+            loadingIndicator.style.display = "";
+
+            // Create a `CameraEnhancer` instance for camera control and a `CameraView` instance for UI control.
+            const cameraView = await Dynamsoft.DCE.CameraView.createInstance();
+            const cameraEnhancer = await Dynamsoft.DCE.CameraEnhancer.createInstance(cameraView);
+            document.querySelector("#camera-view-container").append(cameraView.getUIElement()); // Get default UI and append it to DOM.
+
+            // Create a `CaptureVisionRouter` instance and set `CameraEnhancer` instance as its image source.
+            const cvRouter = await Dynamsoft.CVR.CaptureVisionRouter.createInstance();
+            cvRouter.setInput(cameraEnhancer);
+
+            // Filter out unchecked and duplicate results.
+            const filter = new Dynamsoft.Utility.MultiFrameResultCrossFilter();
+            // Filter out unchecked barcodes.
+            filter.enableResultCrossVerification("barcode", true);
+            // Filter out duplicate barcodes within 3 seconds.
+            filter.enableResultDeduplication("barcode", true);
+            await cvRouter.addResultFilter(filter);
+
+            // Define a callback for results.
+            cvRouter.addResultReceiver({
+                onDecodedBarcodesReceived: async (result) => {
+                    const resultItems = result.barcodeResultItems;
+                    if (!resultItems.length) return;
+                    Dynamsoft.DCE.Feedback.beep(); // Trigger a beep.
+                },
+            });
+
+            loadingIndicator.style.display = "none";
+
+            return { cameraEnhancer, cvRouter, cameraView };
+        };
+
+        let pInit; // promise of init
+
+        const allInputs = document.getElementsByClassName("scan-barcode");
+        for (let input of allInputs) {
+            input.addEventListener("click", async function () {
+                try {
+                    const { cameraEnhancer, cvRouter, cameraView } = await (pInit = pInit || init());
+                    // Define a callback for results.
+                    const resultReceiver = {
+                        onDecodedBarcodesReceived: async (result) => {
+                            const resultItems = result.barcodeResultItems;
+                            if (!resultItems.length) return;
+
+                            // this.value = resultItems[0].text;
+                            cvRouter.stopCapturing();
+                            cameraEnhancer.close();
+                            cameraViewContainer.style.display = "none";
+
+                            cvRouter.removeResultReceiver(resultReceiver);
+
+
+                            $('#'+input.dataset.result).val(resultItems[0].text);
+                        },
+                    };
+                    cvRouter.addResultReceiver(resultReceiver);
+
+                    cameraViewContainer.style.display = "";
+
+                    // Open camera and start scanning single barcode.
+                    await cameraEnhancer.open();
+                    cameraView.setScanLaserVisible(true);
+                    await cvRouter.startCapturing("ReadSingleBarcode");
+                } catch (ex) {
+                    let errMsg = ex.message || ex;
+                    alert(errMsg);
+                }
+            });
+        }
+    })
+
+    function showModalUpdateBarcode(p_productId){
+        if(!p_productId){
+            noty({text: 'Chọn sản phẩm cần cập nhật!', layout: 'topRight', type: 'error',timeout: 4000});
+            return;
+        }
+        console.log(p_productId);
+        run_waitMe('.modal-dialog')
+        $('#modalEditBarcode').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        }).on('shown.bs.modal', function (e) {
+            $.ajax({
+                method: "GET",
+                headers: {Accept: "application/json; charset=utf-8"},
+                url: '<?=$this->url("product-admin",["action"=>"update-barcode"])?>',
+                data: {id:p_productId}
+            }).done(function (res) {
+                if(res.status){
+                    $('#modalEditBarcodeLabel').html('Mã vạch: '+res.data.name+'|'+res.data.weight)
+                    $('#product-code').val(res.data.product_code)
+                    $('#pack-code').val(res.data.pack_code)
+                    $('#barcode-product-id').val(res.data.id)
+                }
+                else{
+                    noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe('.modal-dialog');
+            })
+        });
+    }
+
+</script>

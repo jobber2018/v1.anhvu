@@ -1,0 +1,2260 @@
+<?php
+/**
+ * Copyright (c) 2019.  Sulde JSC
+ * Created by   : TruongHM
+ * Created date: 7/19/19 10:53 AM
+ *
+ */
+
+
+namespace Sell\Controller;
+
+use Admin\Service\AdminManager;
+use Api\Service\ApiManager;
+use Exception;
+use Grocery\Service\GroceryManager;
+use Product\Entity\ProductActivity;
+use Product\Service\ProductManager;
+use Report\Entity\CostRevenue;
+use Report\Service\CostRevenueManager;
+use Sell\Entity\Sell;
+use Sell\Entity\SellOrder;
+use Sell\Entity\SellOrderActivity;
+use Sell\Service\SellManager;
+use Doctrine\ORM\EntityManager;
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+use Sulde\Service\Common\Define;
+use Sulde\Service\SuldeAdminController;
+use Users\Entity\User;
+use Zend\Validator\Date;
+use Zend\View\Model\JsonModel;
+use Zend\View\Model\ViewModel;
+
+class AdminController extends SuldeAdminController
+{
+    private $entityManager;
+    private $sellManager;
+
+    public function __construct(EntityManager $entityManager, SellManager $sellManager)
+    {
+        $this->entityManager = $entityManager;
+        $this->sellManager = $sellManager;
+    }
+
+
+    /**
+     * @return ViewModel
+     */
+    public function indexAction(){
+
+        $sellOrder = $this->sellManager->getSellOrder(1);
+        $arrOrders=[];
+        foreach ($sellOrder as $orderItem){
+            $groceryId = $orderItem->getGrocery()->getId();
+            $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
+        }
+        $listGroceryMerge=array();
+        foreach ($arrOrders as $key=>$arr) {
+            //1 khach hang co nhieu hon 1 don khach tao nhung chua xac nhan
+            if (count($arr) > 1) {
+                $listGroceryMerge[$key]['name']=$arr[0];
+                $listGroceryMerge[$key]['order-number']=count($arr);
+            }
+        }
+
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'listGroceryMerge'=>$listGroceryMerge
+        ]);
+    }
+
+    public function printAction(){
+        $sellOrderID = $this->params()->fromRoute('id', 0);
+        $status = $this->params()->fromQuery('s',0);
+        $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+        //in va chuyen status
+        if($status){
+            $sellOrder->setStatus($status);
+            $action='In và chuyển Đang đóng gói';
+        }else
+            $action='In đơn';
+
+        //insert sell order activity
+        $sellOrderActivity = new SellOrderActivity();
+        $sellOrderActivity->setSellOrder($sellOrder);
+        $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+        $sellOrderActivity->setActionTime(new \DateTime());
+        $sellOrderActivity->setActionIcon('fa-print');
+        $sellOrderActivity->setAction($action);
+        $this->entityManager->persist($sellOrderActivity);
+
+        $this->entityManager->flush();
+
+
+        $viewModel = new ViewModel();
+        $viewModel->setTerminal(true);
+        $viewModel->setVariable('sellOrder',$sellOrder);
+        $viewModel->setVariable('grocery',$sellOrder->getGrocery());
+        return $viewModel;
+    }
+
+    public function printSelectedOrderAction(){
+        $orderIDSelected = $this->params()->fromQuery('s', '');
+        $sellOrders = $this->sellManager->getSellOrderIn(json_decode($orderIDSelected));
+
+        //tinh toan tong so san pham
+        $products=array();
+        foreach ($sellOrders as $sellOrderItem){
+            $sell = $sellOrderItem->getSell();
+            foreach ($sell as $sellItem){
+                $product = $sellItem->getProduct();
+                $quantity = $sellItem->getQuantity();
+
+                //neu san pham dang set da co
+                if(@$products[$product->getId()]){
+                    $products[$product->getId()]['quantity']=$products[$product->getId()]['quantity']+$quantity;
+                }else{
+                    $products[$product->getId()]['quantity']=$quantity;
+                    $products[$product->getId()]['name']=$product->getName();
+                    $products[$product->getId()]['weight']=$product->getWeight();
+                    $products[$product->getId()]['unit']=$product->getUnit()->getName();
+                    $products[$product->getId()]['unit_box']=$product->getBoxUnit();
+                    $products[$product->getId()]['code'] = $product->getCode();
+                    $products[$product->getId()]['sort'] = $product->getSort();
+                }
+//                echo $sellItem->getId();
+            }
+
+            //cap nhat status=11 (dang sap hang)
+            if($sellOrderItem->getStatus()==1){
+                $sellOrderItem->setStatus(11);
+                $this->entityManager->flush();
+            }
+        }
+
+        $viewModel = new ViewModel();
+        $viewModel->setTerminal(true);
+        $viewModel->setVariable('products',$products);
+        $viewModel->setVariable('sellOrders',$sellOrders);
+        return $viewModel;
+    }
+
+    public function detailOrderAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id', 0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            $result['status']=1;
+            $result['order_id']=$sellOrderID;
+            $result['customer_name']=$sellOrder->getGrocery()->getGroceryName();
+            $result['order_code']=$sellOrder->getOrderCode();
+            $result['order_payment_method']=$sellOrder->getPayMethod();
+            $result['order_payment_method_name']=($sellOrder->getPayMethod()==2?'Tiền mặt':'Chuyển khoản');
+            $result['delivered_by']=$sellOrder->getDeliveredBy()->getUsername();
+            $result['delivered_date']=Common::formatDateTime($sellOrder->getDeliveredDate());
+            $result['total_amount_payable']=Common::formatMoney(Common::round($sellOrder->getTotalAmountToPaid()));//tong tien phai thanh toan
+
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'grocery'=>$sellOrder->getGrocery()]);
+        }
+    }
+
+    public function paidOrderAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $sellOrder = $this->sellManager->getOrderPaginator('', Define::_ORDER_PAID_STATUS, 0, 100);
+                $orders = array();
+                foreach ($sellOrder as $orderItem){
+                    $tmp['order_id']=$orderItem->getId();
+                    $tmp['order_code']=$orderItem->getOrderCode();
+                    $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
+                    $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);
+                    $tmp['delivered_date']=Common::formatDateTime($orderItem->getDeliveredDate());
+                    $tmp['delivered_by']=$orderItem->getDeliveredBy()->getUsername();
+                    $tmp['order_message']=($orderItem->getNoteTooltip()?'<button type="button" class="btn btn-rounded btn-warning fa fa-bell popover-dismiss" data-content="'.$orderItem->getNoteTooltip().'"></button>':'');
+                    $tmp['total_amount_paid']=Common::round($orderItem->getTotalAmountToPaid());
+                    $tmp['pay_date']=Common::formatDateTime($orderItem->getPayDate());
+                    $tmp['completed_by']=$orderItem->getCompletedBy();
+                    $tmp['payment_method_name']=$orderItem->getPayMethodName();
+                    $tmp['is_invoice_image']=(count($orderItem->getInvoice())?$orderItem->getId():0);
+                    $orders[]=$tmp;
+
+                }
+                $result['draw']=1;
+                $result['recordsTotal']=count($sellOrder);
+                $result['recordsFiltered']=count($sellOrder);
+                $result['data']=$orders;
+                $result['status']=1;
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+        else{
+            return new ViewModel();
+        }
+    }
+
+    public function deliveredAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            try{
+                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_DELIVERED_STATUS);
+                $orders = array();
+                foreach ($sellOrder as $orderItem){
+                    $tmp['order_id']=$orderItem->getId();
+                    $tmp['order_code']=$orderItem->getOrderCode();
+                    $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
+                    $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);
+                    $tmp['pay_method_name']=$orderItem->getPayMethodName();
+                    $tmp['delivered_date']=Common::formatDateTime($orderItem->getDeliveredDate());
+                    $tmp['delivered_by']=$orderItem->getDeliveredBy()->getUsername();
+                    $tmp['delivery_car']=$orderItem->getDeliveryCar();
+                    $tmp['order_message']=($orderItem->getNoteTooltip()?'<button type="button" class="btn btn-rounded btn-warning fa fa-bell popover-dismiss" data-content="'.$orderItem->getNoteTooltip().'"></button>':'');
+                    $tmp['total_amount_paid']=Common::round($orderItem->getTotalAmountToPaid());
+                    $tmp['is_invoice_image']=(count($orderItem->getInvoice())?$orderItem->getId():0);
+                    $orders[]=$tmp;
+                }
+                $result['data']=$orders;
+            }catch (\Exception $e){
+                $result['status'] = 0;
+                $result['msg'] = $e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+//            $sellOrder = $this->sellManager->getSellOrder(21);
+            return new ViewModel();
+        }
+    }
+
+    public function packingAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKING_STATUS);
+                $orders = array();
+                foreach ($sellOrder as $orderItem){
+                    $orders[]=$this->getDataOrderListResult($orderItem);
+                }
+                $result['data']=$orders;
+            }catch (\Exception $e){
+                $result['status'] = 0;
+                $result['msg'] = $e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+            return new ViewModel();
+        }
+    }
+    public function waitForPayAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $sellOrder = $this->sellManager->getSellOrder(31);
+                $orders = array();
+                foreach ($sellOrder as $orderItem){
+                    $tmp=$this->getDataOrderListResult($orderItem);
+                    $deliveredBy='';
+                    $deliveredDate='';
+                    if($orderItem->getDeliveredBy()){
+                        $deliveredBy = $orderItem->getDeliveredBy()->getFullname();
+                        $deliveredDate=Common::formatDateTime($orderItem->getDeliveredDate());
+                    }
+                    $tmp['delivered_date']=$deliveredDate;
+                    $tmp['delivered_by']=$deliveredBy;
+                    $tmp['unpaid_by']=$orderItem->getUnpaidBy();
+                    $tmp['payment_method_name']=$orderItem->getPayMethodName();
+                    $tmp['is_invoice_image']=(count($orderItem->getInvoice())?$orderItem->getId():0);
+                    $orders[]=$tmp;
+                }
+                $result['data']=$orders;
+                $result['status']=1;
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+        else{
+            return new ViewModel();
+        }
+    }
+    public function draftAction(){
+        $sellOrder = $this->sellManager->getSellOrder(-1);
+        $arrOrders=[];
+        foreach ($sellOrder as $orderItem){
+            $groceryId = $orderItem->getGrocery()->getId();
+            $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
+        }
+        $listGroceryMerge=array();
+        foreach ($arrOrders as $key=>$arr) {
+            //1 khach hang co nhieu hon 1 don moi tao nhung chua xac nhan
+            if (count($arr) > 1) {
+                $listGroceryMerge[$key]['name']=$arr[0];
+                $listGroceryMerge[$key]['order-number']=count($arr);
+            }
+        }
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'listGroceryMerge'=>$listGroceryMerge
+        ]);
+    }
+
+    public function deliveryAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            try{
+                $orderID = $request->getPost("oid");
+                $note = $request->getPost("note");
+                $sellOrder = $this->sellManager->getSellOrderById($orderID);
+                $orderStatus = $sellOrder->getStatus();
+
+                //cap nhat status=2 (dang giao)
+                $sellOrder->setStatus(Define::_ORDER_DELIVERING_STATUS);
+                if(strlen($note)>0){
+                    $uName=$this->userInfo->getUsername();
+                    if($sellOrder->getNote())
+                        $note = $sellOrder->getNote()."\n" .$uName ."|".date("Y-m-d h:i:s")."|".$note;
+                    else
+                        $note = $uName."|".date("Y-m-d h:i:s")."|".$note;
+
+                    $sellOrder->setNote($note);
+                }
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sellOrder);
+                $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $action='Chuyển giao hàng';
+                $sellOrderActivity->setActionIcon('fa-truck');
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message']='Đã chuyển đơn '.$sellOrder->getGrocery()->getGroceryName().' sang chế độ giao hàng!';
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+            //hien thi danh sach don dang giao
+            $sellOrder = $this->sellManager->getSellOrder(2);
+            return new ViewModel([
+                'sellOrder'=>$sellOrder
+            ]);
+        }
+    }
+
+    public function returnAction(){
+        $sellOrderID = $this->params()->fromRoute('id', 0);
+
+        $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            try{
+                $data = $request->getPost("pro");
+
+                $totalPrice=0;
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                foreach ($data as $item) {
+                    $obj = json_decode(json_encode($item));
+
+                    $sellId = $obj->id;
+                    $quantityReturn = $obj->return;
+                    //chi set nhung san co so luong tra lai >0
+                    if($quantityReturn>0){
+                        $sell = $sellOrder->getSellId($sellId);
+                        $product = $sell->getProduct();
+
+                        $quantity=$sell->getQuantity();//so san pham truoc khi tra lai
+
+                        $isPack = $sell->isPack();
+                        if($isPack>0){
+                            $quantityReturn=$sell->getPackUnit()*$quantityReturn;//so san pham tra lai
+                        }
+
+                        $quantityAfter = $quantity-$quantityReturn;
+
+                        if($quantityAfter<0)
+                            throw new Exception('Số lượng sản phẩm trả lại nhiều hơn số lượng sản phẩm bán!');
+
+                        $price=$sell->getPriceValue();
+
+                        $totalPrice += $quantityAfter*$price;
+
+                        $sell->setQuantity($quantityAfter);
+                        $sell->setReturn($quantityReturn);
+
+                        $inventory = $product->getInventory();
+                        $product->setInventory($inventory + $quantityReturn);
+
+                        //tao moi ban ghi product activity
+                        $productActivity = new ProductActivity();
+                        $productActivity->setUser($user);
+                        $productActivity->setProduct($product);
+                        $productActivity->setNote($sellOrder->getGrocery()->getGroceryName().': trả lại');
+                        $productActivity->setCreatedDate(new \DateTime());
+                        $productActivity->setChange($quantityReturn);
+                        $this->entityManager->persist($productActivity);
+
+
+                        //insert sell order activity
+                        $sellOrderActivity = new SellOrderActivity();
+                        $sellOrderActivity->setSellOrder($sell->getSellOrder());
+                        $sellOrderActivity->setActionBy($user->getUsername());
+                        $sellOrderActivity->setActionTime(new \DateTime());
+                        $action='Trả lại '.$quantityReturn.' '.$product->getName();
+                        $sellOrderActivity->setActionIcon('fa-minus-square');
+                        $sellOrderActivity->setAction($action);
+                        $this->entityManager->persist($sellOrderActivity);
+                    }
+                }
+
+//                $sellOrder->setTotalPrice($totalPrice);
+                $this->entityManager->flush();
+
+                $this->flashMessenger()->addSuccessMessage('Đổi trả thành công đơn hàng '.$sellOrder->getOrderCode());
+                $result['status']=1;
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+            return new JsonModel($result);
+
+        }else{
+            return new ViewModel(['sellOrder'=>$sellOrder,'grocery'=>$sellOrder->getGrocery()]);
+        }
+    }
+
+    public function noteAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            try{
+                $sellOrderID = $request->getPost("oid");
+                $note = $request->getPost("note");
+
+                if($sellOrderID && $note){
+                    $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+                    $uName=$this->userInfo->getFullname();
+                    if($sellOrder->getNote())
+                        $note = htmlspecialchars($sellOrder->getNote())."\n" .$uName ."|".date("Y-m-d h:i:s")."|".$note;
+                    else
+                        $note = $uName."|".date("Y-m-d h:i:s")."|".$note;
+
+                    $sellOrder->setNote($note);
+                    $this->entityManager->flush();
+                }
+
+                $this->flashMessenger()->addSuccessMessage('Đã thêm ghi chú cho đơn hàng');
+
+            }catch (\Exception $e){
+                $this->flashMessenger()->addSuccessMessage($e->getMessage());
+            }
+            if($sellOrder->getStatus()<0)
+                return $this->redirect()->toRoute('sell-admin',['action'=>'detail-o-customer','id'=>$sellOrderID]);
+            else
+                return $this->redirect()->toRoute('sell-admin',['action'=>'detail-order','id'=>$sellOrderID]);
+        }
+    }
+
+    public function addAction()
+    {
+        $groceryID = $this->params()->fromRoute('id', 0);
+        $groceryManager = new GroceryManager($this->entityManager);
+        $grocery = $groceryManager->getById($groceryID);
+
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $data = $request->getPost("pro");
+
+                //lay user tuyen
+                $userId=$grocery->getGroceryCat()->getUser()->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                //user dang nhap
+                $userLoginNow=$this->entityManager->getRepository(User::class)->find($this->userInfo->getId());
+
+                $sellOrder = new SellOrder();
+                $totalPrice=0;
+
+                $productManager = new ProductManager($this->entityManager);
+
+                foreach ($data as $key=>$item) {
+                    $obj = json_decode(json_encode($item));
+                    $qty = $obj->odd;
+//                    $price = $obj->price;
+                    $productId = $obj->id;
+
+                    $product = $productManager->getById($productId);
+                    $price = $product->getActivePrice();
+
+                    $quantity=$product->validateQty($qty);
+                    $totalPrice = $totalPrice + $quantity * $price->getPrice();
+
+                    $inventory = $product->getInventory();
+                    $product->setInventory($inventory - $quantity);
+
+                    $sell = new Sell();
+                    $sell->setPrice($price);
+                    $sell->setProduct($product);
+                    $sell->setQuantity($quantity);
+
+                    $sell->setSellOrder($sellOrder);
+                    $sellOrder->addSell($sell);
+
+                    //tao moi ban ghi product activity
+                    $productActivity = new ProductActivity();
+                    $productActivity->setUser($userLoginNow);
+                    $productActivity->setProduct($product);
+                    $productActivity->setNote('Thêm vào đơn: '.$grocery->getGroceryName());
+                    $productActivity->setCreatedDate(new \DateTime());
+//                    $productActivity->setUrl("/admin/werehouse/view/".$werehouseOrder->getId().".html");
+                    $change = 0-$quantity;
+                    $productActivity->setChange($change);
+                    $this->entityManager->persist($productActivity);
+                }
+
+                $sellOrder->setUser($user);
+                $sellOrder->setTotalPrice($totalPrice);
+                $sellOrder->setGrocery($grocery);
+                $sellOrder->setCreatedDate(new \DateTime());
+                $sellOrder->setStatus(1);
+                $sellOrder->setMethod($this->userInfo->getId());//goi dien
+                $this->entityManager->persist($sellOrder);
+                $this->entityManager->flush();
+
+                //$contentEmail="Đơn hàng mời được tạo bởi ". $this->userInfo->getFullname(). " trị giá: ". Common::formatMoney($totalPrice);
+                //$this->sendMailContent("truonghm1980@gmail.com","jobber.vn@gmail.com","","New order form NPP Anh Vu",$contentEmail);
+
+                $userInfo = $this->userInfo;
+
+                $adminManager = new AdminManager($this->entityManager);
+                $msg = '<i class="fa fa-shopping-cart"></i>Đã tạo mới đơn hàng: ' . $grocery->getGroceryName();
+                $data["title"]= $msg;
+                $data["msg"]=$msg;
+                $data["uid"]=$userInfo->getId();
+                $adminManager->addActivity($data);
+
+                $this->flashMessenger()->addSuccessMessage('Đã tạo mới đơn hàng: '.$grocery->getGroceryName());
+                $result['status']=1;
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+            return new JsonModel($result);
+
+        }else{
+            $productManager = new ProductManager($this->entityManager);
+            $productList = $productManager->getAll();
+        }
+        return new ViewModel(['grocery'=>$grocery,'productList'=>$productList]);
+    }
+
+    public function discountAction()
+    {
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            try {
+                $p_id = $request->getPost("id");//id san pham giam gia hoac id don hang
+                $p_dis_type = $request->getPost("dis_type");//=1 giam gia theo tien, =2 giam gia theo %
+                $p_dis_num = $request->getPost("dis_num");//so tien hoac so % giam gia
+                $p_dis_opt = $request->getPost("dis_opt");//=1 giam gia theo san pham, =2 giam gia theo don hang
+
+                $discount=0;
+                //giam gia tren san pham
+                if($p_dis_opt==1){
+                    $sell = $this->sellManager->getById($p_id);
+                    $qty = $sell->getQuantity();
+                    $price = $sell->getPriceValue();
+                    if($p_dis_type==1) $discount=$p_dis_num;
+                    else{
+                        $totalPrice= $qty*$price;
+                        $discount = ($p_dis_num*$totalPrice)/100;
+                    }
+                    $sell->setDiscount($discount);
+                    $result['msg']="Đã ghi nhận giảm giá cho sản phẩm!";
+                }else{
+                    //giam gia theo don hang
+                    $sellOrder = $this->sellManager->getSellOrderById($p_id);
+                    if($p_dis_type==1) $discount=$p_dis_num;
+                    else{
+                        $totalPrice = $sellOrder->getTotalPrice();
+                        $discount = ($p_dis_num*$totalPrice)/100;
+                    }
+                    $sellOrder->setDiscount($discount);
+                    $result['msg']="Đã ghi nhận giảm giá cho đơn hàng!";
+                }
+                $this->entityManager->flush();
+                $result['status']=1;
+            } catch (\Exception $e) {
+                $result['status'] = 0;
+                $result['msg'] = $e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+    public function cancelOrderAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            $sellOrderID = $request->getPost("oid");
+            try {
+                if ($sellOrderID > 0) {
+                    //lay thong tin don hang
+                    $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+                    $userId= $this->userInfo->getId();
+                    $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                    //update inventory cho san pham
+                    foreach ($sellOrder->getSell() as $sellItem) {
+                        $qtyReturn = $sellItem->getQuantity();
+                        $product = $sellItem->getProduct();
+                        $inventory = $product->getInventory();
+                        $product->setInventory($inventory + $qtyReturn);
+
+                        //tao moi ban ghi product activity
+                        $productActivity = new ProductActivity();
+                        $productActivity->setUser($user);
+                        $productActivity->setProduct($product);
+                        $productActivity->setNote('Huỷ đơn: '.$sellOrder->getGrocery()->getGroceryName());
+                        $productActivity->setCreatedDate(new \DateTime());
+                        //$productActivity->setUrl("/admin/werehouse/view/".$werehouseOrder->getId().".html");
+                        $change = $qtyReturn;
+                        $productActivity->setChange($change);
+                        $this->entityManager->persist($productActivity);
+                    }
+
+                    //insert sell order activity
+                    $sellOrderActivity = new SellOrderActivity();
+                    $sellOrderActivity->setSellOrder($sellOrder);
+                    $sellOrderActivity->setActionBy($user->getUsername());
+                    $sellOrderActivity->setActionTime(new \DateTime());
+                    $action='Huỷ đơn';
+                    $sellOrderActivity->setActionIcon('fa-trash-o');
+                    $sellOrderActivity->setAction($action);
+                    $this->entityManager->persist($sellOrderActivity);
+
+                    //set status = 0: huy don hang
+                    $sellOrder->setCanceledDate(new \DateTime());
+                    $sellOrder->setCanceledBy($this->userInfo->getFullname());
+                    $sellOrder->setStatus(0);
+                    $this->entityManager->flush();
+                    $result['status'] = 1;
+                    $result['message'] = 'Đã xác nhận huỷ đơn hàng: ' . $sellOrder->getGrocery()->getGroceryName();
+                }else{
+                    throw new Exception('Không tìm thấy đơn hàng muốn huỷ!');
+                }
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+        }else{
+            $result['status']=0;
+            $result['message']='Không tìm thấy đơn hàng muốn huỷ!';
+        }
+
+        return new JsonModel($result);
+    }
+
+    /**
+     * Chuyển đơn hàng sang trạng thái đã đóng gói
+     * @return JsonModel
+     */
+    public function packedOrderAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            try {
+                $orderId = $request->getPost("oid");
+
+                if(!$orderId)
+                    throw new Exception('Error! Không thể tim thấy đơn hàng!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+                $sellOrder->setStatus(111);
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sellOrder);
+                $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $action='Chuyển '.ConfigManager::getOrderStatus()[111];
+                $sellOrderActivity->setActionIcon('fa-dropbox');
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message']='Đã chuyển đơn '. $sellOrder->getGrocery()->getGroceryName() .' sang chế độ "Đã đóng gói!"';
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+        }else{
+            $result['status']=0;
+            $result['message']='Không tìm thấy đơn hàng!';
+        }
+        return new JsonModel($result);
+    }
+
+    public function editOrderAction(){
+        $request = $this->getRequest();
+
+        /*if($request->isPost()) {
+            try {
+                $proId = $request->getPost("pid");
+                $orderId = $request->getPost("oid");
+                $qty=$request->getPost("qty");
+
+                if(!$proId || !$orderId || !$qty)
+                    throw new Exception('Error! Có thể không tim thấy sản phẩm hoặc đơn hàng hoặc chưa nhập số lượng cần bán!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+
+                $productManager = new ProductManager($this->entityManager);
+                $product = $productManager->getById($proId);
+                $inventory = $product->getInventory();
+                $price = $product->getActivePrice();
+
+                //check product da co trong don hang chua? neu chua tra ve sell moi, neu co roi thi tra ve sell dang co
+                $sell=$sellOrder->buildSell($product);
+
+                //san pham dang co trong don
+                if($sell->getProduct()){
+                    //cong them so luong da nhap truoc
+                    $inventory +=$sell->getQuantity();
+                }
+                //giam so luong sp trong kho
+                $product->setInventory($inventory - $qty);
+
+                $sell->setPrice($price);
+                $sell->setProduct($product);
+                $sell->setQuantity($qty);
+
+                $sell->setSellOrder($sellOrder);
+                $sellOrder->addSell($sell);
+
+                $this->entityManager->persist($sellOrder);
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['msg'] = 'Đã thêm '. $qty .' sản phẩm '. $product->getName() . ' vào đơn hàng!';
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            //danh sach san pham
+            $productManager = new ProductManager($this->entityManager);
+            $productList = $productManager->getAll();
+        }*/
+
+        $sellOrderID = $this->params()->fromRoute('id', 0);
+        $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+        //danh sach san pham
+        $productManager = new ProductManager($this->entityManager);
+        $productList = $productManager->getAll();
+
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'grocery'=>$sellOrder->getGrocery(),
+            'productList'=>$productList
+        ]);
+    }
+    public function packedAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            try {
+
+                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKED_STATUS);
+
+                $orders = array();
+                $arrOrders=[];
+                foreach ($sellOrder as $orderItem){
+                    $orders[]=$this->getDataOrderListResult($orderItem);
+
+                    $groceryId = $orderItem->getGrocery()->getId();
+                    $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
+                }
+
+                $listGroceryMerge=array();
+                foreach ($arrOrders as $key=>$arr) {
+                    //1 khach hang co nhieu hon 1 don da dong goi
+                    if (count($arr) > 1) {
+                        $listGroceryMerge[$key]['name']=$arr[0];
+                        $listGroceryMerge[$key]['orderNumber']=count($arr);
+                    }
+                }
+
+                $result['data']=$orders;
+                $result['merge']=$listGroceryMerge;
+
+                $result['status']=1;
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+            return new JsonModel($result);
+
+        }else{
+            return new ViewModel();
+        }
+    }
+    public function backStatusAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            try {
+                $orderId = $request->getPost("oid");
+                $note = $request->getPost("note");
+
+                if(!$orderId)
+                    throw new Exception('Error! Không tim thấy đơn hàng!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+
+                $currentStatus = $sellOrder->getStatus();
+                $newStatus = $this->getBackStatus($currentStatus);
+
+                if($newStatus>0){
+                    $sellOrder->setStatus($newStatus);
+
+                    //insert sell order activity
+                    $sellOrderActivity = new SellOrderActivity();
+                    $sellOrderActivity->setSellOrder($sellOrder);
+                    $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                    $sellOrderActivity->setActionTime(new \DateTime());
+                    $action='Chuyển từ '.ConfigManager::getOrderStatus()[$currentStatus].' sang '.ConfigManager::getOrderStatus()[$newStatus].' lý do: '.$note;
+                    $sellOrderActivity->setActionIcon('fa-exchange');
+                    $sellOrderActivity->setAction($action);
+                    $this->entityManager->persist($sellOrderActivity);
+
+                    $this->entityManager->flush();
+                    $result['status']=1;
+                    $result['message'] = 'Đã chuyển đơn hàng '. $sellOrder->getGrocery()->getGroceryName() .'('.$sellOrder->getOrderCode().') sang trạng thái '. ConfigManager::getOrderStatus()[$newStatus]. '!';
+//                    $this->flashMessenger()->addSuccessMessage('Đã chuyển đơn hàng '. $sellOrder->getGrocery()->getGroceryName() .'('.$sellOrder->getOrderCode().') sang trạng thái '. ConfigManager::getOrderStatus()[$newStatus]. '!');
+                }else
+                    throw new Exception('Error! Không thể thay đổi trạng thái đơn hàng!');
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+            return new JsonModel($result);
+        }else{
+            $orderId = $request->getQuery("oid");
+            try {
+                if(!$orderId)
+                    throw new Exception('Error! Không tim thấy đơn hàng!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+                $orderInfo['order_id']=$sellOrder->getId();
+                $orderInfo['order_status']=$sellOrder->getStatus();
+                $orderInfo['order_status_name']=ConfigManager::getOrderStatus()[$sellOrder->getStatus()];
+                $backStatus=$this->getBackStatus($sellOrder->getStatus());
+                $orderInfo['order_status_back_name']=ConfigManager::getOrderStatus()[$backStatus];
+                $orderInfo['customer_name']=$sellOrder->getGrocery()->getGroceryName();
+                $orderInfo['customer_address']=$sellOrder->getGrocery()->getAddress();
+
+                $result['status']=1;
+                $result['data']=$orderInfo;
+            }catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+
+    public function getBackStatus($p_currentStatus){
+        $newStatus=0;
+        switch ($p_currentStatus) {
+            case 11://dang dong goi
+                $newStatus=1;//cho dong goi
+                break;
+            case 111://da dong goi
+                $newStatus=11;//dang dong goi
+                break;
+            case 2://dang giao
+                $newStatus=111;//da dong goi
+                break;
+            case 21://da giao
+                $newStatus=2;//dang giao
+                break;
+            case 31://chua thanh toan
+                $newStatus=21;//da giao
+                break;
+        }
+        return $newStatus;
+    }
+
+    /**
+     * @return ViewModel
+     */
+    public function customerAction(){
+        $sellOrder = $this->sellManager->getSellOrder(-2);
+
+        $arrOrders=[];
+        foreach ($sellOrder as $orderItem){
+            $groceryId = $orderItem->getGrocery()->getId();
+            $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
+        }
+        $listGroceryMerge=array();
+        foreach ($arrOrders as $key=>$arr) {
+            //1 khach hang co nhieu hon 1 don khach tao nhung chua xac nhan
+            if (count($arr) > 1) {
+                $listGroceryMerge[$key]['name']=$arr[0];
+                $listGroceryMerge[$key]['order-number']=count($arr);
+            }
+        }
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'listGroceryMerge'=>$listGroceryMerge
+        ]);
+    }
+
+    public function detailOCustomerAction(){
+        $sellOrderID = $this->params()->fromRoute('id', 0);
+
+        $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+        $zaloApp='';
+        if($sellOrder->getZaloAppId()){
+            $apiManager = new ApiManager($this->entityManager);
+            $zaloApp = $apiManager->getById($sellOrder->getZaloAppId());
+        }
+
+        $productManager = new ProductManager($this->entityManager);
+        $productList = $productManager->getAll();
+
+        $groceryManager = new GroceryManager($this->entityManager);
+        $grocery = $groceryManager->getAll();
+
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'grocery'=>$sellOrder->getGrocery(),
+            'productList'=>$productList,
+            "groceryList"=>$grocery,
+            "zaloApp"=>$zaloApp
+        ]);
+    }
+
+    public function detailODraftAction(){
+        $sellOrderID = $this->params()->fromRoute('id', 0);
+
+        $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+        $productManager = new ProductManager($this->entityManager);
+        $productList = $productManager->getAll();
+
+        return new ViewModel([
+            'sellOrder'=>$sellOrder,
+            'grocery'=>$sellOrder->getGrocery(),
+            'productList'=>$productList
+        ]);
+    }
+
+    public function changeGroceryOrderAction(){
+        $request = $this->getRequest();
+        $result['status']=0;
+        if($request->isPost()) {
+            try {
+                $orderId = $request->getPost("oid");
+                $groceryId = $request->getPost("gid");
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+
+                $groceryManager = new GroceryManager($this->entityManager);
+                $grocery = $groceryManager->getById($groceryId);
+
+                //user cham soc tuyen
+                $user = $grocery->getGroceryCat()->getUser();
+
+                //kiem tra neu va cap nhat grocery cho zalo app neu co zalo id;
+
+                $zaloAppId = $sellOrder->getZaloAppId();
+                if($zaloAppId){
+                    $apiManager = new ApiManager($this->entityManager);
+                    $zaloApp = $apiManager->getById($zaloAppId);
+                    $zaloApp->setGroceryId($grocery->getId());
+//                    $this->entityManager->persist($zaloApp);
+                }
+
+                $sellOrder->setUser($user);
+                $sellOrder->setGrocery($grocery);
+
+                $this->entityManager->flush();
+
+                $result['status']=1;
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+        }else{
+            $result['msg']="E001: Có lỗi phát sinh, vui lòng liên hệ Admin!";
+        }
+        return new JsonModel($result);
+    }
+
+    public function productBuyOfDayAction(){
+        $sellOrders = $this->sellManager->getProductBuyOfDay(date("Y-m-d"), date("Y-m-d"));
+        $proArr=array();
+        foreach ($sellOrders as $sellOrder){
+            $sells = $sellOrder->getSell();
+            foreach ($sells as $sell){
+                $proId=$sell->getProduct()->getId();
+                if(@$proArr[$proId])
+                    $proArr[$proId]['qty']+=$sell->getQuantity();
+                else{
+                    $proArr[$proId]['qty']=$sell->getQuantity();
+
+                    $pack_unit = $sell->getProduct()->getBoxUnit();
+                    $unit_name = $sell->getProduct()->getUnit()->getName();
+                    $proArr[$proId]['pack_unit']=$pack_unit;
+                    $proArr[$proId]['unit_name']=$unit_name;
+                    $proArr[$proId]['sort']=$sell->getProduct()->getSort();
+                    $proArr[$proId]['code']=$sell->getProduct()->getCode();
+                    $proArr[$proId]['name']=$sell->getProduct()->getName().' | '.$sell->getProduct()->getWeight();
+                }
+
+                $inventory = $sell->getProduct()->getInventory();
+                $proArr[$proId]['inventory']=$inventory;
+//                $proArr[$proId]['sell_qty']=$this->getPack($proArr[$proId]['qty'], $pack_unit, $unit_name);
+
+            }
+        }
+
+        $productManager = new ProductManager($this->entityManager);
+        $product = $productManager->getAllForPrice();
+        foreach ($product as $pro){
+            $proId=$pro->getId();
+            //San pham khong duoc ban trong ngay
+            if(!@$proArr[$proId]){
+                $proArr[$proId]['qty']=0;
+                $proArr[$proId]['pack_unit']=$pro->getBoxUnit();
+                $proArr[$proId]['unit_name']=$pro->getUnit()->getName();
+                $proArr[$proId]['sort']=$pro->getSort();
+                $proArr[$proId]['code']=$pro->getCode();
+                $proArr[$proId]['name']=$pro->getName().' | '.$pro->getWeight();
+                $proArr[$proId]['inventory']=$pro->getInventory();
+            }
+        }
+
+        $viewModel = new ViewModel();
+        $viewModel->setTerminal(true);
+        $viewModel->setVariable('proArr',$proArr);
+        return $viewModel;
+    }
+
+    public function mergeSellOrderAction(){
+
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            try {
+                $groceryId = $request->getPost("id");
+                $status = $request->getPost("s");
+
+                $sellOrders = $this->sellManager->getSellOrderNeedMergeByGrocery($groceryId,$status);
+
+                //Có hơn 1 đơn ở trạng thái đã đóng gói. (Chỉ cho phép merge đơn ở trạng thái đã đóng gói)
+                if(count($sellOrders)>1){
+                    $firstOrder = $sellOrders[0];
+                    $discountOrder=$firstOrder->getDiscount();
+
+                    for($i=1; $i<count($sellOrders);$i++){
+                        $nextOrder=$sellOrders[$i];
+                        $discountOrder+=$nextOrder->getDiscount();
+                        //chuyen san pham
+                        foreach ($nextOrder->getSell() as $sellItem)
+                            $sellItem->setSellOrder($firstOrder);
+
+                        //move note
+                        if($firstOrder->getNote()){
+                            $note=$firstOrder->getNote()."\n".$nextOrder->getNote();
+                        }else
+                            $note=$nextOrder->getNote();
+
+                        $firstOrder->setNote($note);
+
+                        //set discount
+                        $firstOrder->setDiscount($discountOrder);
+
+                        //xoa order sau khi chuyen
+                        $nextOrder->setSell(null);
+                        $this->entityManager->remove($nextOrder);
+                    }
+                    $this->entityManager->persist($firstOrder);
+                    //insert sell order activity
+                    $sellOrderActivity = new SellOrderActivity();
+                    $sellOrderActivity->setSellOrder($firstOrder);
+                    $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                    $sellOrderActivity->setActionTime(new \DateTime());
+                    $action='Gộp đơn';
+                    $sellOrderActivity->setActionIcon('fa-chain');
+                    $sellOrderActivity->setAction($action);
+                    $this->entityManager->persist($sellOrderActivity);
+
+                    $this->entityManager->flush();
+
+                    $result['oid']=$firstOrder->getId();
+                    $result['status']=1;
+                    $result['msg']='Đơn hàng đã được gộp thành công!';
+                }else{
+                    $result['status']=0;
+                    $result['msg']='Phải có ít nhất 2 đơn ở trạng thái đã đóng gói thì mới có thể gộp được đơn!';
+                }
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['msg']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+            //view order
+            $groceryId = $this->params()->fromRoute('id', '');
+            $status = $this->params()->fromQuery('s',0);
+
+            $groceryManager = new GroceryManager($this->entityManager);
+            $grocery = $groceryManager->getById($groceryId);
+            $sellOrders = $this->sellManager->getSellOrderNeedMergeByGrocery($groceryId,$status);
+
+            //check trùng sản phẩm trong đơn nếu gộp
+            $productInOrder= array();
+            foreach ($sellOrders as $orderItem){
+                foreach ($orderItem->getSell() as $sellItem){
+                    $product=$sellItem->getProduct();
+                    $productInOrder[$product->getId()][]=$product->getName();
+                }
+            }
+
+            //tim san pham trung nhau
+            $productDuplicate=array();
+           foreach ($productInOrder as $key=>$value){
+               //san pham trung nhau trong don
+               if(count($value)>1){
+                   $productDuplicate[]=$value[0];
+               }
+           }
+
+            return new ViewModel([
+                'sellOrders'=>$sellOrders,
+                'grocery'=>$grocery,
+                'productDuplicate'=>$productDuplicate,
+                'status'=>$status
+            ]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/16/2025 10:53 AM
+     * Chi tiết đơn hàng đã giao
+     * @return \Zend\Http\Response|JsonModel|ViewModel
+     */
+    public function doDeliveredAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_DELIVERED_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_DELIVERED_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/16/2025 10:53 AM
+     * Tra lai san pham trong don
+     */
+    public function sellReturnAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            try {
+                $sellDetailId = $request->getPost("id");
+                $returnQty = $request->getPost("qty");
+                $cause = $request->getPost("causes");
+                $note = $request->getPost("note");
+                $option=$request->getPost("opt");//unit or pack
+
+                if(!$sellDetailId)
+                    throw new Exception('Error! Không tìm thấy sản phẩm trong đơn hàng!');
+
+                if($returnQty<=0)
+                    throw new Exception('Error! Số lượng sản phẩm trả lại không hợp lệ!');
+
+                $sell = $this->sellManager->getSellById($sellDetailId);
+
+                $orderQty=$sell->getQuantity();//so luong san pham truoc khi tra lại
+
+                //nếu trả lại theo thùng
+                if($option=='pack'){
+                    $returnQty=$returnQty*$sell->getPackUnit();//quy cach luc dat hang
+                }
+
+                $returnedQty = $orderQty-$returnQty;//so luong san pham sau khi tra lai
+
+                if($returnedQty<0)
+                    throw new Exception('Số lượng sản phẩm trả lại nhiều hơn số lượng sản phẩm có trong đơn!');
+
+                //so luong sau khi tra lai chia quy cach ma khong du => mua theo thung
+                if($returnedQty%$sell->getPackUnit()==0){
+                    //so luong sau khi tra van tinh theo thung=>lay discount theo thung
+                    $discount=$sell->getProduct()->getPackPriceSale();
+                }else{
+                    //so luong san pham sau khi tra, khong phai thung => lay discount theo sp
+                    $discount=$sell->getProduct()->getUnitPriceSale();
+                }
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                $currentReturn=($sell->getReturn())?$sell->getReturn():0;//sl sp da tra truoc day
+
+                $sell->setQuantity($returnedQty);
+                $sell->setReturn($returnQty+$currentReturn);
+                $sell->setReturnCauses($cause);
+                $sell->setReturnNote($note);
+                $sell->setDiscount($discount);
+                $sell->setReturnBy($user->getUsername());
+                $sell->setReturnDate(new \DateTime());
+                $this->entityManager->persist($sell);
+
+                //tinh toan lai ton kho cua san pham
+                $product=$sell->getProduct();
+                $inventory = $product->getInventory();
+                $product->setInventory($inventory + $returnQty);
+
+                //tao moi ban ghi product activity
+                $productActivity = new ProductActivity();
+                $productActivity->setUser($user);
+                $productActivity->setProduct($product);
+                $productActivity->setNote('Trả lại: '.$sell->getSellOrder()->getGrocery()->getGroceryName());
+                $productActivity->setCreatedDate(new \DateTime());
+                $productActivity->setChange($returnQty);
+                $this->entityManager->persist($productActivity);
+
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sell->getSellOrder());
+                $sellOrderActivity->setActionBy($user->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $action='Trả lại: '.$returnQty.' '.$product->getName();
+                $sellOrderActivity->setActionIcon('fa-minus-square');
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message']='Đã trả lại <b>'.$returnQty.' '.$product->getUnit()->getName().'</b> '. $product->getName().'|'.$product->getWeight();
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+            try {
+                $sellDetailId = $request->getQuery("sell_detail_id");
+
+                if(!$sellDetailId)
+                    throw new Exception('Error! Không tìm thấy sản phẩm trong đơn hàng!');
+
+                $sell = $this->sellManager->getSellById($sellDetailId);
+
+                $sellItem['product_id']=$sell->getProduct()->getId();
+                $sellItem['product_name']=$sell->getProduct()->getName();
+                $sellItem['product_weight']=$sell->getProduct()->getWeight();
+                $sellItem['product_barcode']=$sell->getProduct()->getCode();
+                $sellItem['product_unit']=$sell->getProduct()->getUnit()->getName();
+                $sellItem['price']=$sell->getPriceValue();//gia ban chua tru discount
+                $sellItem['qty']=$sell->getQuantity();
+                $sellItem['return']=$sell->getReturn();
+                $sellItem['discount']=$sell->getDiscount();
+                $sellItem['pack_unit']=$sell->getPackUnit();
+
+                $result['status']=1;
+                $result['data']=$sellItem;
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/16/2025 10:53 AM
+     * thay doi phuong thuc thanh toan
+     */
+    public function editPaymentMethodAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            try {
+                $orderId = $request->getPost("order_id",0);
+                $method = $request->getPost("method");
+
+                if(!$orderId)
+                    throw new Exception('Không tìm thấy đơn hàng!');
+                if(!$method)
+                    throw new Exception('Vui lòng chọn phương thức thanh toán!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+                $sellOrder->setPayMethod($method);
+                $this->entityManager->persist($sellOrder);
+
+                $payMethod = ($method==2?'Tiền mặt':'Chuyển khoản');
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sellOrder);
+                $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $action='Thay đổi phương thức thanh thanh toán sang '.$payMethod;
+                $sellOrderActivity->setActionIcon('fa-minus-square');
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message']='Đã cập nhật phương thức thanh toán sang <b>'.$payMethod.'</b>';
+            } catch (\Exception $e) {
+                $result['status'] = 0;
+                $result['message'] = $e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/16/2025 10:53 AM
+     * add note to order
+     * */
+    public function addNoteAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $sellOrderID = $request->getPost("id");
+                $note = $request->getPost("note");
+
+                if($sellOrderID && $note){
+                    $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+                    $uName=$this->userInfo->getFullname();
+                    if($sellOrder->getNote())
+                        $note = htmlspecialchars($sellOrder->getNote())."\n" .$uName ."|".date("Y-m-d h:i:s")."|".$note;
+                    else
+                        $note = $uName."|".date("Y-m-d h:i:s")."|".$note;
+
+                    $sellOrder->setNote($note);
+                    $this->entityManager->flush();
+                }
+
+                $result['status']=1;
+                $result['message']='';
+
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/18/2025 10:53 AM
+     * thêm sản phẩm vào đơn hàng đã xác nhận
+     * nếu sản phẩm có trong đơn rồi thì cộng thêm (@todo:cân nhắc chỗ này, nếu sp có trong đơn rồi thì thông báo để người dùng xoá đi trước khi thêm tránh nhầm lẫn)
+     * */
+    public function addProductOrderAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            try {
+                $proId = $request->getPost("pid");
+                $orderId = $request->getPost("oid");
+                $qty=$request->getPost("qty");
+                $option=$request->getPost("opt");
+
+                if(!$proId || !$orderId || !$qty)
+                    throw new Exception('Error! Có thể không tim thấy sản phẩm hoặc đơn hàng hoặc chưa nhập số lượng cần bán!');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderId);
+
+                $productManager = new ProductManager($this->entityManager);
+                $product = $productManager->getById($proId);
+
+                //them theo thung
+                if($option=='pack'){
+                    //quy doi so luong thung thanh so luong san pham
+                    $qty=$qty*$product->getBoxUnit();
+                }
+
+                $inventory = $product->getInventory();//ton kho hien tai cua sp
+                //check product da co trong don hang chua? neu chua tra ve sell moi, neu co roi thi tra ve sell dang co
+                $sell=$sellOrder->buildSell($product);
+
+//                $qtyBefore = 0;
+                //san pham da co trong don
+                if($sell->getProduct())
+                    throw new Exception('Error! Sản phẩm đã có trong đơn, vui lòng sử dụng chức năng sửa số lượng!');
+//                if($sell->getProduct()){
+//                    $qtyBefore = $sell->getQuantity();//sl sp dang co trong don
+//                }
+
+                //Ton kho khong du de ban, tu dong quy sang ban le (sl sp trong don moi nhieu hon so luong ton kho)
+                if($qty>$inventory)
+                    throw new Exception('Error! Tồn kho không đủ đến bán!');
+//                    $qty=$inventory;//ban toi da sl hang dang co trong kho
+
+//                $qtyAfter=$qty+$qtyBefore;//so luong sp sau thi them vao don = so luong can them + sl dang co trong don
+                //neu tong so luong them vao don tinh duoc theo don vi thung => lay gia khuyen mai cua thung.
+                if($qty%$product->getBoxUnit()==0){
+                    //tien chiet khau theo thung
+                    $discount=$product->getPackPriceSale();
+                }else{
+                    //lay discount theo ban le
+                    $discount=$product->getUnitPriceSale();
+                }
+
+                //giam so luong sp trong kho
+                $product->setInventory($inventory - $qty);
+
+                $sell->setPrice($product->getActivePrice());
+                $sell->setProduct($product);
+                $sell->setQuantity($qty);
+                $sell->setDiscount($discount);
+                $sell->setCost($product->getAveragePrice());
+                $sell->setPackUnit($product->getBoxUnit());
+
+                $sell->setSellOrder($sellOrder);
+                $sellOrder->addSell($sell);
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                //tao moi ban ghi product activity
+                $productActivity = new ProductActivity();
+                $productActivity->setUser($user);
+                $productActivity->setProduct($product);
+                $productActivity->setCreatedDate(new \DateTime());
+
+//                $change = -1*$qty;
+                $productActivity->setChange(-1*$qty);
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sell->getSellOrder());
+                $sellOrderActivity->setActionBy($user->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+
+                $productActivity->setNote('Thêm vào đơn: '.$sellOrder->getGrocery()->getGroceryName());
+                $sellOrderActivity->setActionIcon('fa-plus-square');
+                $this->entityManager->persist($productActivity);
+
+                $action='Thêm '.$qty.' '.$product->getName();
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->persist($sellOrder);
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message'] = 'Đã thêm '. $product->getName() . ' vào đơn hàng!';
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+        }else{
+            $result['status']=0;
+            $result['message']='Không tìm thấy đơn hàng!';
+        }
+        return new JsonModel($result);
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/19/2025 10:53 AM
+     * ds don dang giao
+     **/
+    public function deliveringAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            try{
+                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_DELIVERING_STATUS);
+                $orders = array();
+                foreach ($sellOrder as $orderItem){
+                    $orders[]=$this->getDataOrderListResult($orderItem);
+                }
+                $result['data']=$orders;
+            }catch (\Exception $e){
+                $result['status'] = 0;
+                $result['msg'] = $e->getMessage();
+            }
+            return new JsonModel($result);
+        }else{
+            //hien thi danh sach don dang giao
+            $sellOrder = $this->sellManager->getSellOrder(2);
+            return new ViewModel([
+                'sellOrder'=>$sellOrder
+            ]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/19/2025 10:53 AM
+     * chi tiet don hang dang giao
+     **/
+    public function doDeliveringAction(){
+
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_DELIVERING_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_DELIVERING_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     *  Created by   : TruongHM
+     *  Created date: 3/20/2025 10:53 PM
+     * Xac nhan thanh toan
+     * @return void|JsonModel
+     */
+    public function paymentConfirmationAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $orderID = $request->getPost("oid");
+                $note = $request->getPost("note");
+                $method = $request->getPost("payMethod");
+
+                $uName=$this->userInfo->getFullname();
+
+                if(!$orderID)
+                    throw new Exception('Không thể tìm thấy đơn hàng');
+
+                $sellOrder = $this->sellManager->getSellOrderById($orderID);
+
+                if($method==1){
+                    $sellOrder->setStatus(3);
+                    $sellOrder->setPayDate(new \DateTime());
+                    $sellOrder->setCompletedBy($uName);
+
+                    //update doanh thu ngay
+
+                    $totalRevenue= $sellOrder->getTotalAmountToPaid();
+                    $totalProfit=$sellOrder->getProfit();
+                    $totalCost=$totalRevenue-$totalProfit;
+                    $discount=$sellOrder->getDiscount();
+
+                    $costRevenueManager = new CostRevenueManager($this->entityManager);
+                    $currentDate=date("Y-m-d");
+                    $costRevenues = $costRevenueManager->getDate($currentDate);
+
+                    if($costRevenues){
+                        $costRevenue=$costRevenues[0];
+                        $costRevenue->setCost($costRevenue->getCost() + $totalCost);
+                        $costRevenue->setRevenue($costRevenue->getRevenue() + $totalRevenue);
+                        $costRevenue->setDiscount($costRevenue->getDiscount() + $discount);
+                        $costRevenue->setOrderCompleted($costRevenue->getOrderCompleted() + 1);
+                    }else{
+                        $userCreatedBy = $this->entityManager->getRepository(User::class)->find($this->userInfo->getId());
+                        $costRevenue=new CostRevenue();
+                        $costRevenue->setCost($totalCost);
+                        $costRevenue->setRevenue($totalRevenue);
+                        $costRevenue->setDiscount($discount);
+                        $costRevenue->setDate(new \DateTime());
+                        $costRevenue->setOrderCompleted(1);
+                        $costRevenue->setUser($userCreatedBy);
+                        $costRevenue->setCreatedDate(new \DateTime());
+                    }
+                    $this->entityManager->persist($costRevenue);
+
+                    $action='Đã thanh toán';
+                    $message='Đã xác nhận thanh toán cho đơn hàng ' . $sellOrder->getGrocery()->getGroceryName();
+                }
+                else{
+                    $sellOrder->setStatus(31);//chua thanh toan or thanh toan 1 phan
+                    $sellOrder->setUnpaidBy($uName);
+                    $action='Chưa thanh toán';
+                    $message='Đã xác nhận đơn hàng ('.$sellOrder->getGrocery()->getGroceryName().') chưa thanh toán hoặc thanh toán một phần!';
+                }
+
+                if(!$sellOrder->getDeliveredBy()){
+                    $sellOrder->setDeliveredDate(new \DateTime());
+                    $userId= $this->userInfo->getId();
+                    $user = $this->entityManager->getRepository(User::class)->find($userId);
+                    $sellOrder->setDeliveredBy($user);
+                }
+
+                if(strlen($note)>0){
+                    if($sellOrder->getNote())
+                        $note = $sellOrder->getNote()."\n" .$uName ."|".date("Y-m-d h:i:s")."|".$note;
+                    else
+                        $note = $uName."|".date("Y-m-d h:i:s")."|".$note;
+
+                    $sellOrder->setNote($note);
+                }
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sellOrder);
+                $sellOrderActivity->setActionBy($this->userInfo->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $sellOrderActivity->setActionIcon('fa-money');
+                $sellOrderActivity->setAction($action);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $sellOrder->getGrocery()->setPayTotal($sellOrder->getGrocery()->getPayTotal()+$sellOrder->getTotalAmountToPaid());
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message']=$message;
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+            return new JsonModel($result);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/19/2025 10:53 AM
+     * chi tiet don hang da hoan thanh
+     **/
+    public function doPaidOrderAction(){
+
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PAID_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PAID_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/23/2025 10:53 AM
+     * chi tiet don hang chua thanh toan
+     **/
+    public function doWaitForPayAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_WAIT_FOR_PAY_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_WAIT_FOR_PAY_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 3/24/2025 10:53 AM
+     * Phan tuyen giao hang
+ */
+    public function deliveryRouteAction()
+    {
+        $sellOrder = $this->sellManager->getSellOrderDelivery();
+        $configManage = new ConfigManager();
+
+        $view = new ViewModel();
+        $view->setTerminal(true);
+        $view->setVariable('sellOrder',$sellOrder);
+        $view->setVariable('geoKey',$configManage->getGeoKey());
+        return $view;
+    }
+
+    /**
+     * Phan xe giao hang
+     * @return JsonModel
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
+    public function deliveryCarAction()
+    {
+        $request = $this->getRequest();
+        if($request->isPost()){
+            $orderId=$request->getPost('orderId');
+            $option=$request->getPost('option');
+            $car=$request->getPost('car');
+            $time=$request->getPost('time');
+
+            $sellOrder = $this->sellManager->getSellOrderById($orderId);
+            foreach ($sellOrder->getGrocery()->getSellOrder() as $sellOrderItem){
+                if($sellOrderItem->getStatus()==1 || $sellOrderItem->getStatus()==11 || $sellOrderItem->getStatus()==111){
+                    if($option==1){
+                        $sellOrderItem->setDeliveryCar($car);
+                        $sellOrderItem->setDeliveryCarTime($time);
+                    } else {
+                        $sellOrderItem->setDeliveryCar(null);
+                        $sellOrderItem->setDeliveryCarTime(null);
+                    }
+                    $this->entityManager->persist($sellOrderItem);
+                }
+            }
+            $this->entityManager->flush();
+            $result['status']=1;
+        }else{
+            $result['status']=0;
+            $result['message']='Error: method post only!!!';
+        }
+        return new JsonModel($result);
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/04/2025 10:53 AM
+     * Don hang da giao
+     * @return JsonModel|ViewModel
+     */
+    public function deliveredRouteAction()
+    {
+        $request = $this->getRequest();
+        if($request->isPost()){
+            //nothing
+            $result['status']=1;
+            return new JsonModel($result);
+        }else{
+            $deliveredDate=$request->getQuery('date',(new \DateTime())->format('Y-m-d'));
+
+            $sellOrder = $this->sellManager->getSellOrderDelivered($deliveredDate);
+            $configManage = new ConfigManager();
+
+            $result=array();
+            foreach($sellOrder as $sellOrderItem){
+                $o["name"]=$sellOrderItem['groceryName'];
+                $o["delivered_time"]=($sellOrderItem['delivered_time']?$sellOrderItem['delivered_time']:0);
+                $o["delivered_date"]=($sellOrderItem['delivered_time']?@$sellOrderItem['delivered_date']->format('Y-m-d H:i:s'):'');
+                $o["sid"]=$sellOrderItem['id'];
+                $o["id"]=$sellOrderItem['g_id'];
+                $o["lat"]=$sellOrderItem['lat'];
+                $o["lng"]=$sellOrderItem['lng'];
+                $o["delivery_car_time"]=$sellOrderItem['delivery_car_time'];
+                $o["delivery_car"]=$sellOrderItem['delivery_car'];
+                $result[]=$o;
+            }
+
+            $view = new ViewModel();
+            $view->setTerminal(true);
+            $view->setVariable('sellOrder',$result);
+            $view->setVariable('geoKey',$configManage->getGeoKey());
+            return $view;
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/04/2025 10:53 AM
+     * Chi tiết đơn đang đang đóng gói
+     * @return \Zend\Http\Response|JsonModel|ViewModel
+     */
+    public function doPackingAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PACKING_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PACKING_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/04/2025 10:53 AM
+     * Chi tiết đơn đang da đóng gói
+     * @return \Zend\Http\Response|JsonModel|ViewModel
+     */
+    public function doPackedAction(){
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $sellOrderID = $this->params()->fromPost('id',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PACKED_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            $total_order=0;
+            $total_order_product_discount=0;
+            $products=array();
+            foreach ($sellOrder->getSell() as $sell){
+                $product=$this->getDataOrderDetailListResult($sell);
+                $total_order+=$product['total_price'];
+                $total_order_product_discount+=$product['discount']*$product['qty'];
+
+                $products[]=$product;
+            }
+
+            $result['total_order']=$total_order;
+            $result['total_order_product_discount']=$total_order_product_discount;
+            $result['order_discount']=$sellOrder->getDiscount();
+            $result['total_amount_payable']=Common::round($total_order-$total_order_product_discount-$sellOrder->getDiscount());
+            $result['data'] = $products;
+            return new JsonModel($result);
+        }else{
+            $sellOrderID = $this->params()->fromRoute('id', 0);
+
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+
+            if($sellOrder->getStatus()!=Define::_ORDER_PACKED_STATUS)
+                return $this->redirect()->toRoute('not-authorized');
+
+            return new ViewModel(['sellOrder'=>$sellOrder,'userInfo'=>$this->userInfo]);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/04/2025 10:53 AM
+     * Sua so luong sản phẩm trong đơn hàng đã được xác nhận
+     * - nếu số lượng mới > số lượng ban đầu => điều chỉnh giảm kho
+     * - nếu số lượng mới < số lượng ban đầu => điều chỉnh giảm kho
+     * - nếu số lượng mới = 0 => thông báo không hợp lệ
+     * @return void|JsonModel
+     */
+    public function editProductOrderAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            try {
+                $sellId = $request->getPost("id");
+
+//                $orderId = $request->getPost("oid");
+                $newQty=$request->getPost("qty");
+                $option=$request->getPost("opt");//unit or pack
+
+                if(!$sellId)
+                    throw new Exception('Error! Có thể không tim thấy sản phẩm hoặc đơn hàng hoặc chưa nhập số lượng cần bán!');
+
+                if($newQty==0)
+                    throw new Exception('Không thể thực hiện, vui lòng sử dụng chức năng xoá sản phẩm khỏi đơn hàng.');
+
+                //lấy thông tin sản phẩm cần thay đổi
+                $sell = $this->sellManager->getById($sellId);
+
+                $sellOrder = $sell->getSellOrder();
+
+                $product = $sell->getProduct();
+
+                //thêm vào theo thung
+                if($option=='pack'){
+                    $newQty=$newQty*$sell->getPackUnit();//quy cach luc dat hang
+                }
+
+                //tồn kho hiện tại của sản phẩm
+                $inventory = $product->getInventory();
+
+                //lấy thông tin sản phẩm trong đơn hàng
+//                $productInOrder=$sellOrder->buildSell($product);
+
+                //số lượng sp trong đơn
+                $qtyProductInOrder = $sell->getQuantity();
+
+                $qtyChange=$newQty-$qtyProductInOrder; // nếu $qtyChange>0 => số lượng mới lớn hơn sl hiện có trong đơn, <0 ngược lại, = 0 là không thay đổi
+
+                if ($qtyChange === 0) {
+                    throw new \Exception("Số lượng sản phẩm không có sự thay đổi so với trước đó.");
+                }
+
+                if ($qtyChange > 0) {
+                    // Kiểm tra tồn kho có đủ không
+                    if ($inventory < $qtyChange) {
+                        throw new \Exception("Tồn kho hiện đang có [".$inventory."] không đủ để thêm vào đơn!");
+                    }
+                    //tăng số lượng trong đơn, nên trừ lại vào tồn kho
+                    $newInventory = $inventory - $qtyChange;
+                } else {
+                    // $qtyChange < 0: giảm số lượng trong đơn, nên cộng lại vào tồn kho
+                    $newInventory = $inventory + abs($qtyChange);
+                }
+
+                $product->setInventory($newInventory);
+
+                $sell->setQuantity($newQty);
+//                $productInOrder->setSellOrder($sellOrder);
+//                $sellOrder->addSell($productInOrder);
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                //tao moi ban ghi product activity
+                $productActivity = new ProductActivity();
+                $productActivity->setUser($user);
+                $productActivity->setProduct($product);
+                $productActivity->setCreatedDate(new \DateTime());
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sellOrder);
+                $sellOrderActivity->setActionBy($user->getUsername());
+                $sellOrderActivity->setActionTime(new \DateTime());
+
+                if($qtyChange>0){
+                    $productActivity->setNote('Sửa đơn: '.$sellOrder->getGrocery()->getGroceryName());
+                    $productActivity->setChange(-1*$qtyChange);
+
+                    $action='Bỏ '.$qtyChange.' '.$product->getName();
+                    $sellOrderActivity->setAction($action);
+                    $sellOrderActivity->setActionIcon('fa-minus-square');
+                }else{
+                    $productActivity->setNote('Sửa đơn: '.$sellOrder->getGrocery()->getGroceryName());
+                    $productActivity->setChange(abs($qtyChange));
+
+                    $sellOrderActivity->setActionIcon('fa-plus-square');
+                    $action='Thêm '.abs($qtyChange).' '.$product->getName();
+                    $sellOrderActivity->setAction($action);
+                }
+
+                $this->entityManager->persist($productActivity);
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->persist($sellOrder);
+                $this->entityManager->flush();
+
+                $result['status']=1;
+                $result['message'] = 'Đã sửa số lượng sản phẩm '. $product->getName() . ' trong đơn hàng!';
+
+            } catch (\Exception $e) {
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+            return new JsonModel($result);
+        }
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/04/2025 10:53 AM
+     * Xoá sản phẩm trong đơn hàng đã được xác nhận
+     * - Thực hiện xoá sản phẩm trong đơn và trả lại sản phẩm vào tồn kho
+     * @return void|JsonModel
+     */
+    public function delProductOrderAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            try{
+                $sellId = $request->getPost("id");
+
+                //lấy thông tin sản phẩm cần xoá
+                $sell = $this->sellManager->getById($sellId);
+                $product = $sell->getProduct();
+                //tồn kho hiện tại của sản phẩm
+                $inventory = $product->getInventory();
+
+                //sô lượng sản phẩm đang có trên đơn
+                $quantity = $sell->getQuantity();
+
+                //tra lai san pham vao kho
+                $product->setInventory($inventory+$quantity);
+
+                $this->entityManager->remove($sell);
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+                //tao moi ban ghi product activity
+                $productActivity = new ProductActivity();
+                $productActivity->setUser($user);
+                $productActivity->setProduct($product);
+                $productActivity->setNote('Bỏ ra khỏi đơn: '.$sell->getSellOrder()->getGrocery()->getGroceryName());
+                $productActivity->setCreatedDate(new \DateTime());
+                $productActivity->setChange($quantity);
+                $this->entityManager->persist($productActivity);
+
+                //insert sell order activity
+                $sellOrderActivity = new SellOrderActivity();
+                $sellOrderActivity->setSellOrder($sell->getSellOrder());
+                $sellOrderActivity->setActionBy($user->getUsername());
+                $action='Xoá '.$quantity.' '.$product->getName();
+                $sellOrderActivity->setActionIcon('fa-minus-square');
+                $sellOrderActivity->setAction($action);
+                $sellOrderActivity->setActionTime(new \DateTime());
+                $this->entityManager->persist($sellOrderActivity);
+
+                $this->entityManager->flush();
+                $result['status']=1;
+                $result['message']='Đã xoá sản phẩm '.$product->getName();
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+        }else{
+            $result['status']=0;
+            $result['message']="Không thể thực hiện xoá dữ liệu!";
+        }
+        return new JsonModel($result);
+    }
+
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/21/2025 10:53 AM
+     * trả về dữ liệu hiển thị trên danh sách đơn hàng
+     * @param $orderItem
+     * @return array
+     */
+    private function getDataOrderListResult($orderItem)
+    {
+        $tmp['order_id']=$orderItem->getId();
+        $tmp['order_code']=$orderItem->getOrderCode();
+        $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
+        $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);
+        $tmp['created_date']=Common::formatDateTime($orderItem->getCreatedDate());
+        if($orderItem->getMethod()>0)
+            $createdBy='<span class="fa fa-phone-square"></span> Admin';
+        else if($orderItem->getMethod()==-1)
+            $createdBy='<span class="glyphicon glyphicon-user"></span> Customer';
+        else
+            $createdBy=$orderItem->getUser()->getUsername();
+        $tmp['created_by']=$createdBy;
+
+        $tmp['delivery_car']=$orderItem->getDeliveryCar();
+        $tmp['order_message']=($orderItem->getNoteTooltip()?'<button type="button" class="btn btn-rounded btn-warning fa fa-bell popover-dismiss" data-content="'.$orderItem->getNoteTooltip().'"></button>':'');
+        $tmp['total_amount_paid']=Common::round($orderItem->getTotalAmountToPaid());
+
+        return $tmp;
+    }
+    /**
+     * Created by   : TruongHM
+     * Created date: 4/21/2025 10:53 AM
+     * trả về dữ liệu san pham hiển thị trên chi tieet đơn hàng
+     * @param $orderItem
+     * @return array
+     */
+    private function getDataOrderDetailListResult($sell)
+    {
+        $product['id']=$sell->getId();
+        $product['product_id']=$sell->getProduct()->getId();
+        $product['barcode']=$sell->getProduct()->getCode();
+        $product['weight']=$sell->getProduct()->getWeight();
+        $product['name']=$sell->getProduct()->getName();
+        $product['img']=$sell->getProduct()->getImg();
+        $product['inventory']=$sell->getProduct()->getInventory();
+        $product['note_order']=$sell->getProduct()->getNoteOrder();
+        $product['pack_unit']=$sell->getPackUnit();
+        $product['discount']=$sell->getDiscount();
+        $product['check_qty']=$sell->getCheckQty();
+        $product['check_by']=$sell->getCheckBy();
+        $product['check_date']=Common::formatDateTime($sell->getCheckDate());
+
+        //mua theo thung
+        if($sell->isPack()){
+            $qty=$sell->isPack();
+            $unitName='Thùng';
+            $price=$sell->getPackUnit()*$sell->getPriceValue();//gia ban theo thung
+        }
+        else {
+            $qty=$sell->getQuantity();
+            $unitName=$sell->getProduct()->getUnit()->getName();
+            $price=$sell->getPriceValue();//gia ban le
+        }
+        $product['price']=$price;
+        $product['qty']=$qty;
+        $totalPrice=$price*$qty;//chua tru discount
+        $product['total_price']=$totalPrice;
+        $product['unit']=$unitName;
+        $product['base_unit']=$sell->getProduct()->getUnit()->getName();
+
+        $product['return_message']='';
+        $product['return']=0;
+        if($sell->getReturn()){
+            $product['return']=$sell->getReturn();
+
+            $causes=($sell->getReturnCauses()?ConfigManager::getCausesReturn()[$sell->getReturnCauses()]:'');
+
+            $returnMessage='Đã trả lại ';
+            $returnMessage=$returnMessage.'<b>'.$sell->getReturn().' '.$sell->getProduct()->getUnit()->getName().'</b>';
+            $returnMessage=$returnMessage.', <b>'.$causes.'-'.$sell->getReturnNote().'</b>';
+            $returnMessage=$returnMessage.', ['.$sell->getReturnBy().']: '.Common::formatDateTime($sell->getReturnDate());
+            $product['return_message']=$returnMessage;
+        }
+        return $product;
+    }
+}

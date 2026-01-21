@@ -1,0 +1,166 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Đơn hàng</title>
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+
+</head>
+<body>
+<div> <!--style="border: 1px solid red; width: 793.7px; height: 1100px"-->
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <h3>Khách hàng trong đơn</h3>
+                <?php
+                foreach ($this->sellOrders as $sellOrder){
+                    echo $sellOrder->getGrocery()->getGroceryName(). ' | ';
+                }
+                ?>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div style="text-align: right; padding-bottom: 5px;"><i>Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
+            <div class="info-order">
+                <table id="tblProduct">
+                    <tr>
+                        <th style="text-align: center; ">STT</th>
+                        <th style="">Mã hàng</th>
+                        <th style="text-align: left">Tên hàng hoá</th>
+                        <th style="text-align: center">Loại</th>
+                        <th style="text-align: center">ĐVT</th>
+<!--                        <th style="text-align: center">Quy cách</th>-->
+                        <th style="text-align: center">Số lượng</th>
+                    </tr>
+                    <?php
+                    $i=1;
+                    foreach ($this->products as $product){
+                        $sQc='';
+                        //so luong tinh theo quy cach
+                        $qc=floor($product["quantity"]/$product["unit_box"]);
+                        if($qc>0) $sQc=$qc.' Thùng ';
+                        //so luong tinh don vi
+                        $dv=$product["quantity"]%$product["unit_box"];
+                        if($dv>0) $sQc.=$dv.' '.$product["unit"];
+
+                        echo '<tr>';
+                        echo '<td style="text-align: center">' . $product["sort"] . '</td>';
+                        echo '<td style="text-align: center">' . $product["code"] . '</td>';
+                        echo '<td>' . $product["name"] . '</td>';
+                        echo '<td style="text-align: center">' . $product["weight"] . '</td>';
+                        echo '<td style="text-align: center">' . $product["unit"] . '</td>';
+//                        echo '<td style="text-align: center">' . $product["unit_box"]. '</td>';
+                        echo '<td style="text-align: center">' .$sQc. '</td>';
+                        echo '</tr>';
+                    }
+                    ?>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    table{
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        // Handler for .ready() called.
+        sortTable();
+    });
+
+    function sortTable() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("tblProduct");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[0];
+                y = rows[i + 1].getElementsByTagName("TD")[0];
+                //check if the two rows should switch place:
+                if (parseInt(x.innerHTML.toLowerCase()) > parseInt(y.innerHTML.toLowerCase())) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+                //console.log(x.innerHTML.toLowerCase());
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+
+        //sap xem lai stt
+        for (i = 1; i < (rows.length); i++) {
+            x = rows[i].getElementsByTagName("TD")[0].innerHTML=i;
+            // console.log(x)
+        }
+    }
+</script>
+</body>
+</html>

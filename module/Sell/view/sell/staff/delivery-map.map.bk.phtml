@@ -1,0 +1,267 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NPP ANH VŨ</title>
+    <meta name="viewport" content="width&#x3D;device-width,&#x20;initial-scale&#x3D;1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE&#x3D;edge">
+    <!-- Le styles -->
+    <link href="&#x2F;favicon.png" rel="shortcut&#x20;icon" type="image&#x2F;x-icon">
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <img src="/img/icons/icon-grocery-blue.png" width="25px"> <span> Đang giao</span> (<span id="blue"></span> đơn)
+    </div>
+    <div id="map-canvas"></div>
+</div>
+</body>
+</html>
+<style>
+    html, body, #wrapper{
+        height: 100%;
+        width: 100%;
+    }
+    #header{
+        background-color:#ff6700;
+        padding:5px;
+        margin:10px;
+        position: absolute;
+        z-index: 1000;
+    }
+    #map-canvas{
+        height: 100%;
+        width: 100%;
+    }
+</style>
+<?php
+function getOptimizedRoute($start, $waypoints, $apiKey) {
+    $waypoints[] = $start; // Thêm điểm xuất phát vào cuối để tạo vòng tròn
+
+    // Chuyển tọa độ thành chuỗi định dạng Google Maps API
+    $waypointsStr = implode('|', array_map(function ($wp) {
+        return "{$wp['lat']},{$wp['lng']}";
+    }, $waypoints));
+
+    // Gọi Google Directions API với chế độ "driving"
+    $url = "https://maps.googleapis.com/maps/api/directions/json?"
+        . "origin={$start['lat']},{$start['lng']}"
+        . "&destination={$start['lat']},{$start['lng']}"
+        . "&waypoints=optimize:true|$waypointsStr"
+        . "&mode=driving"  // 🚗 Chế độ di chuyển bằng ô tô
+        . "&key=$apiKey";
+
+    // Gửi request API
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+
+// 📌 Cấu hình các điểm với latitude (lat) và longitude (lng)
+$start = ['lat' => 20.93503664464731, 'lng' => 105.78945461301609];  // Hà Nội
+$waypoints=[];
+$pointName=[];
+if($this->sellOrder){
+
+    foreach ($this->sellOrder as $sellOrderItem) {
+        if(!is_null($sellOrderItem->getGrocery()->getLat()) && !is_null($sellOrderItem->getGrocery()->getLng())){
+            $tmp['lat']=trim($sellOrderItem->getGrocery()->getLat());
+            $tmp['lng']=trim($sellOrderItem->getGrocery()->getLng());
+            $tmp['name']=trim($sellOrderItem->getGrocery()->getGroceryName());
+            $tmp['id']=trim($sellOrderItem->getId());
+//            $pointName[]=$sellOrderItem->getGrocery()->getGroceryName();
+            $waypoints[]=$tmp;
+
+        }
+    }
+}
+$apiKey = "AIzaSyDChks5OL1rjm77PHapW76G0BWRdxIesxY"; // Thay bằng API Key của bạn
+
+// Gọi hàm lấy tuyến đường tối ưu
+$result = getOptimizedRoute($start, $waypoints, $apiKey);
+
+// Truyền dữ liệu sang JavaScript
+$jsRoute = json_encode($result);
+$jsApiKey = $apiKey;
+?>
+<script>
+    const routeData = <?= $jsRoute ?>;
+    const apiKey = "<?= $jsApiKey ?>";
+    const locations = <?= json_encode($waypoints) ?>;
+
+    let map, directionsService, directionsRenderer;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById("map-canvas"), {
+            zoom: 12,
+            center: { lat: 20.93503664464731, lng: 105.78945461301609 },
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true // Ẩn marker mặc định của Google
+        });
+
+        if (routeData.status === "OK") {
+            directionsRenderer.setDirections(routeData);
+            addMarkers(routeData);
+        } else {
+            alert("Không thể hiển thị bản đồ: " + routeData.status);
+        }
+         //calculateRoute("DRIVING"); // Mặc định hiển thị đường đi ô tô
+
+    }
+    function calculateRoute(travelMode) {
+        // Kiểm tra nếu dữ liệu tuyến đường không hợp lệ
+        if (routeData.status !== "OK") {
+            alert("Không thể tải tuyến đường: " + routeData.status);
+            return;
+        }
+
+        const legs = routeData.routes[0].legs;
+
+        const waypoints = legs.slice(1, -1).map(leg => ({
+            location: leg.start_location,
+            stopover: true
+        }));
+
+        const request = {
+            origin: legs[0].start_location,
+            destination: legs[legs.length - 1].end_location,
+            waypoints: waypoints,
+            travelMode: google.maps.TravelMode[travelMode],
+        };
+
+        // Gửi yêu cầu chỉ đường từ Google Directions API
+        directionsService.route(request, (response, status) => {
+            if (status === "OK") {
+                // Vẽ tuyến đường trên bản đồ
+                directionsRenderer.setDirections(response);
+                addMarkers(response);  // Thêm các markers thủ công
+            } else {
+                alert("Lỗi chỉ đường: " + status);
+            }
+        });
+    }
+
+    // Hàm thêm markers vào bản đồ với số thứ tự
+    function addMarkers(response) {
+        const legs = response.routes[0].legs;
+        let markers = [];
+
+        legs.forEach((leg, index) => {
+            // Lấy vị trí điểm hiện tại
+            const position = leg.start_location;
+            const markerLabel = (index + 1).toString(); // Đánh số thứ tự
+
+            // Tìm tên địa điểm theo lat/lng
+            const location = locations.find(loc =>
+                Math.abs(loc.lat - position.lat) < 0.0001 &&
+                Math.abs(loc.lng - position.lng) < 0.0001
+            );
+
+            const locationName = location ? location.name : `Điểm ${markerLabel}`;
+
+            // Tạo marker
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                label: markerLabel,
+            });
+
+            // Thêm InfoWindow khi click vào marker
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<strong>${locationName}</strong><br>${leg.start_address}`,
+            });
+
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+
+            markers.push(marker);
+        });
+
+        // Thêm marker cho điểm cuối
+        const lastLeg = legs[legs.length - 1];
+        const lastPosition = lastLeg.end_location;
+        const lastMarkerLabel = (legs.length + 1).toString();
+
+        const lastLocation = locations.find(loc =>
+            Math.abs(loc.lat - lastPosition.lat) < 0.0001 &&
+            Math.abs(loc.lng - lastPosition.lng) < 0.0001
+        );
+
+        const lastLocationName = lastLocation ? lastLocation.name : `Điểm ${lastMarkerLabel}`;
+
+        const lastMarker = new google.maps.Marker({
+            position: lastPosition,
+            map: map,
+            label: lastMarkerLabel,
+        });
+
+        const lastInfoWindow = new google.maps.InfoWindow({
+            content: `<strong>${lastLocationName}</strong>`,
+        });
+
+        lastMarker.addListener('click', () => {
+            lastInfoWindow.open(map, lastMarker);
+        });
+
+        markers.push(lastMarker);
+    }
+
+    function getInfoMarket(position){
+        console.log(position.lat+';'+position.lng);
+
+        const location = locations.find(loc =>
+            Math.abs(loc.lat - position.lat) < 0.0001 &&
+            Math.abs(loc.lng - position.lng) < 0.0001
+        );
+
+        if(location){
+            console.log(location.name);
+        }
+
+        return location;
+        /*locations.forEach((location, index) => {
+            console.log(location.lat+';'+location.lng)
+        });*/
+    }
+</script>
+
+<!-- Google Maps API JS -->
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=<?= $jsApiKey ?>&callback=initMap">
+</script>

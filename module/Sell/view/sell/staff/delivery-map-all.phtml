@@ -1,0 +1,260 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NPP ANH VŨ</title>
+    <meta name="viewport" content="width&#x3D;device-width,&#x20;initial-scale&#x3D;1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE&#x3D;edge">
+    <!-- Le styles -->
+    <link href="&#x2F;favicon.png" rel="shortcut&#x20;icon" type="image&#x2F;x-icon">
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <img src="/img/icons/icon-grocery-purple.png" width="25px"> <span> Chờ xử lý</span>(<span id="purple"></span>)
+        <img src="/img/icons/icon-grocery-red.png" width="25px"> <span> Đang đóng gói</span>(<span id="red"></span>)
+        <img src="/img/icons/icon-grocery-yeallow.png" width="25px"> <span> Chuẩn bị giao</span>(<span id="yeallow"></span>)
+        <img src="/img/icons/icon-grocery-blue.png" width="25px"> <span> Đang giao</span>(<span id="blue"></span>)
+    </div>
+    <div id="map-canvas"></div>
+</div>
+</body>
+</html>
+<style>
+    html, body, #wrapper{
+        height: 100%;
+        width: 100%;
+    }
+    #header{
+        background-color:#ff6700;
+        padding:5px;
+        margin:10px;
+        position: absolute;
+        z-index: 1000;
+    }
+    #map-canvas{
+        height: 100%;
+        width: 100%;
+    }
+</style>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>
+<script>
+    var map;
+    <?php
+    echo PHP_EOL;
+    echo 'jsonObj = [];'.PHP_EOL;
+    $blue=0;
+    $yeallow=0;
+    $red=0;
+    $purple=0;
+    if($this->sellOrder){
+
+        foreach ($this->sellOrder as $sellOrderItem) {
+            if(!is_null($sellOrderItem->getGrocery()->getLat()) && !is_null($sellOrderItem->getGrocery()->getLng())){
+                $debt=0;
+                foreach ($sellOrderItem->getGrocery()->getSellOrder() as $sellOrderTmp){
+                    if($sellOrderTmp->getStatus() == 21 || $sellOrderTmp->getStatus() ==31)
+                        $debt+=$sellOrderTmp->getTotalAmountToPaid();
+                }
+
+                echo PHP_EOL;
+                echo 'item = {};'.PHP_EOL;
+                echo 'item["name"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getGroceryName()),ENT_QUOTES).'\';'.PHP_EOL;
+                echo 'item["id"]=\''.$sellOrderItem->getGrocery()->getId().'\';'.PHP_EOL;
+                echo 'item["lat"]=\''.trim($sellOrderItem->getGrocery()->getLat()).'\';'.PHP_EOL;
+                echo 'item["lng"]=\''.trim($sellOrderItem->getGrocery()->getLng()).'\';'.PHP_EOL;
+                echo 'item["debt"]=\''.Common::formatMoney($debt).'\';'.PHP_EOL;
+                echo 'item["img"]=\''.$sellOrderItem->getGrocery()->getImg().'\';'.PHP_EOL;
+                echo 'item["tp"]=\''.Common::formatMoney($sellOrderItem->getTotalPrice()).'\';'.PHP_EOL;
+                echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
+                echo 'item["cd"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
+                echo 'item["zalo"]=\''.($sellOrderItem->getGrocery()->getZaloAppItem()?'App: Đã cài':'App: Chưa cài').'\';'.PHP_EOL;
+
+                if($sellOrderItem->getStatus()==2){
+                    $icon = 'blue.png';
+                    $blue=$blue+1;
+                }else if($sellOrderItem->getStatus()==1||$sellOrderItem->getStatus()==11){
+                    $icon = 'red.png';
+                    $red=$red+1;
+                }else if($sellOrderItem->getStatus()==111){
+                    $icon = 'yeallow.png';
+                    $yeallow=$yeallow+1;
+                }else if($sellOrderItem->getStatus()==-1 || $sellOrderItem->getStatus()==-2){
+                    $icon = 'purple.png';
+                    $purple=$purple+1;
+                }
+
+                echo 'item["icon"]=\''.$icon.'\';'.PHP_EOL;
+                echo 'jsonObj.push(item);'.PHP_EOL;
+            }
+        }
+    }
+    ?>
+
+    var myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        },{
+            "featureType": "administrative",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        },{
+            "elementType": "labels",
+            "stylers": [
+                { "visibility": "on" }
+            ]
+        },{
+            "featureType": "poi",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        }
+    ];
+    $('#blue').html(<?=$blue?>);
+    $('#yeallow').html(<?=$yeallow?>);
+    $('#red').html(<?=$red?>);
+    $('#purple').html(<?=$purple?>);
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+            disableDefaultUI: true,
+            fullscreenControl: true,
+            zoom: 15,
+            styles: myStyles
+        });
+
+        var bounds = new google.maps.LatLngBounds();
+        $.each(jsonObj, function (key, data) {
+            var latLng = new google.maps.LatLng(data.lat, data.lng);
+            var marker = new google.maps.Marker({
+                map: map,
+                position: latLng,
+                icon:{
+                    url:"/img/icons/icon-grocery-"+data.icon,
+                    scaledSize: new google.maps.Size(35, 35)
+                }
+            });
+            var url='/user/grocery/panel/'+data.id+'.html';
+            var content = `<div id="content">`;
+
+            if(data.img)
+                content += `<p><img src="${data.img}" style="max-width: 320px"><p>`;
+
+             content += `<a target="_blank" style="font-weight: bold" href="${url}">${data.name} | ${data.zalo}</a>`;
+             content += `<br> Ngày tạo: ${data.cd}`;
+             content += `<br> Tổng đơn: <i>${data.tp}`;
+             content += `<br> <span style="color: #ee1e2d; font-weight: bold">Công nợ: ${data.debt}</span>`;
+             content += `<br> ${data.note}`;
+             content += `</div>`;
+            var infowindow = new google.maps.InfoWindow({
+                // content: '<div id="content"><a target="_blank" href="'+url+'">'+data.name+' | '+data.zalo+'</a>,<br> Ngày tạo: '+data.cd+' <br>Tổng đơn: <i>'+data.tp+' đ</i><br><span style="color: #ee1e2d; font-weight: bold">Công nợ: '+data.debt+'</span><br>'+data.note+'</div>'
+                content:content
+            });
+
+            marker.addListener("click", () => {
+                infowindow.open(map, marker);
+            });
+            bounds.extend(latLng);
+        });
+        var mapBound = 0;
+        if(jsonObj.length>0){
+            map.fitBounds(bounds);
+             mapBound = 1;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+                var center = new google.maps.LatLng(position.coords.latitude,
+                    position.coords.longitude);
+
+                if(mapBound == 0)
+                    map.setCenter(center);
+
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: center,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        strokeColor: 'white',
+                        strokeWeight: 2,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.6
+                    }
+                });
+                marker.setMap(map);
+                marker.setPosition(center);
+
+                var markerWaveCurrent = new google.maps.Marker({
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                        strokeColor: 'white',
+                        strokeWeight: 1,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.3
+                    },
+                });
+                markerWaveCurrent.setMap(map);
+                markerWaveCurrent.setPosition(center);
+
+                var count=0;
+                window.setInterval(function() {
+                    var icon = markerWaveCurrent.get('icon');
+                    if(icon.scale<30){
+                        icon.scale = icon.scale+1;
+                    }else{
+                        count = count+1;
+                        icon.scale = 8;
+                    }
+                    markerWaveCurrent.set('icon', icon);
+                }, 35);
+
+            }, function () {
+                handleLocationError(true, infowindow, map.getCenter());
+                // stop_waitMe();
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infowindow, map.getCenter());
+            // stop_waitMe();
+        }
+    }
+</script>

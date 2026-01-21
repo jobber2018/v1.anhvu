@@ -1,0 +1,180 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$this->headTitle($this->escapeHtml($this->groceryCat->getName()))->setSeparator(' - ')->setAutoEscape(false)
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li class="active">Danh sách cửa hàng</li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Tuyến <?=$this->groceryCat->getName()." <i>(".$this->groceryCat->getGroceryActiveCount()?> cửa hàng)</i></h3>
+    <button class="btn btn-info active" onclick="location.href='<?=$this->url('grocery-user',['action'=>'add','id'=>$this->escapeHtml($this->groceryCat->getId())])?>';"><i class="fa fa-plus"></i>Thêm cửa hàng</button>
+    <button class="btn btn-info" onclick="location.href='<?=$this->url('grocery-user',['action'=>'map','id'=>$this->escapeHtml($this->groceryCat->getId())])?>';"><i class="fa fa-map-marker"></i>Bản đồ</button>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div style="padding-bottom: 10px; color: red">Khách hàng bạn cần quan tâm và CRM cụ thể khi đi tuyến này!.</div>
+                    <table class="table nowrap table-hover display datatable_simple" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Khách hàng</th>
+                            <th>Đơn gần nhất</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <?php
+                        foreach ($this->orderAnalytic as $k=>$v) {
+//                            $day = $v->getGrocery()->getGroceryCat()->getDay();
+//                            $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
+                            if($v->getGrocery()->getGroceryCat()->getId() ==$this->groceryCat->getId() && $v->getDiff()>=5) {
+                                echo '<tr>';
+                                echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
+                                echo '</tr>';
+                            }
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="tblGrocery" class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th style="width: 25px"></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        if($this->groceryList){
+                            $dateNow=date("Y-m-d",strtotime("now"));
+                            foreach ($this->groceryList as $grocery=>$groceryItem) {
+                                $checkinColor="#cccccc";
+                                $checkInDate = $groceryItem->getCheckInDate();
+                                $checkInTime = $groceryItem->getTimeInGrocery();
+                                $isDate=-1;
+                                if(!is_null($checkInDate)){
+                                    $sCheckInDate = $checkInDate->format('Y-m-d');
+                                    $isDate = strtotime($dateNow)-strtotime($sCheckInDate);
+                                    if($isDate==0 && $checkInTime <=5) $checkinColor="#ff8400";
+                                    else if($isDate==0 && $checkInTime >5) $checkinColor="#1caf9a";
+                                }
+
+                                //check star
+                                $star='<span class="fa fa-star-o"></span>';
+                                $payTotal = $groceryItem->getPayTotal()/50000000;
+                                if($payTotal<=1 && $payTotal>0)
+                                    $star='<span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>1 && $payTotal<=2)
+                                    $star='<span class="fa fa-star"></span>';
+                                else if($payTotal>2 && $payTotal<=3)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>3 && $payTotal<=4)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>4 && $payTotal<=5)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>5 && $payTotal<=6)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>6 && $payTotal<=7)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>7 && $payTotal<=8)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>8 && $payTotal<=9)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>=10)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+
+
+                                //install zalo app?
+                                $zaloApp=$groceryItem->getZaloAppItem();
+                                $zaloAppInstall= '<lable style="color: red; font-weight: bold">Chưa cài app</lable>';
+                                if($zaloApp){
+                                    $zaloAppInstall='<lable style="color: #0C7FCC; font-weight: bold">Đã cài app</lable>';
+                                }
+
+                                echo '<tr>';
+                                echo '<td><span class="fa fa-map-marker" style="font-size: 20px; color: '.$checkinColor.'"></span></td>';
+                                echo '<td>';
+                                echo '<a class="title" href="'.$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($groceryItem->getId())]).'">'.$this->escapeHtml($groceryItem->getGroceryName()).' '.$star.'</a>';
+                                echo '<p><i>'.$this->escapeHtml($groceryItem->getAddress()).'</i></p>';
+                                echo '<p><b>'.$this->escapeHtml($groceryItem->getOwnerName()).'</b> Mobile: <b>'.$groceryItem->getMobile().'</b> - <b>'.($groceryItem->getZaloConnect()==1?'<span style="color: #0C7FCC">Đã kết bạn Zalo<span>':'<span style="color: red">Chưa kết bạn Zalo</span>').'</b> | '.$zaloAppInstall.'</p>';
+                                echo '<p><strong> Checkin:</strong> '.Common::formatDateTime($groceryItem->getCheckInDate()).' Chăm sóc: <b>'.$groceryItem->getStringIsApproach().'</b></p>';
+
+                                echo '<p style="color: #d26b04"><b>3 CRM mới nhất</b></p>';
+                                $i=0;
+                                foreach ($groceryItem->getGroceryCrm() as $groceryCrmItem) {
+                                    if($i<3)
+                                        echo '<p><i><b>'.$groceryCrmItem->getUser()->getFullname().':</b> '.$groceryCrmItem->getNote().'</i></p>';
+                                    $i++;
+                                }
+
+                                echo '</td>';
+                                echo '</tr>';
+                            }
+                        }else{
+                            echo '<tr><td colspan="2"></td></tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    #tblGrocery .title{font-weight: bold; font-size: 16px; padding-bottom: 5px}
+    #tblGrocery p{padding-bottom: 5px; margin: 0px}
+    #tblGrocery td{padding-bottom: 5px; padding-top: 5px}
+    #tblGrocery td:first-child{padding-right: 5px}
+    #tblGrocery tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+    .dataTables_filter label {float: unset; width: 100%}
+    .dataTables_filter label input {width: 80%}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblGrocery').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+        // $('.dataTables_filter label').addClass('input-group-addon');
+    });
+</script>

@@ -1,0 +1,224 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+use Sulde\Service\Common\Define;
+
+?>
+<div class="panel panel-default">
+    <div class="panel-body">
+        <table class="table nowrap table-hover display tblOrderInfo">
+            <tbody>
+            <tr>
+                <td>Mã đơn</td>
+                <td><?=$order->getOrderCode()?></td>
+            </tr>
+            <tr>
+                <td>Phải thanh toán</td>
+                <td><span class="total-amount-payable highlight"></span></td>
+            </tr>
+            <?php
+            if($order->getPayMethod()){
+                ?>
+                <tr>
+                    <td>Thanh toán</td>
+                    <td>
+                        <select class="form-control select" id="payMethod">
+                            <option value="2" <?=($order->getPayMethod()==2?'selected':'')?>>Tiền mặt</option>
+                            <option value="1" <?=($order->getPayMethod()==1?'selected':'')?>>Chuyển khoản</option>
+                        </select>
+                    </td>
+                </tr>
+                <?php
+            }
+            ?>
+            <tr>
+                <td>Trạng thái</td>
+                <td class="price"><?=ConfigManager::getOrderStatus()[$order->getStatus()]?></td>
+            </tr>
+            <?php
+            //show hinh anh hoa don
+            $invoices = $order->getInvoice();
+            if(count($order->getInvoice())){
+                $btnInvoice ='<button class="btn btn-info" onclick="showImg(\''.$order->getId().'\')"><span class="fa fa-picture-o"></span>Hình ảnh hoá đơn</button>';
+                echo '<tr><td></td><td>'.$btnInvoice.'</td></tr>';
+            }else{
+                $btnInvoice ='<button class="btn btn-danger"><span class="fa fa-picture-o"></span>Không có hình ảnh</button>';
+                echo '<tr><td></td><td>'.$btnInvoice.'</td></tr>';
+            }
+            ?>
+            <tr>
+                <td>Ngày tạo</td>
+                <td><?=Common::formatDateTime($order->getCreatedDate())?></td>
+            </tr>
+            <tr>
+                <td>Người tạo</td>
+                <?php
+                if($order->getMethod()>0)
+                    $method='<span class="fa fa-phone-square"></span> Admin';
+                else if($order->getMethod()==-1)
+                    $method='<span class="glyphicon glyphicon-user"></span> Zalo mini app';
+                else
+                    $method=$order->getUser()->getFullname();
+                ?>
+                <td><?=$method?></td>
+            </tr>
+            <?php
+            if($order->getCheckBy()){
+                echo '<tr><td>Ngày kiểm</td><td>'.Common::formatDate($order->getCheckDate()).'</td></tr>';
+                echo '<tr><td>Người kiểm</td><td>'.$order->getCheckBy().'</td></tr>';
+                echo '<tr><td>Số thùng</td><td>'.$order->getPackNumber().'</td></tr>';
+            }
+            if($order->getDeliveredDate()){
+                echo '<tr><td>Ngày giao</td><td>'.Common::formatDateTime($order->getDeliveredDate()).'</td></tr>';
+                echo '<tr><td>Người giao</td><td>'.$order->getDeliveredBy()->getFullname().'</td></tr>';
+            }
+            ?>
+            </tbody>
+        </table>
+        <div>
+            <p style="padding-top: 10px">Click, Hoă kéo thả hình ảnh hoá đơn để upload</p>
+            <form action="<?=$this->url('sell-staff',['action'=>'upload-invoice','id'=>$order->getId()])?>" class="dropzone dropzone-mini" id="dropzoneFrom"></form>
+        </div>
+    </div>
+</div>
+<div class="modal" id="invoiceModal" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" id="previewImg">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tblOrderInfo tr:first-child td{border-top: 0px}
+    .tblOrderInfo td:first-child{font-weight: bold}
+    .tblOrderInfo{margin-bottom: 0px}
+    .dz-image-preview img{width: 100%!important;}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/dropzone/dropzone.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        $('#payMethod').selectpicker().on('change', function(){
+            let method = $(this).val();
+            run_waitMe();
+            let url='<?=$this->url('sell-admin',['action'=>'edit-payment-method'])?>';
+            $.ajax({
+                method: "POST",
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                },
+                data: {order_id:<?=$order->getId()?>,method:method},
+                url: url
+            }).done(function(res) {
+                if(res.status==1){
+                    noty({text: res.message, layout: 'topRight', type: 'success',timeout: 4000});
+                }else{
+                    noty({text: res.message, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe();
+            });
+        });
+
+
+        let fileList = new Array;
+        let i=0;
+        Dropzone.options.dropzoneFrom = {
+            autoProcessQueue: true,
+            acceptedFiles:".png,.jpg,.gif,.bmp,.jpeg",
+            parallelUploads: 5,
+            maxFilesize: 10, // MB
+            addRemoveLinks: true,
+            dictRemoveFileConfirmation: "Do you want to remove this?",
+            init: function(){
+                let myDropzone = this;
+
+                <?php
+                foreach ($order->getInvoice() as $image) {
+                    echo PHP_EOL;
+                    echo 'mockFile = { name: "File '.$image->getId().'", size: '.Common::getRemoteFileInfo($image->getPath()).' };' . PHP_EOL;
+                    echo 'myDropzone.options.addedfile.call(myDropzone, mockFile);' . PHP_EOL;
+                    echo 'myDropzone.options.thumbnail.call(myDropzone, mockFile, "'.$image->getPath().'");' . PHP_EOL;
+                    echo 'myDropzone.files.push(mockFile);' . PHP_EOL;
+                    echo 'fileList[i] = {' . PHP_EOL;
+                    echo '"fileName": "File '.$image->getId().'",' . PHP_EOL;
+                    echo '"fileId": '.$image->getId() . PHP_EOL;
+                    echo '};' . PHP_EOL;
+                    echo 'i += 1;' . PHP_EOL;
+                }
+                ?>
+
+                this.on("success", function(file,response){
+                    fileList[i] = {
+                        "fileName": file.name,
+                        "fileId": response.id
+                    };
+                    i += 1;
+                    noty({text: 'Upload successful', layout: 'topRight', type: 'success',timeout: 4000});
+                });
+
+                this.on("removedfile", function(file){
+                    let fileId = "";
+                    //find file in list uploaded
+                    for (let f = 0; f < fileList.length; f++) {
+                        if (fileList[f].fileName === file.name) {
+                            fileId = fileList[f].fileId;
+                        }
+                    }
+                    //do delete file
+                    let url='<?=$this->url('sell-staff',['action'=>'delete-invoice'])?>';
+                    if(fileId){
+                        $.ajax({
+                            headers: {
+                                Accept: "application/json; charset=utf-8"
+                            },
+                            method: "POST",
+                            url: url,
+                            data: {id:fileId}
+                        }).done(function (response) {
+                            if(response.status==1){
+                                noty({text: 'Delete successful', layout: 'topRight', type: 'success',timeout: 4000});
+                            }else{
+                                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                            }
+
+                        })
+                    }
+                    // console.log("do remove File: "+ fileId);
+                });
+            },
+        };
+    });
+
+    function showImg(orderId){
+        run_waitMe();
+        let url='<?=$this->url('sell-staff',['action'=>'invoice-image'])?>';
+        $.ajax({
+            method: "GET",
+            data: {id:orderId},
+            url: url
+        }).done(function(res) {
+            if(res.status==1){
+                $('#previewImg').empty();
+                $.each(res.data, function(key,value) {
+                    let img = $('<img />').attr({
+                        'src': value,
+                        'alt': 'JSFiddle logo',
+                        'title': 'JSFiddle logo',
+                        'width': "100%"
+                    }).appendTo('#previewImg');
+                });
+                $('#invoiceModal').modal('show');
+            }else{
+                noty({text: res.message, layout: 'topRight', type: 'warning',timeout: 4000});
+            }
+            stop_waitMe();
+        });
+    }
+</script>

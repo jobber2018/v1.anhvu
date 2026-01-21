@@ -1,0 +1,433 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$this->headTitle("Sửa đơn hàng");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($this->grocery->getId())])?>"><?=$this->grocery->getGroceryName()?></a></li>
+    <li class="active">Sửa đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3>
+        <span class="fa fa-arrow-circle-o-left"></span> Sửa đơn hàng (<?=$this->sellOrder->getOrderCode()?>) | <?=$this->grocery->getGroceryName()?>
+        <small class="label label-warning"><?=ConfigManager::getOrderStatus()[$this->sellOrder->getStatus()]?></small>
+    </h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form action="<?=$this->url('sell-user',['action'=>'note'])?>" method="post">
+                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                        <div class="input-group" style="padding-bottom: 10px">
+                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                            <span class="input-group-btn">
+                                    <button class="btn btn-default" type="submit">Ghi chú</button>
+                                </span>
+                        </div>
+                    </form>
+
+                    <?php
+                    $noteArr =explode("\n",$this->sellOrder->getNote());
+                    if($this->sellOrder->getNote()){
+                        if(count($noteArr)){
+                            //                echo '<div class="col-md-4">';
+                            //                echo '<div class="panel panel-default">';
+                            //                echo '<div class="panel-body">';
+                            foreach ($noteArr as $value){
+                                $arrNote = explode("|",$value);
+                                ?>
+                                <div class="list-group-item">
+                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                    <p><i><?=@$arrNote[2]?></i></p>
+                                </div>
+                                <?php
+                            }
+                            //                echo '</div></div></div>';
+                        }
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Thôn tin đơn hàng</h3>
+                    <ul class="panel-controls">
+                        <?php
+                        if($this->sellOrder->getStatus()<0){
+                        ?>
+                        <button onclick="showModalSelectProduct()" class="btn btn-info"><span class="fa fa-plus-square"></span>Thêm sản phẩm</button>
+                        <?php
+                        }
+                        ?>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <ul id="productList" class="list-group">
+                        <?php
+                        $total_order_price=0;
+                        $total_order_product_discount=0;
+                        foreach ($this->sellOrder->getSell() as $sell){
+                            $inventory=$sell->getProduct()->getInventory();
+                            $priceValue = $sell->getPriceValue();
+                            $qty=$sell->getQuantity();
+                            $packUnit=$sell->getPackUnit();
+                            $discount=$sell->getDiscount();
+                            //mua theo thung
+                            if($sell->isPack()){
+                                $qtySale=$sell->isPack();
+                                $unitSale='Thùng';
+                                $price=$packUnit*$priceValue;//gia ban theo thung
+                            }else{
+                                $qtySale=$qty;
+                                $unitSale=$sell->getProduct()->getUnit()->getName();
+                                $price=$priceValue;//gia ban le
+                            }
+                            ?>
+                            <li id="li<?=$sell->getProduct()->getId()?>" href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1 title">
+                                        <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?>
+                                        <span class="fa fa-trash-o pull-right" style="cursor: pointer" title="Bỏ sản phẩm khỏi đơn hàng" alt="Bỏ sản phẩm khỏi đơn hàng" onclick="removeProduct('<?=$sell->getId()?>')"></span>
+                                    </h5>
+                                </div>
+                                <table style="width: 100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="padding-right: 5px; width: 40px">
+                                            <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                        </td>
+                                        <td>
+                                            <table style=" width: 100%;" >
+                                                <tbody>
+                                                <tr>
+                                                    <th style="width: 30%"></th>
+                                                    <th nowrap="">Đơn vị</th>
+                                                    <th nowrap="" class="text-right">Số lượng</th>
+                                                    <th nowrap="" class="text-right">Giá bán</th>
+                                                    <th nowrap="" class="text-right">Chiết khấu</th>
+                                                    <th style="padding-left: 5px" class="text-right">Thành tiền</th>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td><?=$unitSale?></td>
+                                                    <td class="text-right"><?=$qtySale?></td>
+                                                    <td style="color: #2691ec; font-weight: bold" class="text-right" nowrap="">
+                                                        <?=Common::formatMoney($price)?>
+                                                    </td>
+
+                                                    <td class="text-right">
+                                                        <?=Common::formatMoney($discount)?>
+                                                    </td>
+                                                    <?php
+                                                    $totalPrice = $price*$qtySale;
+                                                    $total_order_price+=$totalPrice;
+                                                    $total_order_product_discount+=$discount*$qtySale;
+                                                    ?>
+                                                    <td class="text-right"><?=Common::formatMoney($totalPrice)?></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="warning-color"></small>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                    </ul>
+                    <div class="form-group" style="padding-top: 10px; padding-right: 20px; float: right">
+                        <table>
+                            <tr>
+                                <td style="width: 100%"></td>
+                                <td style="padding-right: 10px; text-align: right; padding-bottom: 5px; border-bottom: 1px solid #cccccc" nowrap="">Tổng cộng:</td>
+                                <td style="text-align: right; font-weight: bold; padding-bottom: 5px; border-bottom: 1px solid #cccccc"><?=Common::formatMoney($total_order_price)?></td>
+                            </tr>
+                            <tr>
+                                <td style="width: 100%"></td>
+                                <td style="text-align: right; border-bottom: 1px solid #cccccc; padding: 3px 10px;" nowrap="">Chiết khấu theo sản phẩm:</td>
+                                <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($total_order_product_discount)?></td>
+                            </tr>
+                            <tr>
+                                <td style="width: 100%"></td>
+                                <td style="padding-right: 10px; text-align: right; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">Chiết khấu theo đơn (<?=@round(($this->sellOrder->getDiscount()/$total_order_price)*100,2).'%'?>):</td>
+                                <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc">
+                                        <?=Common::formatMoney($this->sellOrder->getDiscount())?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width: 100%"></td>
+                                <td style="padding-right: 10px; text-align: right; padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>
+                                <td style="text-align: right; font-weight: bold; padding-top: 3px;" nowrap=""><?=Common::formatMoney(round(($total_order_price-$total_order_product_discount-$this->sellOrder->getDiscount())/1000)*1000)?></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="form-group" style="padding-top: 15px">
+                        <?php
+                        if($this->sellOrder->getStatus()<0){
+                            ?>
+                            <button onclick="deleteOrderDraft(<?=$this->sellOrder->getId()?>)" class="btn btn-danger pull-right"><span class="fa fa-trash-o"></span>Xoá đơn hàng</button>
+                            <?php
+                        }
+                        ?>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Chọn sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                        <?php
+                        foreach ($this->productList as $product){
+                            $arrTmp["id"]=$product->getId();
+                            $arrTmp["name"]=$product->getName();
+                            $arrTmp["code"]=$product->getCode();
+                            $arrTmp["unit_name"]=$product->getUnit()->getName();
+                            $arrTmp["box_unit"]=$product->getBoxUnit();
+                            $arrTmp["inventory"]=$product->getInventory();
+                            $arrTmp["weight"]=$product->getWeight();
+                            $arrTmp["price"]=$product->getUnitPriceAfterSale();
+                            $arrTmp["unit_sale_value"]=$product->getUnitPriceSale();
+                            $arrTmp["price_pack"]=$product->getPackPriceAfterSale();
+                            $arrTmp["pack_sale_value"]=$product->getPackPriceSale();
+                            $arrTmp["option"]='unit';
+                            $arrTmp["qty"]=0;
+                            $arrTmp["exchange_unit"]=$product->getExchangeUnit();
+                            if(is_null($product->getImg()))
+                                $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                            else
+                                $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                            $json = json_encode($arrTmp);
+
+                            if($product->getUnitPriceSale() || $product->getPackPriceSale())
+                                $class='class="special"';
+                            else
+                                $class='';
+                            echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getName(). " (".$product->getWeight().')</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div id="productInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" id="btnAddProductToOrder" class="btn btn-success">Thêm sản phẩm</button>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<style>
+    .special {
+        color: #1065e7 !important;
+        font-weight: bold!important;
+    }
+    .warning-color{color: red}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+
+</style>
+<script>
+    $( document ).ready(function() {
+
+    })
+
+    $('#btnAddProductToOrder').click(function(){
+        let orderId = <?=$this->sellOrder->getId()?>;
+        let proId = $('#proId').val();
+        let qty = $('#txtQty').val();
+        let opt=$('input[name="opt"]:checked').val();
+
+        run_waitMe();
+        let url = "<?=$this->url('sell-user',['action'=>'order-detail-draft'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {oid:orderId,pid:proId,qty:qty,opt:opt}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    });
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            let data = $(this).find(':selected').attr('data');
+            let obj = jQuery.parseJSON(data);
+            let msg='',cls='',defaultQuantity=1;
+
+            let unit_price_old='';
+            let unit_price_old_lable='';
+            let pack_price_old='';
+            let pack_price_old_lable='';
+
+            if(obj.unit_sale_value){
+                unit_price_old=obj.price + obj.unit_sale_value
+                unit_price_old_lable='<span style="color: red; text-decoration: line-through;">('+formatCurrency(unit_price_old.toString())+')</span>';
+            }
+
+            if(obj.pack_sale_value){
+                pack_price_old=obj.price_pack + obj.pack_sale_value
+                pack_price_old_lable='<span style="color: red; text-decoration: line-through">('+formatCurrency(pack_price_old.toString())+')</span>';
+            }
+
+            var html='<div style="margin-top: 15px; border: 1px solid #e0dcdc; padding: 5px 10px">';
+            html+='<table style="width: 100%">';
+            html+='<tr>';
+            html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+            html+='<td>';
+            html+='<table style="width: 100%">';
+            html+=' <tr>';
+            html+='     <td nowrap="">Giá lẻ:</td>';
+            html+='     <td style="padding-left: 10px; font-weight: bold; width: 100%" nowrap="">'+formatCurrency(obj.price.toString())+' '+unit_price_old_lable+'</td>';
+            html+=' </tr><tr>';
+            html+='      <td nowrap="">Giá thùng:</td>';
+            html+='      <td style="padding-left: 10px;color: #0C7FCC; font-weight: bold;" nowrap="">'+formatCurrency(obj.price_pack.toString())+' '+pack_price_old_lable+'</td>';
+            html+=' </tr><tr>';
+            html+='     <td nowrap="">Mua theo</td>';
+            html+='     <td style="padding-left: 10px">';
+            html+='         <label class="check"><input type="radio" value="unit" class="iradio" name="opt" checked="checked"/> '+obj.unit_name+'</label>';
+            html+='         <label class="check"><input type="radio" value="pack" class="iradio" name="opt"/> Thùng ('+obj.box_unit+' '+obj.unit_name+')</label>';
+            html+='     </td>';
+            html+=' </tr><tr>';
+            html+='     <td nowrap="">Số lượng:</td>';
+            html+='     <td>';
+            html+='         <input id="proId" name="proId" type="hidden" value="'+obj.id+'">';
+            html+='         <input style="width: 100px" id="txtQty" name="quantity" type="number" value="'+defaultQuantity+'" min="1" class="form-control">';
+            html+='     </td>';
+            html+=' </tr>';
+            html+='</table>';
+            if(obj.exchange_unit > 1)
+                msg='Tối thiểu bán '+obj.exchange_unit+' '+obj.unit_name+' ';
+
+            html+='<small class="warning-color">'+msg+'</small> <small id="msgInventory" class="warning-color"></small>';
+            html+='</td></tr></table>';
+            html+='</div>';
+
+            $('#productInfo').html(html);
+            $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'});
+
+            $('#btnAddProductToOrder').prop('disabled', false);
+
+        });
+
+    function showModalSelectProduct(){
+        $('#productInfo').html('');
+        $('#btnAddProductToOrder').prop('disabled', true);
+        $('#modalSelectProduct').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+
+    function removeProduct(id){
+        // console.log("removed sell");
+        run_waitMe();
+        var url = "<?=$this->url('sell-user',['action'=>'delete-product-order-draft'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    }
+
+
+    function deleteOrderDraft(oId){
+        let text = "Nếu nhấn OK đơn hàng sẽ bị xoá mà không thể khôi phục lại. Nếu chưa chắc bạn có thể nhấn Cancel.";
+        if (confirm(text) == true) {
+            run_waitMe();
+            var url = "<?=$this->url('sell-user',['action'=>'delete-order-draft'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: {id:oId}
+            }).done(function (data) {
+                if(data.status){
+                    alert('Đã xoá đơn hàng <?=$this->sellOrder->getOrderCode()?>: <?=$this->sellOrder->getGrocery()->getGroceryName()?>!');
+                    window.location.href = '<?=$this->url('user-dashboard')?>';
+                }
+                else{
+                    alert(data.msg);
+                    stop_waitMe();
+                }
+            })
+        }
+    }
+
+    function formatCurrency(value){
+        var result=0;
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            result= numFormat.format(value.replaceAll( ",","" ));
+        }else{
+            result= value;
+        }
+        return result;
+    }
+</script>

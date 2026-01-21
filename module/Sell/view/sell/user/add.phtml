@@ -1,0 +1,301 @@
+<?php
+$this->headTitle("Tạo đơn bán hàng");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($this->grocery->getId())])?>"><?=$this->grocery->getGroceryName()?></a></li>
+    <li class="active">Tạo đơn bán hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Tạo đơn bán hàng</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Chọn sản phẩm</label>
+                    <div class="col-md-9">
+                        <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                            <?php
+                            foreach ($this->productList as $product){
+                                $arrTmp["id"]=$product->getId();
+                                $arrTmp["name"]=$product->getName();
+                                $arrTmp["cat_id"]=$product->getProductCat()->getId();
+                                $arrTmp["cat_name"]=$product->getProductCat()->getName();
+                                $arrTmp["unit_name"]=$product->getUnit()->getName();
+                                $arrTmp["box_unit"]=$product->getBoxUnit();
+                                $arrTmp["inventory"]=$product->getInventory();
+                                $arrTmp["weight"]=$product->getWeight();
+                                $arrTmp["price"]=$product->getActivePrice()->getPrice();
+                                $arrTmp["odd"]=0;
+                                if(is_null($product->getImg()))
+                                    $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                                else
+                                    $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                                $json = json_encode($arrTmp);
+
+                                if($product->getInventory()==0)
+                                    $class='class="special"';
+                                else
+                                    $class='';
+                                echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getCode().' | '.$product->getName(). " (".$product->getWeight().')</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <ul id="productList" class="list-group"></ul>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <input type="submit" disabled name="btnSubmit"  id="btnSubmit" class="btn btn-success" value="Tạo đơn hàng">
+                        <span class="pull-right price" id="total-price"></span>
+                        <span class="pull-right price" id="total-price-lable"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+<style>
+    .special {
+        color: #fff !important;
+        background: #bc0000 !important;
+    }
+    .warning-color{color: red}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+
+</style>
+<script>
+    var myProSelect=[];
+    var hash = location.hash.substring(1);
+
+    $( document ).ready(function() {
+
+    })
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            var data = $(this).find(':selected').attr('data');
+            var obj = jQuery.parseJSON(data);
+            var msg='',cls='',defaultQuantity=1;
+            // console.log(obj);
+            // console.log(obj.name);
+            if(obj.inventory==0){
+                msg='Thiếu sản phẩm để bán!';
+                cls='warning-color';
+                defaultQuantity=0;
+            }
+            obj.odd=defaultQuantity;
+
+            var html='<li id="li'+obj.id+'" href="#" class="list-group-item list-group-item-action flex-column align-items-start">';
+                html+='<div class="d-flex w-100 justify-content-between">';
+                html+='<h5 class="mb-1 title">';
+                html+=obj.name +'|'+obj.weight;
+                html+='<span class="fa fa-times pull-right" onclick="removeProduct('+obj.id+')"></span>';
+                html+='</h5>';
+                html+='</div>';
+                html+='<table style="width: 100%">';
+                html+='<tr>';
+                html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+                html+='<td>';
+                html+='<small><span class="'+cls+'">Có thể bán: '+obj.inventory+' '+obj.unit_name+' </span>| '+ obj.box_unit+' '+obj.unit_name+'/Thùng</small>';
+                html+='<table>';
+                html+='<tr>';
+                html+='<td nowrap="">Giá:</td>';
+                html+='<td style="padding-left: 10px; font-weight: bold;" nowrap="">'+formatCurrency(obj.price.toString())+' đ</td>';
+                html+='<td style="padding-left: 10px; padding-right: 10px" nowrap="">SL:</td>';
+                html+='<td style="width: 60px">';
+                html+='<input id="odd'+obj.id+'" name="quantity" type="number" onchange="oddOnchange('+obj.id+')"  value="'+defaultQuantity+'" min="0" max="'+obj.inventory+'" class="form-control">';
+                html+='</td>';
+                html+='<td style="padding-left: 5px">'+obj.unit_name+'</td>';
+                html+='</tr>';
+                html+='</table>';
+                html+='<small id="msg'+obj.id+'" class="warning-color">'+msg+'</small>';
+                html+='</td></tr></table>';
+                html+='</li>';
+            var alreadyLi=0;
+            $.each( myProSelect, function( key, data ) {
+                if(data.id==obj.id) {
+                    alreadyLi=1;
+                }
+            });
+            if(alreadyLi==1){
+                var liItem =$('#li'+obj.id);
+                $('#li'+obj.id).remove();
+                $('#productList').prepend(liItem);
+            }else{
+                $('#productList').prepend(html);
+                myProSelect.push(obj);
+            }
+            showInforOrder();
+            showButtonSubmitOrder();
+        });
+
+    function removeProduct(id){
+        $('#li'+id).remove();
+        myProSelect = $.grep(myProSelect, function(e){
+            return e.id != id;
+        });
+        showInforOrder();
+        showButtonSubmitOrder();
+    }
+
+    function showButtonSubmitOrder(){
+        if(myProSelect.length > 0)
+            $('#btnSubmit').prop('disabled', false);
+        else
+            $('#btnSubmit').prop('disabled', true);
+    }
+
+    function showInforOrder(){
+        var totalPrice=0;
+
+        if(myProSelect.length==0){
+            $('#total-price').html('');
+            $('#total-price-lable').html('');
+            return;
+        }
+
+        $.each( myProSelect, function( key, data ) {
+            var price=0;
+            var quantity=0;
+            if(data.price) price=data.price;
+            if(data.odd) quantity=data.odd;
+            totalPrice+=price*quantity;
+
+        });
+        $('#total-price').html(formatCurrency(totalPrice.toString())+" đ");
+        $('#total-price-lable').html('Tổng tiền:');
+        // console.log(myProSelect);
+    }
+    function oddOnchange(id){
+        var obj=$('#odd'+id);
+        var value=obj.val();
+        if(!value) value=0;
+
+        $.each( myProSelect, function( key, data ) {
+            if(data.id==id){
+                if(value>data.inventory){
+                    $('#msg'+id).html('Tối đa có thể bán '+data.inventory);
+                    obj.val(data.inventory);
+                    value=data.inventory;
+                }else if(value<0){
+                    $('#msg'+id).html('Không thể nhập số âm!');
+                    obj.val(0);
+                    //value=data.inventory;
+                }
+                else{
+                    $('#msg'+id).html('');
+                }
+
+                $.extend(data,{
+                    odd:parseInt(value)
+                });
+            }
+        });
+        showInforOrder();
+    }
+
+    $('#btnSubmit').click(function(){
+        if(!myProSelect.length){
+            alert("Vui lòng chọn sản phẩm nhập kho.");
+            return;
+        }
+        var err=0;
+        $.each( myProSelect, function( key, data ) {
+            if(!data.price){
+                alert("Vui lòng nhập giá cho sản phẩm "+data.name);
+                err=1;
+                return;
+            }
+            if(!data.odd){
+                alert("Vui lòng nhập số lượng cho sản phẩm "+data.name);
+                err=1;
+                return;
+            };
+        });
+
+        if(err==1) return;
+
+        run_waitMe();
+
+        var url = "<?=$this->url('sell-user',['action'=>'add','id'=>$this->grocery->getId()])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {pro:myProSelect}
+        }).done(function (data) {
+            if(data.status){
+                // alert('Đơn hàng đã được tạo.');
+                //if go to from checkin
+                if(hash=='ci'){
+                    backToCheckIn();
+                }else{
+                    // window.history.back();
+                    window.location.href = '<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($this->grocery->getId())])?>';
+                }
+            }
+            else{
+                alert(data.msg);
+                stop_waitMe();
+            }
+        })
+    });
+
+    function backToCheckIn(){
+        run_waitMe();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position){
+                    stop_waitMe();
+                    location.href="<?=$this->url('grocery-user',['action'=>'check-in','id'=>$this->grocery->getId()])?>?lat="+position.coords.latitude+"&lng="+position.coords.longitude;
+                },
+                function(error) {
+                    alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                    stop_waitMe();
+                }
+            );
+        }
+    }
+    function formatCurrency(value){
+        var result=0;
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            result= numFormat.format(value.replace( ",","" ));
+        }else{
+            result= value;
+        }
+        return result;
+    }
+</script>

@@ -1,0 +1,153 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <?php
+                if($this->myCard){
+                ?>
+                <table id="tblProduct" class="display" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+//                    print_r($_SESSION['my_card']);
+                    foreach ($this->myCard as $myCardItem) {
+                        $unitName = ($myCardItem['opt']==1)?'Thùng':$myCardItem['unit_name'];
+                        ?>
+                    <tr>
+                        <td style="padding-top: 10px"><img src="<?=$myCardItem['img']?>" style ="max-width:60px; max-height:50px"></td>
+                        <td style="padding-bottom: 10px; padding-top: 10px">
+                            <div>
+                                <a href="<?=$this->url('product-front',['action'=>'detail','id'=>$myCardItem['id']])?>"><?=$this->escapeHtml($myCardItem['name']).' | '.$myCardItem['weight']?></a>
+                                <span class="fa fa-trash-o pull-right" style="padding: 3px; color: red" onclick="removeProduct(<?=$myCardItem['id']?>)"></span>
+                            </div>
+                            <div style="padding-top: 5px">
+                                <div class="pull-left">Số lượng: <b><?=$myCardItem['qty']. ' ' .$unitName?></b></div>
+                                <div class="pull-right">Thành tiền: <b><?=Common::formatMoney($myCardItem['price'])?></b></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php
+                    }
+                    ?>
+                    </tbody>
+                </table>
+                <?php } else{
+                    echo '<div style="color: red; text-align: center">Không có sản phẩm nào trong giỏ hàng!</div>';
+                    echo '<div style="color: red; text-align: center"><a href="/">Tiếp tục mua hàng</a> </div>';
+                }?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="position: fixed; bottom: 0; width: 100%">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="pull-left">Tổng tiền: <strong><?=Common::formatMoney(round($this->total_price/1000)*1000)?> đ</strong></div>
+                <?php
+                if($this->myCard){
+                ?>
+                <div class="pull-right"><button id="btnConfirmOrder" type="button" class="btn btn-info active"><i class="fa fa-shopping-cart"></i>Đặt hàng</button></div>
+                <?php } ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="confirmOrderForm" action="<?=$this->url('sell-front',['action'=>'add-order'])?>" method="post" class="form-horizontal">
+            <input type="hidden" name="oid" id="oid">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modal">Xác nhận thông tin đặt hàng</h4>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-md-12" style="color: red;"><i>Vui lòng cung cấp thông tin bên dưới để chúng tôi có thể giao hàng nhanh nhất!</i></div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">Tên cửa hàng</label>
+                            <div class="col-md-10">
+                                <input type="text" name="txtName" id="name" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">Điện thoại</label>
+                            <div class="col-md-10">
+                                <input type="text" name="txtMobile" id="mobile" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit"  class="btn btn-success">Xác nhận</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    #tblProduct a{font-weight: bold}
+    #tblProduct tr{border-bottom: 1px solid rgba(232, 231, 231, 0.96)}
+    #tblProduct tr:last-child{border-bottom: 0px}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type='text/javascript' src='/joli/js/plugins/jquery-validation/jquery.validate.js'></script>
+<script>
+    $(document).ready(function () {
+        $('#btnConfirmOrder').click(function(){
+            $('#modal').modal({
+                keyboard: false,
+                backdrop:'static',
+                show:true
+            });
+        })
+        var jvalidate = $("#confirmOrderForm").validate({
+            ignore: [],
+            rules: {
+                txtName: {
+                    required: true
+                },
+                txtMobile: {
+                    required: true
+                }
+            },
+            messages: {
+                txtName: "Vui lòng nhập tên cửa hàng của bạn!",
+                txtMobile: "Vui lòng nhập số điện thoại để chúng tôi liên hệ trước khi giao hàng!"
+            }
+        });
+    });
+
+    function removeProduct(id){
+        run_waitMe();
+        var url = "<?=$this->url('product-front',['action'=>'delete-pro-my-cart'])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status)
+                location.reload();
+            else
+                stop_waitMe();
+        })
+    }
+</script>

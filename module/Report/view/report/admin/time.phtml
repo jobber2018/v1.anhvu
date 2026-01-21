@@ -1,0 +1,300 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Time</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h3>Doanh thu & Lợi nhuận ngày <?=date("d/m/Y")?></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#tab-first" role="tab" data-toggle="tab">Doanh thu</a></li>
+                    <li><a href="#tab-second" role="tab" data-toggle="tab">Lợi nhuận</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab-first" style="text-align: center">
+                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
+                        <h4>DOANH THU</h4>
+                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold"><?=Common::formatMoney($this->totalRevenue)?></div>
+                        <div><b>Tổng đơn hàng: <?=$this->orderNumber?></b></div>
+                        <div style="text-align: left; padding-top: 30px"><b>Doanh thu:</b> Bằng tổng giá trị các đơn hàng đã thanh toán - Chiết khấu.</div>
+                    </div>
+                    <div class="tab-pane" id="tab-second">
+                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
+                        <h4 style="text-align: center">LỢI NHUẬN GỘP</h4>
+                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold; text-align: center;"><?=Common::formatMoney($this->totalProfit)?></div>
+                        <div style="text-align: center; padding-bottom: 15px"><b>Tỷ suất LN: <?=@round(($this->totalProfit/$this->totalRevenue)*100,2)?>%</b></div>
+                        <div style="padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid #cccccc; border-top: 1px solid #cccccc">
+                            <span><b>Doanh thu:</b> <?=Common::formatMoney($this->totalRevenue)?></span>
+                            <span class="pull-right"><b>Giá vốn:</b> <?=Common::formatMoney($this->totalRevenue-$this->totalProfit)?></span>
+                        </div>
+                        <div style="text-align: left; padding-top: 20px"><b>Lợi nhuận gộp = Doanh thu - Giá vốn</b></div>
+                        <div>Giá vốn là giá vốn bình quân của sản phẩm được tính sau mỗi lần nhập hàng.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- START DONUT CHART -->
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="morris-donut-cat" style="height: 300px;"></div>
+                </div>
+            </div>
+            <!-- END DONUT CHART -->
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fromDate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->toDate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                        <button id="btnRecalculate" class="btn btn-info">Tính lại số liệu</button><br>
+                        <small class="text-danger">Tính lại số liệu Doanh thu, giá vốn, lợi nhuận các đơn hàng trong khoảng thời gian đã chọn!</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display" style="width:100%" id="tblCostRevenue">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Ngày</th>
+                            <th>Doanh thu</th>
+                            <th>Giá vốn</th>
+                            <th>Chiết khấu</th>
+                            <th>Lợi nhuận</th>
+                            <th>%</th>
+                            <th>Đơn tạo</th>
+                            <th>Đơn giao</th>
+                            <th>Tiền giao</th>
+                            <th>Đơn hoàn thành</th>
+                            <th>Phải thu khách hàng</th>
+                            <th>Phải trả NCC</th>
+                            <th>Giá trị kho</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        $profit=0;
+                        $costPercent=0;
+                        foreach ($this->costRevenue as $costRevenueItem){
+                            $profit=$costRevenueItem->getRevenue()-$costRevenueItem->getCost();
+                            $costPercent = @round(($profit/$costRevenueItem->getRevenue())*100,1);
+                            echo '<tr>';
+                            echo '<td>'.$i++.'</td>';
+                            echo '<td>'.Common::formatDate($costRevenueItem->getDate()).'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getRevenue()).'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getCost()).'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getDiscount()).'</td>';
+                            echo '<td>'.Common::formatMoney($profit).'</td>';
+                            echo '<td>'.$costPercent.'</td>';
+                            echo '<td>'.$costRevenueItem->getOrderCreated().'</td>';
+                            echo '<td class="text-center">'.$costRevenueItem->getOrderDeliveredNumber().'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getOrderDelivered()).'</td>';
+                            echo '<td>'.$costRevenueItem->getOrderCompleted().'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getReceivable()).'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getReturnNcc()).'</td>';
+                            echo '<td>'.Common::formatMoney($costRevenueItem->getWarehouseValue()).'</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                    <div>
+                        <small><b>Doanh thu:</b> = Giá trị đơn hàng - Chiết khấu</small><br>
+                        <small><b>Lợi nhuận:</b> = Doanh thu - giá vốn</small><br>
+                        <small><b>Discount:</b> = Chiết khẩu theo đơn + Giảm giá sản phẩm</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .panel-body table td{vertical-align: center !important;}
+
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'time'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+        $('#btnRecalculate').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'time'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val()+'&recalculate=1';
+
+            run_waitMe();
+            $.ajax({
+                method: "GET",
+                url: url
+            }).done(function (data) {
+                if(data.status){
+                    // location.reload();
+                    window.location.href = '<?=$this->url('report-admin',['action'=>'time'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+                }
+                else{
+                    stop_waitMe();
+                }
+            })
+        })
+
+        $('#tblCostRevenue').DataTable({
+            paging: true,
+            pageLength:10,
+            ordering: true,
+            info: false,
+            searching:true,
+            language: {
+                searchPlaceholder: ""
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+
+                revenueTotal = api
+                    .column(2)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+
+                // Update footer
+                $(api.column(2).footer()).html(formatCurrency(revenueTotal.toString()));
+
+                costTotal = api
+                    .column(3)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                $(api.column(3).footer()).html(formatCurrency(costTotal.toString()));
+
+                discountTotal = api
+                    .column(4)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                $(api.column(4).footer()).html(formatCurrency(discountTotal.toString()));
+
+                profitTotal = api
+                    .column(5)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                $(api.column(5).footer()).html(formatCurrency(profitTotal.toString()));
+
+                //profit percentage
+
+                profitPercentage = api
+                    .column(6)
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                $(api.column(6).footer()).html((100*profitTotal/revenueTotal).toFixed(1).toString());
+            }
+        });
+
+        var morrisCharts = function() {
+            Morris.Donut({
+                element: 'morris-donut-cat',
+                data: [
+                    <?php
+                    foreach ($this->arrRevenueByProductCat as $k=>$v){
+                        echo '{label: "'.$v['name'].'", value: '.$v['revenue'].'},';
+                    }
+                    ?>
+                ],
+                colors: ['#95B75D', '#1caf9a', '#FEA223']
+            });
+        }();
+    })
+</script>

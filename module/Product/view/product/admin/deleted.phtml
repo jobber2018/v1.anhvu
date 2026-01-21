@@ -1,0 +1,153 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Product deleted";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách sản phẩm đã dừng hoạt động</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('product-admin',['action'=>'add'])?>" class="btn btn-info pull-left"><span class="fa fa-plus"></span>Thêm mới sản phẩm</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'deleted'])?>" class="btn btn-default pull-left"><span class="fa fa-info-circle"></span>Sản phẩm dừng giao dịch</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'inactive'])?>" class="btn btn-default pull-left"><span class="fa fa-info-circle"></span>Sản phẩm không hiển thị trên báo giá</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'optimize'])?>" class="btn btn-danger pull-left"><span class="fa fa-info-circle"></span>Chuẩn hoá dữ liệu</a>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblProduct">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Mã </th>
+                            <th>Tên sản phẩm</th>
+                            <th>TB giá</th>
+                            <th>Giá bán</th>
+                            <th>+/-</th>
+                            <th>Tồn kho</th>
+                            <th style="width: 200px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->product as $product){
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php
+                                    if(is_null($product->getImg()))
+                                        echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                    else
+                                        echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                    ?>
+                                </td>
+                                <td><?=$product->getCode()?></td>
+                                <td>
+                                    <a class="<?=($product->getInventory()>0?($product->getInventory()<=3?'warning-yeallow':''):'warning-red')?>" href="<?=$this->url('product-admin',['action'=>'price','id'=>$product->getId()])?>"><strong><?=$product->getName() .' | '.$product->getWeight()?></strong></a>
+                                    <p><?=$product->getBoxUnit() ." ".$product->getUnit()->getName()."/Thùng"?></p>
+                                </td>
+                                <td><?=Common::formatMoney($product->getAveragePrice())?></td>
+                                <td>
+                                    <?=Common::formatMoney($product->getActivePrice()->getPrice())?> đ/<?=$product->getUnit()->getName()?></td>
+                                <?php
+
+                                if($product->getAveragePrice()==0)
+                                    $profit = '-/-';
+                                else{
+                                    $profit=$product->getActivePrice()->getPrice()-$product->getAveragePrice();
+//                                    $profit=0;
+                                    $percentProfit=round(($profit/$product->getAveragePrice())*100,2).'%';
+                                    if($profit<0)
+                                        $profit='<span style="color:red">'.Common::formatMoney($profit).' ('.$percentProfit.')</span>';
+                                    else
+                                        $profit='<span style="color:dodgerblue">'.Common::formatMoney($profit).' ('.$percentProfit.')</span>';
+                                }
+                                ?>
+                                <td><?=$profit?></td>
+                                <td><?=$product->getInventory()?></td>
+                                <td>
+                                    <a href="<?=$this->url('product-admin',['action'=>'edit','id'=>$product->getId()])?>"><span class="fa fa-edit"> Sửa</span></a> |
+                                    <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$this->escapeHtml($product->getId())])?>"><span class="fa fa-money"> Quản lý giá</span></a> |
+                                    <a href="<?=$this->url('product-admin',['action'=>'add','id'=>$this->escapeHtml($product->getId())])?>"><span class="fa fa-copy"> Copy</span></a>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .warning-red{color: red}
+    .warning-yeallow{color: #ff9100
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: true,
+            pageLength:50,
+            ordering: true,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            language: {
+                searchPlaceholder: "Tìm kiếm sản phẩm"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

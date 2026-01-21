@@ -1,0 +1,55 @@
+.modal {
+    text-align: center;
+    padding: 0!important;
+}
+
+.modal:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -4px;
+}
+
+.modal-dialog {
+    display: inline-block;
+    text-align: left;
+    vertical-align: middle;
+}
+.title{font-weight: bold}
+a.title{font-weight: bold}
+
+.highlight{font-weight: bold; color: red; font-size: 11pt}
+.number{text-align: right}
+.price{color: #2691ec; font-weight: bold;}
+.font-weight-bold{font-weight: bold;}
+.tr-selected{background-color: #0627b5 !important; color: white!important;}
+.tr-selected a{color: white!important;}
+.tr-selected .price{color: white!important;}
+.tr-selected .popover{color: black!important;}
+.dt-input{
+    border: 1px solid #D5D5D5;
+    background: #F9F9F9;
+    height: 30px;
+    border-radius: 4px;
+    width: 250px;
+    padding: 5px;
+}
+.dt-search{padding-bottom: 5px}
+.panel-body table tr td{vertical-align: middle;}
+.dataTables_length{
+    float: right;
+    width: auto;
+}
+.dataTables_filter{
+    float: left;
+}
+.dataTables_filter label{
+    float: unset;
+}
+.popover-content{font-size: 12px}
+ul.error{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}

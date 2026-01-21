@@ -1,0 +1,261 @@
+<?php
+
+use Sulde\Service\Common\ConfigManager;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('roles-admin')?>">Role manage</a></li>
+    <li class="active"><?=$this->role->getName()?></li>
+</ul>
+<!-- END BREADCRUMB -->
+<link href="/vendor/jquery/treeview/hummingbird-treeview.css" rel="stylesheet">
+<script src="/vendor/jquery/treeview/hummingbird-treeview.js"></script>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="btn-group">
+                        <h3 class="panel-title"><?=$this->translate('Role group')?></h3>
+                    </div>
+                </div>
+                <div class="panel-body list-group">
+                    <?php
+                    $currentRoleId = $this->role->getId();
+                    foreach ($this->roles as $role) {
+                        if($currentRoleId == $role->getId()){
+                            $cssActive ='active';
+                        }else {
+                            $cssActive ='default';
+                        }
+                        echo '<a href="'.$this->url('roles-admin',['action'=>'privileges','id'=>$role->getId()]).'" class="list-group-item '.$cssActive.'">
+                                <i class="fa fa-ticket"></i>'.$role->getName(). ' <span class="badge badge-info">'.count($role->getPrivileges()).' privileges </span>'.
+                            '</a>';
+                    };
+                    ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <form method="POST" action="<?=$this->url('roles-admin',['action'=>'update-privileges','id'=>$this->role->getId()])?>" name="privileges-form" class="form-horizontal" id="privileges-form">
+                    <div class="panel-heading ui-draggable-handle">
+                        <h3 class="panel-title"><?=$this->translate('Privileges')?></h3>
+                        <ul class="panel-controls">
+                            <li>
+                                <button id="btnSave" class="btn btn-info save"><span class="fa fa-save"></span>Save</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="panel-body">
+                        <div id="treeview_container" class="hummingbird-treeview">
+                            <ul id="treeview" class="hummingbird-base">
+                            <li>
+                                <i class="fa fa-minus"></i>
+                                <label><input id="xnode-0" data-id="custom-0" type="checkbox" />All privileges</label>
+                                <ul style="display: block;">
+                                <?php
+                                foreach ($this->roleGroup as $key =>$items){
+                                    echo '<li>';
+                                    echo '<i class="fa fa-plus"></i> ';
+                                    echo '<label><input  id="'.$key.'" data-id="'.$key.'" type="checkbox" /> '.$key.' </label>';
+
+                                    if(@count($items>0)){
+                                        echo '<ul>';
+                                        foreach ($items as $k =>$privilege){
+                                            echo '<li>';
+                                            echo '<label><input class="hummingbird-end-node" name="privileges[]" value="'.$privilege->getId().'" id="'.$privilege->getId().'" data-id="'.$privilege->getId().'" type="checkbox" /> '.$privilege->getName().'</label>';
+                                            echo '</li>';
+                                        }
+                                        echo '</ul>';
+                                    }
+
+                                    echo '</li>';
+                                }
+                                ?>
+                                </ul>
+                            </li>
+                        </ul>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Users of the group</h3>
+                    <ul class="panel-controls">
+                        <li>
+                            <button id="btnAddUserModal" class="btn btn-default add"><span class="fa fa-plus"></span><?=$this->translate('Add new')?></button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-body list-group list-group-contacts">
+                    <form method="POST" action="<?=$this->url('roles-admin',['action'=>'delete-user','id'=>$this->role->getId()])?>" name="delete-user-form" class="form-horizontal" id="delete-user-form">
+                        <input type="hidden" name="userDelete_id" id="userDelete_id" value="">
+                        <ul class="list-group">
+                            <?php
+                            foreach ($this->role->getUser() as $key=>$user){
+                                if($user->getAvatar()) $avatar = $user->getAvatar();
+                                else $avatar = '/img/users/avatar.png';
+                                echo '<li class="list-group-item">';
+                                echo '<img src="'.$avatar.'" class="pull-left" />';
+                                echo '<span class="contacts-title">'.$user->getFullname().'</span>';
+                                echo '<p>'.$user->getMobile().' - '.$user->getEmail().' - '.\Sulde\Service\Common\Common::getTimeAgo($user->getLoginDate()).'</p>';
+                                echo '<div class="list-group-controls">
+                                                <button type="button" class="btn btn-primary btn-rounded" onclick="delete_row('.$user->getId().')"><span class="fa fa-trash-o"></span></button>
+                                            </div>';
+                                echo '</li>';
+                            }
+                            ?>
+                        </ul>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add user MODAL -->
+    <div class="modal" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" action="<?=$this->url('roles-admin',['action'=>'add-user','id'=>$this->role->getId()])?>" name="add-user-form" class="form-horizontal" id="add-user-form">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="defModalHead"><?=$this->translate('Add user to role group')?></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" role="alert">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                            <strong>Áp dụng với những user có trạng thái là active.</strong> (Nhập số điện thoải để tìm kiếm user.)
+                        </div>
+                        <select name="user_id" class="form-control selectpicker with-ajax" id="user_id" data-live-search="true">
+                            <option value="">...</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btnAddUser" type="button" class="btn btn-default"><?=$this->translate('Add')?></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+<script>
+
+    $( document ).ready(function() {
+        https://hummingbird-dev.000webhostapp.com/hummingbird_v1.php
+
+       $("#treeview").hummingbird();
+
+        <?php
+        foreach ($this->role->getPrivileges() as $privileges){
+            echo '$("#treeview").hummingbird("checkNode",{attr:"id",name:"'.$privileges->getId().'",expandParents:false});';
+        }
+        ?>
+
+        /*$("#btnSave").on("click", function(){
+            var List = {"id" : [], "dataid" : [], "text" : []};
+            $("#treeview").hummingbird("getChecked",{list:List,onlyEndNodes:true});
+        });*/
+
+        $('#btnAddUserModal').click(function() {
+            $('#addUserModal').modal({
+                keyboard: false,
+                backdrop:'static',
+                show:true
+            });
+            $( "#btnAddUser").attr("disabled", "disabled");
+            $('#email').focus();
+        });
+
+
+
+        var selectPicker = {
+
+            ajax: {
+                // data source
+                url: url,
+                // ajax type
+                type: 'POST',
+                // data type
+                dataType: 'json',
+                // Use "{{{q}}}" as a placeholder and Ajax Bootstrap Select will
+                // automatically replace it with the value of the search query.
+                data: {
+                    q: '{{{q}}}'
+                }
+            },
+            // function to preprocess JSON data
+            preprocessData: function (data) {
+                var i, l = data.length, array = [];
+                if (l) {
+                    for (i = 0; i < l; i++) {
+                        //console.log(data[i]);
+                        array.push($.extend(true, data[i], {
+                            text : data[i].mobile + ' ('+data[i].name+')',
+                            value: data[i].id,
+                            data : {
+                                subtext: '(Id: '+data[i].id + ')'
+                            }
+                        }));
+                    }
+                }
+                return array;
+            }
+        }
+        $('#user_id').selectpicker().ajaxSelectPicker(selectPicker);
+    });
+
+    $('#user_id').change(function (e) {
+        $( "#btnAddUser" ).removeAttr('disabled');
+    });
+
+    $( "#btnAddUser" ).click(function() {
+        $( "#add-user-form" ).submit();
+    });
+
+    function delete_row(id){
+        var box = $("#mb-remove-row");
+        box.addClass("open");
+
+        $( "#userDelete_id" ).val(id);
+
+        box.find(".mb-control-yes").on("click",function(){
+            $('#delete-user-form').submit();
+        });
+    }
+</script>

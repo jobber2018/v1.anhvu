@@ -1,0 +1,82 @@
+<?php
+$this->headTitle("Thêm mới cửa hàng");
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('supplier-admin')?>">Danh sách NCC</a></li>
+    <li class="active">Sửa NCC</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Sửa thông tin NCC</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="panel panel-default">
+            <?=$this->form()->openTag($form)?>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Tên NCC (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('name'));
+                        echo $this->formElementErrors($form->get('name'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+                <!--Address-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Địa chỉ (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('address'));
+                        echo $this->formElementErrors($form->get('address'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--Mobile-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Điện thoại (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('mobile'));
+                        echo $this->formElementErrors($form->get('mobile'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <button type="submit" name="btnSubmit"  id="btnSubmit" class="btn btn-success">
+                            <i class="fa fa-edit"></i>
+                            Thêm mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,432 @@
+<?php
+$this->headTitle("Tạo đơn nhập");
+
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li><a href="<?=$this->url('werehouse-admin')?>">Danh sách đơn nhập</a></li>
+    <li class="active">Tạo đơn nhập kho</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Tạo đơn nhập kho:</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="col-md-9">
+            <!-- CONTACT LIST WIDGET -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Danh sách sản phẩm</h3>
+                    <ul class="panel-controls">
+                        <li><a id="btnSelectPro" class="control-primary"><span class="fa fa-plus"></span></a></li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <ul id="myListPro" class="panel-body list-group list-group-contacts"></ul>
+                </div>
+                <div class="panel-footer">
+                    <button id="btnSubmit" disabled="disabled" class="btn btn-info pull-right">
+                        <span class="fa fa-save"></span>Nhập kho
+                    </button>
+
+                    <button id="btnSubmitSaveDraft" disabled="disabled" class="btn btn-warning pull-right">
+                        <span class="glyphicon glyphicon-floppy-saved"></span>Lưu nháp
+                    </button>
+                </div>
+            </div>
+            <!-- END CONTACT LIST WIDGET -->
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="panel-title-box">
+                        <h3>Thông tin đơn hàng</h3>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Tổng sản phẩm:</b></td>
+                            <td style="padding-bottom: 10px" id="total-product"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Tổng tiền:</b></td>
+                            <td style="padding-bottom: 10px" id="total-price"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding-top: 10px; padding-bottom: 10px; background: #F5F5F5; border-top: 1px solid #E3E3E3; border-bottom: 1px solid #E3E3E3"><b>Thông tin NCC</b></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px; padding-top: 10px"><b>Tên NCC</b></td>
+                            <td style="padding-bottom: 10px"><?=$this->supplier->getName()?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Điện thoại</b></td>
+                            <td style="padding-bottom: 10px"><?=$this->supplier->getMobile()?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <i><?=$this->supplier->getAddress()?></i>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade bottom" id="productModal" tabindex="-1" role="dialog" aria-labelledby="modalProduct" aria-hidden="true">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Danh sách sản phẩm</h3>
+                    <ul class="panel-controls">
+                        <li><a href="#" id="modal-remove"><span class="fa fa-times"></span></a></li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <table id="product" class="display table-hover table">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Code</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Tồn kho</th>
+                            <th style="width: 10px">Đơn vị</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float:unset;
+        width: 100%;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td, .table > tfoot > tr > td{
+        vertical-align: middle;
+    }
+    .table > tbody > tr {
+        cursor: pointer;
+    }
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .warning-color{color: red}
+    .successful-color{color: #0C7FCC}
+</style>
+<script>
+    <?php
+    $data=[];
+    foreach ($this->productList as $product){
+        $arrTmp["id"]=$product->getId();
+        $arrTmp["name"]=$product->getName()." | ".$product->getWeight();
+        $arrTmp["code"]=$product->getCode();
+//        $arrTmp["cat_id"]=$product->getProductCat()->getId();
+//        $arrTmp["cat_name"]=$product->getProductCat()->getName();
+//        $arrTmp["unit_id"]=$product->getUnit()->getId();
+        $arrTmp["unit_name"]=$product->getUnit()->getName();
+        $arrTmp["box_unit"]=$product->getBoxUnit();
+        $arrTmp["inventory"]=$product->getInventory();
+        $arrTmp["weight"]=$product->getWeight();
+        $arrTmp["average_price"]=$product->getAveragePrice();
+        $arrTmp["box"]=0;
+        if(is_null($product->getImg()))
+            $arrTmp["img"]='<img src=\"/img/icons/no-image-icon.png\" class=\"pull-left\" width=\"40px\">';
+        else
+            $arrTmp["img"]='<img src=\"'.$product->getImg().'\" class=\"pull-left\" style=\"max-width:40px; max-height:30px\">';
+        $data[]=$arrTmp;
+    }
+//    print_r($data);
+    ?>
+    var data = jQuery.parseJSON('<?=json_encode($data)?>');
+    var myProSelect=[];
+    $( document ).ready(function() {
+        // console.log(data);
+        var table = $('#product').DataTable( {
+            data: data,
+            // paging: false,
+            ordering:  false,
+            columns: [
+                { data: 'img' },
+                { data: 'code' },
+                { data: 'name' },
+                { data: 'inventory' },
+                { data: 'unit_name'}
+            ],
+            "columnDefs": [
+                { "searchable": false, "targets": 0 }
+            ]
+        });
+        $('#product tbody').on( 'click', 'tr', function () {
+            var rowData = table.row( this ).data();
+            // console.log(rowData);
+            $('#productModal').modal('hide');
+            var htmlLi ='<li id="li'+rowData.id+'" class="list-group-item">';
+            htmlLi+='<table style="width: 90%">';
+            htmlLi+='<tr><td>';
+            htmlLi+=rowData.img;
+            htmlLi+='</td><td style="width: 40%"><span class="contacts-title">'+rowData.name +'</span>';
+            htmlLi+='<p><b>'+rowData.code +'</b> | Tồn kho: <b>'+ rowData.inventory + ' '+ rowData.unit_name +'</b></p><p><b>Trung bình giá vốn:</b> '+formatCurrency(rowData.average_price.toString())+' đ<br><small class="warning-color" id="msg'+rowData.id+'"></small></p>';
+            htmlLi+='<td style="white-space: nowrap; width: 50px; padding-right: 5px">Giá nhập/Thùng ('+rowData.box_unit +' '+rowData.unit_name+'):</td>';
+            htmlLi+='<td style="width: 50px"><input id="txtPrice'+rowData.id+'" onblur="priceOnblur('+rowData.id+')" type="text" class="form-control" style="width: 100px"></td>';
+            htmlLi+='</td><td style="white-space: nowrap; width: 50px; padding-right: 5px; padding-left: 5px">Số lượng:</td>';
+            htmlLi+='<td style="width: 50px"><input min="0" id="box'+rowData.id+'" onchange="boxOnchange('+rowData.id+')" type="number" class="form-control" style="width: 70px"></td>';
+            htmlLi+='<td style="padding-left: 5px">Thùng</td>';
+            htmlLi+='<div class="list-group-controls" onclick="removeProduct('+rowData.id+')">';
+            htmlLi+='<button class="btn btn-primary btn-rounded"><span class="fa fa-trash-o"></span></button>';
+            htmlLi+='</div>';
+            htmlLi+='</li>';
+
+            var alreadyLi=0;
+            $.each( myProSelect, function( key, value ) {
+                if(value.id==rowData.id) {
+                    alreadyLi=1;
+                }
+            });
+            if(alreadyLi==1){
+                var liItem =$('#li'+rowData.id);
+                $('#li'+rowData.id).remove();
+                $('#myListPro').prepend(liItem);
+            }else{
+                $('#myListPro').prepend(htmlLi);
+                myProSelect.push(rowData);
+            }
+            $('#txtPrice'+rowData.id).focus();
+            showButtonSubmitOrder();
+
+        } );
+
+        $('#btnSelectPro').click(function() {
+            //clear search box
+            table.search('').draw();
+
+            $('#productModal').modal({
+                keyboard: false,
+                backdrop:'static',
+                show:true
+            });
+            // $('.dataTables_filter label input').focus();
+        });
+
+        $('#modal-remove').click(function() {
+            $('#productModal').modal('hide');
+        })
+
+        $('#btnSubmit').click(function(){
+            if(!myProSelect.length){
+                alert("Vui lòng chọn sản phẩm nhập kho.");
+                return;
+            }
+            var err=0;
+            var myProPost=[];
+
+
+            $.each( myProSelect, function( key, data ) {
+                if(!data.price){
+                    alert("Vui lòng nhập giá cho sản phẩm "+data.name);
+                    err=1;
+                    return;
+                }
+                if(!data.box){
+                    alert("Vui lòng nhập số lượng cho sản phẩm "+data.name);
+                    err=1;
+                    return;
+                };
+                myProPost.push({
+                    id:data.id,
+                    box: data.box,
+                    price:data.price
+                });
+            });
+
+            if(err==1) return;
+            run_waitMe();
+
+            var url = "<?=$this->url('werehouse-admin',['action'=>'add','id'=>$this->supplier->getId()])?>";
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: {pro:myProPost}
+            }).done(function (data) {
+                if(data.status)
+                    window.location.href = '<?=$this->url('werehouse-admin')?>';
+                else
+                    alert(data.msg);
+            })
+        });
+
+        $('#btnSubmitSaveDraft').click(function(){
+            if(!myProSelect.length){
+                alert("Vui lòng chọn sản phẩm nhập kho.");
+                return;
+            }
+
+            var myProPost=[];
+
+            $.each( myProSelect, function( key, data ) {
+                if(!data.price) data.price=0;
+                myProPost.push({
+                    id:data.id,
+                    box: data.box,
+                    price:data.price
+                });
+            });
+            // console.log(myProPost);
+            run_waitMe();
+            var url = "<?=$this->url('werehouse-admin',['action'=>'save-draft','id'=>$this->supplier->getId()])?>";
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: {pro:myProPost}
+            }).done(function (data) {
+                if(data.status){
+                    window.location.href = '<?=$this->url('werehouse-admin')?>';
+                }
+                else
+                    alert(data.msg);
+            })
+        })
+
+    });
+
+    function removeProduct(id){
+        $('#li'+id).remove();
+        myProSelect = $.grep(myProSelect, function(e){
+            return e.id != id;
+        });
+        showButtonSubmitOrder();
+        // console.log(myProSelect);
+    }
+
+    function priceOnblur(id){
+        var obj=$('#txtPrice'+id);
+        // console.log(validPrice(obj.val()));
+        var value=obj.val().replaceAll( ",","" );
+        // console.log('befo format'+value);
+        obj.val(formatCurrency(value));
+        //console.log('Formated: ' +formatCurrency(value))
+        //add price to product select
+        $.each( myProSelect, function( key, data ) {
+            if(data.id==id){
+                $.extend(data,{
+                    price:value
+                });
+            }
+        });
+        //console.log(myProSelect);
+        showInforOrder();
+    }
+
+    function boxOnchange(id){
+        var obj=$('#box'+id);
+        var value=obj.val();
+        if(!value) value=0;
+        //add box number to product select
+        $.each( myProSelect, function( key, data ) {
+            if(data.id==id){
+                $.extend(data,{
+                    box:parseFloat(value)
+                });
+            }
+        });
+        showInforOrder();
+    }
+
+    function formatCurrency(value){
+        // console.log(value);
+        // console.log("length:"+value.length)
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            // console.log("format ok");
+            return numFormat.format(value.replaceAll( ",","" ));
+        }else{
+            return value;
+        }
+    }
+
+    function showInforOrder(){
+        var totalPrice=0;
+        $.each( myProSelect, function( key, data ) {
+            var price=0;
+            var quantity=0;
+            if(data.price) price=parseInt(data.price);
+            if(data.box) quantity=parseInt(data.box);
+            totalPrice+=price*quantity;
+        });
+        $('#total-price').html(formatCurrency(totalPrice.toString())+" đ");
+        $('#total-product').html(myProSelect.length);
+        validateProductSelectData();
+    }
+    function showButtonSubmitOrder(){
+        if(myProSelect.length > 0){
+            $('#btnSubmit').prop('disabled', false);
+            $('#btnSubmitSaveDraft').prop('disabled', false);
+        }
+        else{
+            $('#btnSubmit').prop('disabled', true);
+            $('#btnSubmitSaveDraft').prop('disabled', true);
+        }
+    }
+    function validateProductSelectData(){
+        $.each( myProSelect, function( key, data ) {
+            var averagePrice=0;
+            if(isNaN(data.price)==false || isNaN(data.box)==false){
+                if(data.price >0 && data.box > 0){
+                    $('#msg'+data.id).removeClass("successful-color");
+                    $('#msg'+data.id).removeClass("warning-color");
+                    averagePrice = data.price/data.box_unit;
+                    if(data.average_price < averagePrice){
+                        $('#msg'+data.id).html('Trung bình giá vốn '+formatCurrency(Math.round(averagePrice).toString())+'đ cao hơn bình thường!');
+                        $('#msg'+data.id).addClass("warning-color");
+                    }
+                    else{
+                        $('#msg'+data.id).html('Trung bình giá vốn '+formatCurrency(Math.round(averagePrice).toString())+'đ !');
+                        $('#msg'+data.id).addClass("successful-color");
+                    }
+                }
+                else{
+                    $('#msg'+data.id).addClass("warning-color");
+                    $('#msg'+data.id).html('Kiểm tra giá nhập và số lượng nhập!');
+                }
+            }else{
+                $('#msg'+data.id).addClass("warning-color");
+                $('#msg'+data.id).html('Kiểm tra giá nhập và số lượng nhập!');
+            }
+        });
+    }
+</script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>

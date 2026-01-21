@@ -1,0 +1,586 @@
+<script type="application/javascript">
+    var geocoderInit = (function() {
+        var map;
+        var geocoder;
+        var autocomplete;
+        var markerSearch;
+        var markerWaveCurrent = new google.maps.Marker({
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 0,
+                strokeColor: 'white',
+                strokeWeight: 1,
+                fillColor: '#1A73E8',
+                fillOpacity: 0.3
+            },
+        });
+        var markerWaveSearch = new google.maps.Marker({
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                strokeColor: 'white',
+                strokeWeight: 1,
+                fillColor: '#1A73E8',
+                fillOpacity: 0.3
+            },
+        });
+        var waveCurrentInterval;
+        var waveSearchInterval;
+        var hashFragment = '';
+        var waitInternal = null;
+        var state = new GeocoderState();
+
+
+        function runSearchWave() {
+            var count=0;
+            clearInterval(waveSearchInterval);
+            waveSearchInterval= window.setInterval(function() {
+                var icon = markerWaveSearch.get('icon');
+                if(icon.scale<40){
+                    icon.scale = icon.scale+1;
+                }else{
+                    count = count+1;
+                    icon.scale = 0;
+                }
+                markerWaveSearch.set('icon', icon);
+            }, 25);
+        }
+
+        function runCurrentWave() {
+            var count=0;
+            clearInterval(waveCurrentInterval);
+            waveCurrentInterval= window.setInterval(function() {
+                var icon = markerWaveCurrent.get('icon');
+                if(icon.scale<40){
+                    icon.scale = icon.scale+1;
+                }else{
+                    count = count+1;
+                    icon.scale = 8;
+                }
+                markerWaveCurrent.set('icon', icon);
+            }, 25);
+        }
+
+        /**
+         * Wait for a the query-input DOM element to be ready.
+         */
+        var waitForQueryInput = function() {
+            var deferred = $.Deferred();
+            waitInternal = setInterval(function() {
+                var element = document.getElementById('query-input');
+                if (element != null) {
+                    clearInterval(waitInternal);
+                    deferred.resolve();
+                }
+            }, 50);
+            return deferred.promise();
+        };
+
+        /**
+         * Remove all geocoding results' markers from the map.
+         */
+        var clearMarkers = function() {
+            if(markerSearch)
+                markerSearch.setMap(null);
+            /*var result;
+            while (result = geocodingResults.pop()) {
+                result.marker.setMap(null);
+            }*/
+        };
+
+        /**
+         * React to changes in the URL hash fragment.
+         */
+        var checkHashFragment = function() {
+            newHashFragment = unescape(window.location.hash.substring(1));
+            if (newHashFragment != hashFragment) {
+                hashFragment = newHashFragment;
+                state.updateFromHash(hashFragment);
+                updateSearchControlFromState();
+                geocodeState();
+            }
+        };
+
+        var geoMapHeight = function () {
+            var headerH = $('#navbar').innerHeight();
+            var footerH = $('#footer').innerHeight();
+            var mapH = $(window).height()-(headerH+footerH+2);
+            $('#geomap').height(mapH);
+        };
+        /**
+         * Update the global state from the values in the search control.
+         */
+        var updateStateFromSearchControl = function() {
+            state.reset();
+            state.query = document.getElementById('query-input').value;
+            geocodeState();
+            updateHashFromState();
+        };
+        /**
+         * Update the URL hash fragment from the global state.
+         */
+        var updateHashFromState = function() {
+            hashFragment = state.buildHash();
+            window.location.hash = '#' + escape(hashFragment);
+        };
+
+        /**
+         * Update the search control from the global state.
+         */
+        var updateSearchControlFromState = function() {
+            document.getElementById('query-input').value = state.query;
+        };
+
+        /**
+         * Enable Places Autocomplete in the query input.
+         */
+        var enableAutocomplete = function() {
+            var queryInput = document.getElementById('query-input');
+            autocomplete = new google.maps.places.Autocomplete(queryInput, {fields: ['place_id', 'name']});
+            autocomplete.bindTo('bounds', map);
+            autocomplete.addListener('place_changed', function() {
+                var place = autocomplete.getPlace();
+                state.reset();
+                state.query = place.name;
+                queryInput.value= place.name;
+                updateHashFromState();
+                updateSearchControlFromState();
+                geocodeState();
+            });
+        };
+
+        /**
+         * Send a request to geocode the global state.
+         */
+        var geocodeState = function() {
+            var request = state.buildGeocodingRequest();
+            if (!request.placeId && !request.address && !request.latLng &&
+                !request.componentRestrictions) {
+                alert('<?=$this->translate("Please enter where you want to go")?>');
+                return;
+            }
+            geocoder.geocode(request, handleGeocodingResponse);
+        };
+
+        var selectResult = function() {
+            map.setCenter(state.center);
+            map.setZoom(DEFAULT_GEOLOCATION_ZOOM);
+        };
+
+        var searchHistory = function(result){
+            var search={};
+            search.address = result.formatted_address;
+
+            $.each(result.address_components, function( index, value ) {
+                $.each(value.types, function( i, v ) {
+                    if(v=='establishment') search.establishment = value.long_name;
+                    else if(v=='sublocality') search.sublocality = value.long_name;
+                    else if(v=='administrative_area_level_2') search.administrative_area_level_2 = value.long_name;
+                    else if(v=='administrative_area_level_1') search.administrative_area_level_1 = value.long_name;
+                    else if(v=='country') search.country = value.long_name;
+
+                });
+            });
+
+            $.ajax({
+                method: "POST",
+                url: "/history/add-map-search-history.html",
+                data: search
+            });
+        };
+        /**
+         * Handle a geocoding response.
+         * @param {google.maps.GeocoderResults} results Results from the geocoder.
+         * @param {google.maps.GeocoderStatus} status Status code from the geocoder.
+         */
+        var handleGeocodingResponse = function(results, status) {
+            clearMarkers();
+
+            var result= results[0];
+
+            markerWaveSearch.setMap(map);
+            markerWaveSearch.setPosition(result.geometry.location);
+
+            markerSearch = new google.maps.Marker({
+                icon: {
+                    url: '/img/search-marker.png',
+                    scaledSize: new google.maps.Size(40, 40),
+                },
+                map: map,
+                position: result.geometry.location
+            });
+//
+            state.center = result.geometry.location;
+            state.zoom = DEFAULT_GEOLOCATION_ZOOM;
+
+            selectResult();
+            runSearchWave();
+
+            searchHistory(result);
+
+        };
+
+        var loadMarket = function (bounds) {
+            var windowInfoMarkerLoading = $('#quick-view-window-info-template').text();
+            // console.log(map.getBounds().getNorthEast().lat());
+            // console.log(map.getBounds().getSouthWest().lat());
+            // markersByBounds
+            var url = "<?=$this->url('hotel-front-list',['action'=>'markers-by-bounds'])?>";
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: {
+                    ne_lat: bounds.getNorthEast().lat()
+                    ,ne_lng: bounds.getNorthEast().lng()
+                    ,sw_lat: bounds.getSouthWest().lat()
+                    ,sw_lng: bounds.getSouthWest().lng()
+                }
+            }).done(function (datas) {
+                // showAccommodationsNumber(datas.length);
+                $.each(datas, function(key, data) {
+                    //Window info
+                    var srcImg = '/img/logo_small_bestay.svg';
+                    if(data.default_img) srcImg = data.default_img;
+
+                    var view ={
+                        name:data.name
+                        ,address:data.address
+                        ,price:data.price
+                        ,promotion:data.promotion
+                        ,img:srcImg
+                    };
+                    var infowindow = new google.maps.InfoWindow({
+                        content: Mustache.render(windowInfoMarkerLoading, view)
+                    });
+
+                    var marketIcon = {
+                        url: '/img/icon-hotel.png',
+                        scaledSize: new google.maps.Size(40, 40),
+                    };
+
+                    var latLng = new google.maps.LatLng(data.lat, data.lng);
+
+                    /*var marker1 = new google.maps.Marker({
+                        id:data.id,
+                        position: latLng,
+                        title: data.name,
+                        map:map,
+                        // icon: marketIcon,
+                        // icon: 'blank',
+                        // label:{text:'$2000',id:'sdd'},
+                        address:data.address,
+                        price:data.price,
+                        promotion:data.promotion,
+                        alias:data.alias
+                    });*/
+
+                    var marker = new HTMLMapMarker({
+                        latlng: latLng,
+                        map: map,
+                        html: '<div class="accommodation-marker"><div class="accommodation-marker-content" style="">'+data.price+'</div><div class="accommodation-marker-arrow"></div></div>'
+                    });
+
+                    marker.id=data.id;
+                    marker.price=data.price;
+                    marker.address=data.address;
+                    marker.promotion=data.promotion;
+                    marker.alias=data.alias;
+                    marker.title=data.name;
+
+                    marker.addListener('click', markerClick);
+
+                    marker.addListener('mouseover', function() {
+                        infowindow.open(map, this);
+                    });
+
+                    marker.addListener('mouseout', function() {
+                        infowindow.close();
+                    });
+                });
+
+            });
+        };
+
+        var markerClick = function() {
+            var urlDetail = '/room/detail/{{alias}}/{{id}}.html';
+            urlDetail =Mustache.render(urlDetail, {alias:this.alias,id:this.id});
+            window.open(urlDetail, '_blank');
+            // console.log(urlDetail);
+
+            /*var url = '/application/hotel-info/0/0/'+this.id;
+            $.ajax({
+                type: "GET",
+                url: url,
+                success: function(res) {
+                    $('.modal-content').html(res);
+                    $("#modalHotelInfo #local").val( state.center.lat()+','+state.center.lng());
+                    $('#modalHotelInfo').modal('show');
+                },
+                error:function(request, status, error) {
+                    //console.log("ajax call went wrong:" + request.responseText);
+                }
+            });*/
+        };
+        /**
+         * Center the map on a position provided by W3C Geolocation.
+         * @param {Object} position The position provided by W3C Geolocation.
+         */
+        var centerMapOnGeolocation = function(position) {
+            if (state.center == null) {
+                centerMapOnViewport(
+                    new google.maps.LatLng(position.coords.latitude,
+                        position.coords.longitude),
+                    DEFAULT_GEOLOCATION_ZOOM);
+            }
+        };
+        /**
+         * Center (and zoom) the map and update the global state.
+         * @param {google.maps.LatLng} center A latlng to center the map on.
+         * @param {number} zoom The zoom level to set on the map.
+         */
+        var centerMapOnViewport = function(center, zoom) {
+            state.center = center;
+            state.zoom = zoom;
+            state.centerMap(map);
+            state.marker = new google.maps.Marker({
+                map: map,
+                position:center,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    strokeColor: 'white',
+                    strokeWeight: 2,
+                    fillColor: '#1A73E8',
+                    fillOpacity: 0.6
+                },
+                animation: google.maps.Animation.DROP,
+                title:CURRENT_TEXT_POSITION
+            });
+
+            markerWaveCurrent.setMap(map);
+            markerWaveCurrent.setPosition(center);
+            // map.setZoom(14);
+            // loadMarket(center);
+            runCurrentWave();
+        };
+        var location = function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition,function(error) {
+                    handleLocationError();
+                    //alert(error.message.toString());
+                });
+            }else {
+                //Geolocation is not supported by this browser.
+                handleLocationError();
+                // console.log(2);
+            }
+        };
+        var showPosition = function (position) {
+            var center = new google.maps.LatLng(position.coords.latitude,
+                position.coords.longitude);
+
+            state.marker = new google.maps.Marker({
+                map: map,
+                position:center,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    strokeColor: 'white',
+                    strokeWeight: 2,
+                    fillColor: '#1A73E8',
+                    fillOpacity: 0.6
+                },
+                animation: google.maps.Animation.DROP,
+                title:CURRENT_TEXT_POSITION
+            });
+            map.setCenter(center);
+            markerWaveCurrent.setMap(map);
+            markerWaveCurrent.setPosition(center);
+            runCurrentWave();
+        };
+        var handleLocationError = function () {
+            map.setCenter(new google.maps.LatLng(21.028667,105.852148));
+            map.setZoom(DEFAULT_GEOLOCATION_ZOOM);
+            // console.log('get position hanoi');
+            alert('<?=$this->translate("Turn on location services for your phone or browser")?>');
+        };
+
+        return function() {
+            state.reset();
+            geoMapHeight();
+
+            map = new google.maps.Map(document.getElementById('geomap'), {
+                // center: (state.center !== null ?
+                //     state.center : new google.maps.LatLng(21.028667,105.852148)),
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_RIGHT
+                },
+                disableDefaultUI: true,
+                panControl: false,
+                scaleControl: true,
+                zoom: state.zoom,
+                styles: [
+                    {
+                        featureType: 'poi.business',
+                        stylers:  [
+                            { visibility: "off" }
+                        ]
+                    },{
+                        featureType: 'poi.attraction',
+                        elementType: 'labels.text.fill',
+                        stylers: [{color: '#e28b0b'}]
+                    }
+                ]
+            });
+            geocoder = new google.maps.Geocoder();
+
+            map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(document.getElementById('location'));
+
+            if(detectmob){
+                var notification = document.createElement('div');
+                notification.appendChild(document.getElementById('notification-panel'));
+                notification.index = 1;
+                map.controls[google.maps.ControlPosition.LEFT_TOP].push(notification);
+
+            }
+
+            google.maps.event.addDomListener(
+                document.getElementById('location'),
+                'click',
+                location);
+
+            google.maps.event.addDomListener(
+                document.getElementById('geocode-button'),
+                'click',
+                updateStateFromSearchControl);
+
+
+            google.maps.event.addDomListener(
+                document.getElementById('query-input'),
+                'focus',
+                function(){
+                    this.select();
+                    this.setSelectionRange(0,999);
+                }
+            );
+
+            // if()
+            // Center the map in the user location, if available.
+            if (state.center == null && unescape(window.location.hash.substring(1)).length ==0) {
+                // console.log(navigator.geolocation);
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(centerMapOnGeolocation,function() {
+                        handleLocationError();
+                    });
+                    // console.log('getCurrentPosition');
+                }else {
+                    handleLocationError();
+                }
+            }
+
+
+
+            waitForQueryInput().then(function() {
+                setInterval(checkHashFragment, 500);
+                enableAutocomplete();
+                $('#location').css('display','unset')
+            });
+            map.addListener('tilesloaded', function() {
+                loadMarket(map.getBounds());
+/*
+                var boundsRect = new google.maps.Rectangle();
+                boundsRect.setOptions({
+                    clickable: false,
+                    fillOpacity: 0,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1,
+                    strokeWeight: 1
+                });
+                var viewportRect = new google.maps.Rectangle();
+                viewportRect.setOptions({
+                    clickable: false,
+                    fillOpacity: 0,
+                    strokeColor: '#0000FF',
+                    strokeOpacity: 1,
+                    strokeWeight: 1
+                });
+
+                var bounds = map.getBounds();
+
+                boundsRect.setBounds(map.getBounds());
+                boundsRect.setMap(map);*/
+
+            });
+        }
+    }());
+
+    class HTMLMapMarker extends google.maps.OverlayView
+    {
+        // Constructor accepting args
+        constructor(args) {
+            super();
+            this.latlng = args.latlng;
+            this.html = args.html;
+            this.setMap(args.map);
+        }
+
+        // Create the div with content and add a listener for click events
+        createDiv() {
+            this.div = document.createElement('div');
+            this.div.style.position = 'absolute';
+            if (this.html) {
+                this.div.innerHTML = this.html;
+            }
+            google.maps.event.addDomListener(this.div, 'click', event => {
+                google.maps.event.trigger(this, 'click');
+            });
+
+        }
+
+        // Append to the overlay layer
+        // Appending to both overlayLayer and overlayMouseTarget which should allow this to be clickable
+        appendDivToOverlay() {
+            const panes = this.getPanes();
+            panes.overlayLayer.appendChild(this.div);
+            panes.overlayMouseTarget.appendChild(this.div);
+        }
+
+        // Position the div according to the coordinates
+        positionDiv() {
+            const point = this.getProjection().fromLatLngToDivPixel(this.latlng);
+            if (point) {
+                this.div.style.left = `${point.x}px`;
+                this.div.style.top = `${point.y}px`;
+            }
+        }
+
+        // Create the div and append to map
+        draw() {
+            if (!this.div) {
+                this.createDiv();
+                this.appendDivToOverlay();
+            }
+            this.positionDiv();
+        }
+
+        // Remove this from map
+        remove() {
+            if (this.div) {
+                this.div.parentNode.removeChild(this.div);
+                this.div = null;
+            }
+        }
+
+        // Return lat and long object
+        getPosition() {
+            return this.latlng;
+        }
+
+        // Return whether this is draggable
+        getDraggable() {
+            return false;
+        }
+    }
+    google.maps.event.addDomListener(window, 'load', geocoderInit);
+</script>

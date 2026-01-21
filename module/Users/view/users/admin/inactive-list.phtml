@@ -1,0 +1,140 @@
+<?php
+$title = "User list";
+$this->headTitle($title);
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger; ?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">User list</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form action="<?=$this->url('user-admin',['action'=>'inactive-list'])?>" role="form" onsubmit="return validateForm();" method="GET" name="hotel-search-form" class="form-horizontal" id="hotel-search-form">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" name="mobile" id="user_mobile" value="<?=$searchFormData["mobile"]?>" placeholder="Fill mobile please">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control xn-search" name="name" id="user_name" value="<?=$searchFormData["name"]?>" placeholder="Fill fullname please">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" name="email" id="user_email" value="<?=$searchFormData["email"]?>" placeholder="Fill email please">
+                        </div>
+                        <div class="col-md-1">
+                            <button id="btnSearch" class="btn btn-info"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <thead>
+                    <th>STT</th>
+                    <th>Mobile</th>
+                    <th>Fullname</th>
+                    <th>Email</th>
+                    <th>Last login</th>
+                    <th>Status</th>
+                    </thead>
+                    <tbody>
+                    <?php if (count($this->paginator)): ?>
+                    <?php
+                    $stt = 1;
+                    foreach($paginator as $user):?>
+
+                        <tr>
+                            <td><?=$stt?></td>
+                            <td><?=$this->escapeHtml($user->getMobile())?></td>
+                            <td><?=$this->escapeHtml($user->getFullname())?></td>
+                            <td><?=$this->escapeHtml($user->getEmail())?></td>
+                            <td><?php
+                                if($user->getLoginDate()) echo $user->getLoginDate()->format('d/M/Y');
+                                else echo "--";
+                                ?>
+                            </td>
+                            <td>
+                                <label class="switch switch-small">
+                                    <input onclick="active(this.value)" type="checkbox" value="<?=$user->getId()?>"/>
+                                    <span></span>
+                                </label>
+                            </td>
+
+
+                        </tr>
+                        <?php
+                        $stt++;
+                    endforeach
+                    ?>
+                    <?php endif; ?>
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-footer">
+                <h3 class="panel-title"><?='<b>'.$paginator->getTotalItemCount().'</b> records'?></h3>
+                <?= $this->paginationControl(
+                    $this->paginator,
+                    'Sliding',
+                    'paginator',
+                    array('route' => 'user-admin'
+                    ,'params'=>['action' => 'inactive-list']
+                    ,'query'=>$this->queryParam)
+                ) ?>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<script>
+    function active(id){
+        run_waitMe();
+        $.ajax({
+            type: "POST",
+            url: '<?=$this->url("user-admin",["action"=>"active"])?>',
+            data: {id:id},
+            success: function(res) {
+                location.reload();
+                //console.log(res);
+            }
+        });
+    }
+    function validateForm() {
+        $("#btnSearch").attr("disabled", true);
+    }
+</script>

@@ -1,0 +1,107 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="text-center" style="max-height: 350px">
+                    <?php
+
+                    use Sulde\Service\Common\Common;
+
+                    if(is_null($this->product->getImg()))
+                        $imgSrc="/img/icons/no-image-icon.png";
+                    else
+                        $imgSrc= $this->product->getImg();
+                    ?>
+                    <img src="<?=$imgSrc?>" style="max-height: 350px">
+                </div>
+                <div style="font-weight: bold; border-top:1px solid #e4e3e3; padding-top: 10px; margin-top:10px; font-size: 14pt">
+                    <?=$this->product->getName().' | '.$this->product->getWeight()?>
+                </div>
+                <div style="padding-top: 5px;">
+                    <div class="pull-left">Giá bán: <b><?=Common::formatMoney($this->product->getActivePrice()->getPrice()).'đ / '.$this->product->getUnit()->getName()?></b></div>
+                    <div class="pull-right" style="color: #0C7FCC">
+                        <?='<b>'.Common::formatMoney($this->product->getActivePrice()->getPrice()*$this->product->getBoxUnit()).'đ / Thùng </b> <i>(' .$this->product->getBoxUnit().' '.$this->product->getUnit()->getName() .'/Thùng)</i>'?>
+                    </div>
+                </div>
+                <div style="padding-top: 30px">
+                    <table>
+                        <tr>
+                            <td><input type="number" name="qty" id="qty" class="form-control" value="<?=$this->product->getExchangeUnit()?>" /></td>
+                            <td style="padding-left: 5px; padding-right: 5px">
+                                <select id="opt" class="form-control select">
+                                    <option value="0"><?=$this->product->getUnit()->getName()?></option>
+                                    <option value="1">Thùng</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button id="btnAddToCard" type="button" class="btn btn-info active"><i class="fa fa-shopping-cart"></i>Thêm vào giỏ hàng</button>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php
+                        if($this->product->getExchangeUnit()>1)
+                            echo '<small style="color: red; padding-top: 5px"><i>Bán tối thiếu '.$this->product->getExchangeUnit().' '.$this->product->getUnit()->getName().'</i></small>';
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Có thể bạn quan tâm</h3>
+            </div>
+            <div class="panel-body">
+                    <?php
+                    foreach ($this->relatedProducts as $productItem){
+                        if(is_null($productItem->getImg()))
+                            $imgSrc="/img/icons/no-image-icon.png";
+                        else
+                            $imgSrc= $productItem->getImg();
+                    ?>
+                        <div class="col-xs-6 col-sm-4 col-md-4">
+                            <div>
+                                <div style="text-align: center; height: 100px">
+                                    <a href="<?=$this->url('product-front',['action'=>'detail','id'=>$productItem->getId()])?>">
+                                    <img src="<?=$imgSrc?>" style="max-height: 100%">
+                                    </a>
+                                    <div style="position: absolute; bottom: 30%"><label class="label label-danger"><?=Common::formatMoney($productItem->getActivePrice()->getPrice()).'đ/'.$productItem->getUnit()->getName()?></label></div>
+                                </div>
+                                <div style="font-weight: bold; padding-top: 10px; height: 45px"><a href="<?=$this->url('product-front',['action'=>'detail','id'=>$productItem->getId()])?>"><?=$productItem->getName().' | '.$productItem->getWeight()?></a></div>
+                            </div>
+                        </div>
+                    <?php
+                    }
+                    ?>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#btnAddToCard').click(function(){
+            let qty = $('#qty').val();
+            let opt = $('#opt').val();
+            run_waitMe();
+            $.ajax({
+                method: "POST",
+                url: '<?=$this->url('product-front',['action'=>'add-to-card','id'=>$this->product->getId()])?>',
+                data: {qty:qty,opt:opt}
+            }).done(function (data) {
+                if(data.success){
+                    // alert('Đã thêm sản phẩm vào giở hàng!');
+                    // console.log(data.count_product);
+                    $('#c_my_card').html(data.count_product);
+                    noty({text: 'Đã thêm sản phẩm vào giỏ hàng!', layout: 'topRight', type: 'success',timeout: 4000});
+                }
+                else{
+                    alert(data.msg);
+                }
+                stop_waitMe();
+            })
+        })
+    });
+</script>

@@ -1,0 +1,530 @@
+<table class="table table-hover" id="tblProduct">
+    <thead>
+    <tr>
+        <th></th>
+        <th>No.</th>
+        <th></th>
+        <th>Barcode</th>
+        <th style="width: 100%">Tên sản phẩm</th>
+        <th class="number">Đơn vị</th>
+        <th class="number">Số lượng</th>
+        <th class="number">Giá bán</th>
+        <th class="number" nowrap="">Chiết khấu</th>
+        <th class="number" nowrap="">Thành tiền</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<div style="padding-right: 10px">
+    <table>
+        <tr>
+            <td style="width: 100%"></td>
+            <td style="padding-right: 10px; text-align: right; padding-bottom: 5px; border-bottom: 1px solid #cccccc" nowrap="">Tổng cộng:</td>
+            <td class="total-order-amount" style="text-align: right; font-weight: bold; padding-bottom: 5px; border-bottom: 1px solid #cccccc">0</td>
+        </tr>
+        <tr>
+            <td style="width: 100%"></td>
+            <td style="text-align: right; border-bottom: 1px solid #cccccc; padding: 3px 10px;" nowrap="">Chiết khấu theo sản phẩm:</td>
+            <td class="total-order-product-discount" style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">0</td>
+        </tr>
+        <tr>
+            <td style="width: 100%"></td>
+            <td style="padding-right: 10px; text-align: right; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">Chiết khấu theo đơn:</td>
+            <td class="order-discount" style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">0</td>
+        </tr>
+        <tr>
+            <td style="width: 100%"></td>
+            <td style="padding-right: 10px; text-align: right; padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>
+            <td class="total-amount-payable highlight" style="text-align: right; font-weight: bold; padding-top: 3px;" nowrap="">0</td>
+        </tr>
+    </table>
+</div>
+<style>
+    .removeItem{margin-left: 5px;}
+    .returnItem{margin-left: 5px;}
+    .table img{max-width: 40px; max-height: 30px}
+    .dt-nowrap{white-space: nowrap}
+</style>
+<div class="modal fade" id="modalEditProduct" tabindex="-1" role="dialog" aria-labelledby="modalEditProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <input id="sellId" name="sellId" type="hidden" value="0" />
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h3 class="modal-title" id="modalEditProductLabel">Sửa số lượng sản phẩm trên đơn</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Tên sản phẩm:</label>
+                        <div class="col-md-9 title" id="modal-product-label-name"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Mã sản phẩm:</label>
+                        <div class="col-md-9 title" id="modal-product-label-code"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Số lượng trên đơn:</label>
+                        <div class="col-md-9 highlight" id="modal-product-label-qty"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Số lượng cần sửa:</label>
+                        <div class="col-md-2">
+                            <input id="txtEditQty" name="txtEditQty" type="number" class="form-control" min="0" max="">
+                        </div>
+                        <label id="modal-product-label-unit" class="col-md-1"></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label"></label>
+                        <div class="col-md-9">
+                            <label class="check">
+                                <input type="radio" id="unit" value="unit" class="iradio" name="opt"/> <span id="modal-product-label-unit-name"></span>
+                            </label>
+                            <label class="check">
+                                <input type="radio" id="pack" value="pack" class="iradio" name="opt"/> Thùng
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-product-message" style="font-style: italic; color: red"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnEditProductNumber" type="button" class="btn btn-info">
+                    <span class="fa fa-save"></span>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReturn" tabindex="-1" role="dialog" aria-labelledby="modalReturnLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <input type="hidden" id="return_sell_detail_id" name="return_sell_detail_id" value="0">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h3 class="modal-title" id="modalReturnLabel">Trả lại hàng</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Tên sản phẩm:</label>
+                        <div class="col-md-9 title" id="modal_return_product_name"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Mã sản phẩm:</label>
+                        <div class="col-md-9 title" id="modal_return_product_code"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Số lượng trên đơn:</label>
+                        <div class="col-md-9 highlight" id="modal_return_qty"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Số lượng trả lại:</label>
+                        <div class="col-md-2">
+                            <input id="txtReturnQty" name="txtReturnQty" type="number" class="form-control" min="1" max="">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label"></label>
+                        <div class="col-md-9">
+                            <label class="check">
+                                <input type="radio" id="modal_return_unit" value="unit" class="iradio" name="return_opt"/> <span id="modal_return_unit_name"></span>
+                            </label>
+                            <label class="check">
+                                <input type="radio" id="modal_return_pack" value="pack" class="iradio" name="return_opt"/> Thùng
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-product-message" style="font-style: italic; color: red"></div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Nguyên nhân:</label>
+                        <div class="col-md-4">
+                            <select class="form-control" id="cboCauses">
+                                <?php
+
+                                use Sulde\Service\Common\ConfigManager;
+
+                                foreach (ConfigManager::getCausesReturn() as $key=> $value){
+                                    echo '<option value="'.$key.'">'.$value.'</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label"></label>
+                        <div class='col-md-9'>
+                            <textarea type="text" class="form-control" id="txtReturnNote" name="txtReturnNote" placeholder="Ghi chú" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-return-product-message" style="font-style: italic; color: red"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnReturnConfirm" type="button" class="btn btn-info">
+                    <span class="fa fa-save"></span>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let table;
+    let action = <?=json_encode($this->action)?>;
+    // console.log(action.find((element) => element = 'edit123'));
+    $(document).ready(function () {
+        table=$('#tblProduct').DataTable({
+                paging: false,
+                ordering: false,
+                info:false,
+                processing: false,
+                serverSide: true,
+                stateSave: false,
+                searching: false,
+                columnDefs: [
+                    {
+                        name:'rowData',
+                        targets: 0,
+                        visible: false
+                    },
+                    {
+                        name: 'img',
+                        targets: 2,
+                        width: 100,
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            if (cellData) {
+                                $(td).html('<img src="'+cellData+'">');
+                            }
+                        }
+                    },
+                    {
+                        name: 'name',
+                        targets: 4,
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            let productItem=rowData[0];
+                            let name='<a href="<?=$this->url('product-admin',['action'=>'price'])?>/'+productItem.product_id+'" class="title">'+productItem.name+' | '+productItem.weight+'</a>';
+                            if (productItem.return_message) {
+                                name+='<br><small style="color: red"> '+productItem.return_message+'</small>';
+                            }
+                            if(productItem.check_by){
+                                name+='<br><small class="text-muted"> Người kiểm: <b>'+productItem.check_by+'</b> | Ngày: <b>'+productItem.check_date+'</b> | SL: <b>'+productItem.check_qty+ ' ' + productItem.unit+'</b></small>';
+                            }
+                            $(td).html(name);
+                        }
+                    },
+                    {
+                        name: 'qty',
+                        targets: 6,
+                        width: 100,
+                        className: 'number price',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            if ( cellData <= 0 ) {
+                                $(td).css('color', 'red');
+                                $(td).css('font-weight', 'bold');
+                            }
+                        }
+                    },
+                    {
+                        name: 'price',
+                        targets: 7,
+                        width: 100,
+                        className: 'number',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            if ( cellData <= 0 ) {
+                                $(td).css('color', 'red');
+                                $(td).css('font-weight', 'bold');
+                            }
+                            $(td).html(formatMoney(cellData));
+                        }
+                    },
+                    {
+                        name:'discount',
+                        targets: 8,
+                        width: 100,
+                        className: 'number',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            $(td).html(formatMoney(cellData));
+                        }
+                    },
+                    {
+                        name: 'total_price',
+                        targets: 9,
+                        width: 100,
+                        className: 'number price',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            if ( cellData <= 0 ) {
+                                $(td).css('color', 'red');
+                                $(td).css('font-weight', 'bold');
+                            }
+                            $(td).html(formatMoney(cellData));
+                        }
+                    },
+                    {
+                        name: 'button',
+                        targets: 10,
+                        className: 'dt-nowrap',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            let button='';
+                            if(action.includes("edit")){
+                                button+='<button data-toggle="tooltip" data-placement="bottom" title="Thay đổi số lượng" type="button" class="btn btn-warning btn-rounded editItem">';
+                                button+='<span class="fa fa-pencil"></span>';
+                                button+='</button>';
+                            }
+
+                            if(action.includes('return')){
+                                button+='<button data-toggle="tooltip" data-placement="bottom" title="Trả hàng" type="button" class="btn btn-warning btn-rounded returnItem">';
+                                button+='<span class="fa fa-reply"></span>';
+                                button+='</button>';
+                            }
+
+                            if(action.includes("delete")){
+                                button+='<button data-toggle="tooltip" data-placement="bottom" title="Xoá sản phẩm" type="button" class="btn btn-danger btn-rounded removeItem">';
+                                button+='<span class="fa fa-trash-o"></span>';
+                                button+='</button>';
+                            }
+
+                            $(td).html(button);
+                        }
+                    }
+                ],
+                ajax: {
+                    url: '<?=$this->url('sell-admin',['action'=>$this->url])?>',
+                    type: 'POST',
+                    data:{id:<?=$order->getId()?>},
+                    beforeSend: function(){
+                        $('#tblProduct > tbody').html(
+                            '<tr class="odd">' +
+                            '<td valign="top" colspan="10" style="font-size: 9pt" class="dataTables_empty">Đang tải dữ liệu&hellip;</td>' +
+                            '</tr>'
+                        );
+                    },
+                    dataSrc: function (json) {
+                        let data=[];
+                        let i=1;
+                        $.each( json.data, function( key, value ) {
+                            let dataItem=[];
+                            dataItem.push(value);
+                            dataItem.push(i++);
+                            dataItem.push(value.img);
+                            dataItem.push(value.barcode);
+                            dataItem.push(value.name);
+                            dataItem.push(value.unit);
+                            dataItem.push(value.qty);
+                            dataItem.push(value.price);
+                            dataItem.push(value.discount);
+                            dataItem.push(value.total_price);
+                            dataItem.push(value.product_id);
+                            data.push(dataItem);
+                        });
+
+                        $('.total-order-amount').html(formatMoney(json.total_order));
+                        $('.total-order-product-discount').html(formatMoney(json.total_order_product_discount));
+                        $('.order-discount').html(formatMoney(json.order_discount));
+                        $('.total-amount-payable').html(formatMoney(json.total_amount_payable));
+
+                        return data;
+                    }
+                }
+            }).on('click', 'tbody tr', (e) => {
+                let classList = e.currentTarget.classList;
+
+                if (classList.contains('tr-selected')) {
+                    classList.remove('tr-selected');
+                }
+                else {
+                    table.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                    classList.add('tr-selected');
+                }
+            });
+
+        $('#tblProduct tbody')
+            .on('click', '.editItem', function () {
+                let row = $(this).closest('tr');
+                let data = table.row( row ).data();
+
+                $('#modalEditProduct').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                }).on('shown.bs.modal', function (e) {
+                    $('#modal-product-label-name').html(data[0].name+'|'+data[0].weight);
+                    $('#modal-product-label-code').html(data[0].barcode);
+                    $('#modal-product-label-qty').html(data[0].qty+' '+data[0].unit);
+                    $('#modal-product-label-unit-name').html(data[0].base_unit);
+                    $('#modal-product-message').html('Tồn kho: '+data[0].inventory+' '+data[0].base_unit+', '+data[0].note_order);
+                    $('#sellId').val(data[0].id);
+
+                    (data[0].unit=='Thùng')?$('#pack').iCheck('check'):$('#unit').iCheck('check');
+
+                    $("#txtEditQty")
+                        .val('')
+                        .focus();
+                });
+            })
+            .on('click','.removeItem',function(){
+                let row = $(this).closest('tr');
+                let data = table.row( row ).data();
+                let text = "Bạn có chắc muốn xoá sản phẩm "+ data[0].name +"?";
+                if (confirm(text) === false) {
+                    return false;
+                }
+                let sellId=data[0].id;
+                if(!sellId){
+                    noty({text: '[Error]: Không thể tìm thấy sản phẩm cần xoá! vui lòng liên hệ admin.', layout: 'topRight', type: 'error',timeout: 4000});
+                    return false;
+                }
+
+                run_waitMe();
+                var url = "<?=$this->url('sell-admin',['action'=>'del-product-order'])?>";
+                $.ajax({
+                    headers: {Accept: "application/json; charset=utf-8"},
+                    method: "POST",
+                    url: url,
+                    data: {id:sellId}
+                }).done(function (response) {
+                    if(response.status){
+                        table.ajax.reload();
+                        noty({text: response.message, layout: 'topRight', type: 'success',timeout: 4000});
+                    }else{
+                        noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    }
+                    stop_waitMe();
+                })
+            })
+            .on('click','.returnItem',function(){
+                let row = $(this).closest('tr');
+                let data = table.row( row ).data();
+                // console.log(data);
+                $('#modalReturn').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                }).on('shown.bs.modal', function (e) {
+                    $("#txtReturnQty")
+                        .val('')
+                        .focus();
+                    $('#cboCauses').selectpicker();
+                    $("#txtReturnNote").val('');
+
+                    (data[0].unit=='Thùng')?$('#modal_return_pack').iCheck('check'):$('#modal_return_unit').iCheck('check');
+
+                    $('#return_sell_detail_id').val(data[0].id);
+                    $('#modal_return_product_name').html(data[0].name+' | '+data[0].weight);
+                    $('#modal_return_product_code').html(data[0].barcode);
+                    $('#modal_return_qty').html(data[0].qty + ' '+data[0].unit);
+                    $('#modal_return_unit_name').html(data[0].base_unit);
+
+                    let warringMessage='';
+                    if(data[0].unit=='Thùng'){
+                        $('#modal_return_pack').iCheck('check');
+                        warringMessage='Bạn có thể trả lại tối đa '+data[0].qty+' thùng, hoặc '+data[0].qty*data[0].pack_unit+' '+data[0].base_unit;
+                    }else{
+                        $('#modal_return_unit').iCheck('check');
+                        warringMessage='Bạn có thể trả lại tối đa '+data[0].qty+' '+data[0].base_unit;
+                    }
+                    $('#modal-return-product-message').html(warringMessage);
+                    // console.log(data[0]);
+                });
+            })
+
+        $('#btnEditProductNumber').click(function(){
+            let sellId = $('#sellId').val();
+            let qty = $('#txtEditQty').val();
+            let opt=$('input[name="opt"]:checked').val();
+
+            if(!qty || !opt){
+                noty({text: 'Nhập số lượng sản phẩm cần sửa và đơn vị sửa', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }
+
+            run_waitMe('.modal-dialog');
+            let url = "<?=$this->url('sell-admin',['action'=>'edit-product-order'])?>";
+            $.ajax({
+                method: "POST",
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                },
+                url: url,
+                data: {id:sellId,qty:qty,opt:opt}
+            }).done(function (response) {
+                // console.log(response);
+                if(response.status){
+                    table.ajax.reload();
+                    noty({text: response.message, layout: 'topRight', type: 'success',timeout: 4000});
+                    $('#modalEditProduct').modal('hide');
+                }else{
+                    $('#txtEditQty').focus();
+                    noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe('.modal-dialog');
+            })
+        });
+        $('#btnReturnConfirm').click(function() {
+            let returnQty = $("#txtReturnQty").val();
+            let causes = $("#cboCauses").val();
+            let opt=$('input[name="return_opt"]:checked').val();
+
+            let note = $("#txtReturnNote").val();
+            let return_sell_detail_id = $("#return_sell_detail_id").val();
+
+            if(!returnQty || returnQty==0){
+                noty({text: 'Số lượng sản phẩm trả lại không hợp lệ!', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }else if(causes=='other' && !note){
+                noty({text: 'Vui lòng nhập ghi chú!', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }
+            var data ={
+                id:return_sell_detail_id,
+                qty:returnQty,
+                opt:opt,
+                causes:causes,
+                note:note
+            };
+            run_waitMe('.modal-dialog');
+            var url = '<?=$this->url('sell-admin',['action'=>'sell-return'])?>';
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: data
+            }).done(function (msg) {
+                if(msg.status){
+                    table.ajax.reload();
+                    noty({text: msg.message, layout: 'topRight', type: 'success',timeout: 4000});
+                    $('#modalReturn').modal('hide');
+                }else{
+                    noty({text: msg.message, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe('.modal-dialog');
+            });
+        });
+    })
+</script>

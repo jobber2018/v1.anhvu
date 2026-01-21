@@ -1,0 +1,282 @@
+<?= $this->doctype() ?>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
+    <?= $this->headTitle('NPP ANH VŨ')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()
+//        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+    ?>
+
+    <!-- Le styles -->
+    <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/favicon.png'])?>
+
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- START NOTY -->
+    <script type='text/javascript' src='/joli/js/plugins/noty/jquery.noty.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/layouts/topRight.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/themes/default.js'></script>
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+
+<!-- START PAGE CONTAINER -->
+<div id="loader"></div>
+<div class="modal_loading"></div>
+
+<!-- START PAGE CONTAINER -->
+<div class="page-container">
+    <div class="page-sidebar">
+        <ul class="x-navigation">
+            <li class="xn-logo">
+                <a href="<?=$this->url('user-dashboard')?>" style="padding-top: 2px"><img src="/img/logo-user-admin.png" width="120px"></a>
+                <a href="#" class="x-navigation-control"></a>
+            </li>
+
+            <li class="xn-openable">
+                <a href="#"><span class="fa fa-random"></span> <span class="xn-text">Tuyến đi</span></a>
+                <ul class="animated zoomIn">
+                    <li><a href="<?=$this->url('grocery-user')?>"><span class="fa fa-heart"></span> Danh sách tuyến</a></li>
+                    <li><a href="<?=$this->url('product-front',['action'=>'price'])?>"><span class="fa fa-money"></span> Bảng giá</a></li>
+                    <li><a href="https://anhvu.store/files/user-guide.pdf" target="_blank"><span class="glyphicon glyphicon-bullhorn"></span> Hướng dẫn sử dụng</a></li>
+                </ul>
+            </li>
+
+            <li class="xn-openable">
+                <a href="#"><span class="fa fa-file-text-o"></span> <span class="xn-text">User</span></a>
+                <ul class="animated zoomIn">
+                    <li class="xn-profile">
+                        <?php
+                        if($this->authIdentity->getAvatar()) $avatarSource= $this->authIdentity->getAvatar();
+                        else $avatarSource = '/img/users/avatar.png'
+                        ?>
+                        <div class="profile">
+                            <div class="profile-image">
+                                <a href="<?=$this->url('user-front',['action'=>'profile'])?>" class="profile-control-left"><img src="<?=$avatarSource?>" alt="<?=$this->authIdentity->getFullname();?>"/></a>
+                            </div>
+                            <div class="profile-data">
+                                <div class="profile-data-name"><?=$this->authIdentity->getFullname();?></div>
+                                <div class="profile-data-title">Vai trò: <?=ucfirst($this->authIdentity->getRole());?></div>
+                            </div>
+                            <div class="profile-controls">
+                                <a href="<?=$this->url('user-front',['action'=>'profile'])?>" class="profile-control-left"><span class="fa fa-info"></span></a>
+                                <a href="#" class="profile-control-right"><span class="fa fa-envelope"></span></a>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('user-front',['action'=>'profile'])?>">
+                            <span class="glyphicon glyphicon-user"></span><?=$this->translate('User Profile')?>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('user-front',['action'=>'change-password'])?>">
+                            <span class="glyphicon glyphicon-edit"></span><?=$this->translate('Change password')?>
+                        </a>
+                    </li>
+                    <?php
+                    if($this->authIdentity->getRole()=='admin'){
+                        ?>
+                        <li>
+                            <a href="<?=$this->url('admin-dashboard')?>">
+                                <span class="glyphicon glyphicon-retweet"></span> Quản trị hệ thống
+                            </a>
+                        </li>
+                        <?php
+                    }
+                    ?>
+                </ul>
+            </li>
+
+            <!-- SIGN OUT -->
+            <li class="xn-icon-button pull-right">
+                <a href="#" class="mb-control" data-box="#mb-signout"><span class="fa fa-sign-out"></span></a>
+            </li>
+            <!-- END SIGN OUT -->
+
+        </ul>
+    </div>
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+        <ul class="x-navigation x-navigation-horizontal x-navigation-panel">
+            <!-- TOGGLE NAVIGATION -->
+            <li class="xn-icon-button">
+                <a href="#" class="x-navigation-minimize"><span class="fa fa-dedent"></span></a>
+            </li>
+            <!-- END TOGGLE NAVIGATION -->
+            <!-- TASKS -->
+            <li class="xn-icon-button pull-right">
+                <a href="#"><span class="fa fa-tasks"></span></a>
+                <div id="activityInformer" class="informer informer-warning"></div>
+                <div class="panel panel-primary animated zoomIn xn-drop-left xn-panel-dragging">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><span class="fa fa-tasks"></span> Activity</h3>
+                        <div class="pull-right">
+                            <span id="activityActive" class="label label-warning"></span>
+                        </div>
+                    </div>
+                    <div id="activityTask" class="panel-body list-group scroll" style="height: 200px;"></div>
+                    <div class="panel-footer text-center">
+<!--                        <a href="#">Show all tasks</a>-->
+                    </div>
+                </div>
+            </li>
+            <!-- END TASKS -->
+        </ul>
+        <!-- PAGE CONTENT WRAPPER -->
+        <div class="page-content-wrap">
+            <?= $this->content ?>
+        </div>
+        <!-- PAGE CONTENT WRAPPER -->
+    </div>
+    <!-- END PAGE CONTENT -->
+</div>
+<!-- END PAGE CONTAINER -->
+
+
+<!-- MESSAGE BOX-->
+<div class="message-box animated fadeIn" data-sound="alert" id="mb-signout">
+    <div class="mb-container">
+        <div class="mb-middle">
+            <div class="mb-title"><span class="fa fa-sign-out"></span> Đăng <strong>Xuất</strong> ?</div>
+            <div class="mb-content">
+                <p>Bạn chắc chắn muốn thoát phiên làm việc?</p>
+                <p>Bấm No nếu bạn muốn tiếp tục công việc. Bấm Yes để đăng xuất người dùng hiện tại.</p>
+            </div>
+            <div class="mb-footer">
+                <div class="pull-right">
+                    <a href="/user-logout.html" class="btn btn-success btn-lg">Yes</a>
+                    <button class="btn btn-default btn-lg mb-control-close">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MESSAGE BOX-->
+
+<!-- START PRELOADS -->
+<audio id="audio-alert" src="/joli/audio/alert.mp3" preload="auto"></audio>
+<audio id="audio-fail" src="/joli/audio/fail.mp3" preload="auto"></audio>
+<audio id="audio-warning" src="/joli/audio/warning.mp3" preload="auto"></audio>
+<audio id="audio-success" src="/joli/audio/success.mp3" preload="auto"></audio>
+<!-- END PRELOADS -->
+<style>
+    .x-navigation > li.xn-logo > a:first-child{
+        background-color:#ff6700;
+    }
+    .x-navigation > li.xn-logo > a:first-child{
+        background:#ff6700
+    }
+    .x-navigation > li.xn-logo > a:first-child:hover{
+        background:#ff6700;
+    }
+
+    /* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   speak for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+    .modal_loading {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .8 )
+        url('/img/icons/loading.gif')
+        50% 50%
+        no-repeat;
+        background-size: contain;
+    }
+
+    /* When the body has the loading class, we turn
+       the scrollbar off with overflow:hidden */
+    body.loading {
+        overflow: hidden;
+    }
+
+    /* Anytime the body has the loading class, our
+       modal element will be visible */
+    body.loading .modal_loading {
+        display: block;
+    }
+    .actTitle{font-weight: bold};
+</style>
+<!-- END PRELOADS -->
+<script>
+    $( document ).ready(function() {
+        $.ajax({
+            method: "POST",
+            url: "<?=$this->url('user-activity')?>",
+        }).done(function(response) {
+            if(response.success==1){
+                var data=response.data;
+                var item='';
+                var actNew=0;
+                $.each(data, function( index, value ) {
+                    var cls='';
+                    if(value.seen==0){
+                        cls='actTitle';
+                        actNew++;
+                    }
+                    item='<a class="list-group-item" href="#" onclick="activityRead('+value.id+')">';
+                    item+='<div id="act_'+value.id+'" class="'+cls+'">'+value.username +': '+value.title+'</div>';
+                    item+='<small class="text-muted">'+value.created_date+'</small>';
+                    item+='</a>';
+                    $('#mCSB_1_container').append(item);
+                });
+
+                $('#activityInformer').html(actNew);
+                $('#activityActive').html(data.length + ' active');
+            }
+            // noty({text: 'Successful', layout: 'topRight', type: 'success'});
+        });
+
+    })
+
+    function activityRead(activityId){
+        if($('#act_'+activityId).attr('class')=='actTitle'){
+            $.ajax({
+                method: "POST",
+                url: "<?=$this->url('user-activity-read')?>",
+                data: {id:activityId}
+            }).done(function(response) {
+                $('#act_'+activityId).removeClass('actTitle');
+                if($('#activityInformer').html()>0)
+                    $('#activityInformer').html($('#activityInformer').html()-1);
+            });
+        }
+    }
+
+</script>
+</body>
+</html>

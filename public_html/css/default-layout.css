@@ -1,0 +1,20 @@
+.breadcrumb{background-color: unset}
+
+#navbar{
+    position: fixed;
+    z-index: 10;
+    width: 100%;
+    background: white;
+}
+.navbar{padding:0rem 1rem}
+.navbar .l-line{
+    padding-left:2rem;
+    border-left:1px solid #cccccc;
+}
+.navbar .icons-list{width: 24px; height: 24px}
+.nav-mobile{
+    display:contents;
+    width:100%;
+}
+
+.content{margin-top: 50px; margin-bottom: 30px}

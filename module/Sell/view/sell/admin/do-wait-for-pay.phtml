@@ -1,0 +1,241 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>">Danh sách đơn hàng</a></li>
+    <li class="active">Chi tiết đơn hàng chưa thanh toán</li>
+</ul>
+<div class="page-title">
+    <h2>
+        <span class="fa fa-arrow-circle-o-left"></span>
+        Chi tiết đơn hàng chưa thanh toán
+    </h2>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a class="btn btn-info" href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" >
+                        <span class="fa fa-print"></span>In đơn
+                    </a>
+                    <button onclick="showDiscountModal()" class="btn btn-danger">
+                        <span class="fa fa-gift"></span>
+                        Chiết khấu theo đơn
+                    </button>
+                    <?=$this->partial('sell/partial/order-discount', ['order'=>$this->sellOrder]);?>
+                    <ul class="panel-controls">
+                        <li>
+                            <button onclick="showModalSelectProduct()" class="btn btn-success">
+                                <span class="fa fa-plus-circle"></span>
+                                Thêm sản phẩm
+                            </button>
+
+                            <button onclick="showModalPayConfirm()" type="button" class="btn btn-info">
+                                <span class="fa fa-credit-card"></span>
+                                Xác nhận thanh toán
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <?=$this->partial('sell/partial/order-edit-product', ['order'=>$this->sellOrder,'action'=>['edit','return'],'url'=>'do-wait-for-pay']);?>
+                </div>
+                <div class="panel-footer">
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-note', ['order'=>$this->sellOrder,'userInfo'=>$this->userInfo]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/customer-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử thay đổi</h3>
+                </div>
+                <div class="panel-body">
+                    <!-- START TIMELINE -->
+                    <div class="timeline timeline-right" style="padding: 10px; background: rgba(223, 226, 226, 0.74)">
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date">Activity</div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                        <?php
+                        foreach ($this->sellOrder->getActivity() as $activityItem){
+
+                            ?>
+                            <!-- START TIMELINE ITEM -->
+                            <div class="timeline-item timeline-item-right">
+                                <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
+                                <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
+                                <div class="timeline-item-content">
+                                    <div class="timeline-body">
+                                        <b><?=$activityItem->getActionBy()?></b><br>
+                                        <i><?=$activityItem->getAction()?></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END TIMELINE ITEM -->
+                            <?php
+                        }
+                        ?>
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+                    <!-- END TIMELINE -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script type="text/html" id="order-pay-info-template">
+    <style>
+        .tplOrderPayInfo tr:first-child td{border-top: 0px}
+        .tplOrderPayInfo td:first-child{font-weight: bold}
+        .tplOrderPayInfo{margin-bottom: 0px}
+    </style>
+    <table class="table nowrap table-hover display tplOrderPayInfo">
+        <tr>
+            <td>Khách hàng:</td>
+            <td class="title">{{customer_name}}</td>
+        </tr>
+        <tr>
+            <td>Mã đơn hàng:</td>
+            <td>{{order_code}}</td>
+        </tr>
+        <tr>
+            <td>Số tiền:</td>
+            <td><span class="highlight" style="font-size: 10pt">{{total_amount_payable}}</span> [{{order_payment_method_name}}]</td>
+        </tr>
+        <tr>
+            <td>Ngày giao:</td>
+            <td>{{delivered_date}}</td>
+        </tr>
+        <tr>
+            <td>Người giao:</td>
+            <td class="price">{{delivered_by}}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <label class="check">
+                    <input type="radio" class="iradio" name="payMethod" value="1" checked="checked"/>Hoàn thành
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <textarea type="text" class="form-control" id="orderNote" name="orderNote" placeholder="Ghi chú" rows="3"></textarea>
+            </td>
+        </tr>
+    </table>
+</script>
+<div class="modal fade" id="modalPayConfirm" tabindex="-1" role="dialog" aria-labelledby="modalPayConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalPayConfirmLabel">Xác nhận thanh toán</h4>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnConfirmPayment" type="button" class="btn btn-success">
+                    <span class="fa fa-credit-card"></span>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+</style>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+
+        $('#btnConfirmPayment').click(function() {
+            let orderId = <?=$this->sellOrder->getId()?>;
+            let orderNote = $("#orderNote").val();
+            let payMethod = $("input[name='payMethod']:checked").val();
+
+            let data ={
+                oid:orderId,
+                payMethod:payMethod,
+                note:orderNote
+            };
+            run_waitMe('.modal-dialog');
+            let url = "<?=$this->url('sell-admin',['action'=>'payment-confirmation'])?>";
+            $.ajax({
+                method: "POST",
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                },
+                url: url,
+                data: data
+            }).done(function (response) {
+                if(response.status){
+                    alert(response.message);
+                    window.location.href='<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>';
+                    $('#modalPayConfirm').modal('hide');
+                }else{
+                    noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    stop_waitMe('.modal-dialog');
+                }
+            });
+        });
+    });
+
+    function showModalPayConfirm(){
+        $('#modalPayConfirm').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        }).on('shown.bs.modal', function (e) {
+            $('#orderNote').val('').focus();
+        });
+        run_waitMe('.modal-dialog');
+        $('#modalPayConfirm .modal-body').html('');
+        var url = '<?=$this->url('sell-admin',['action'=>'detail-order'])?>';
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {id:<?=$this->sellOrder->getId()?>}
+        }).done(function (response) {
+            if(response.status){
+                let orderPayInfoTemplate = $('#order-pay-info-template').text();
+                let orderPayInfoContent = Mustache.render(orderPayInfoTemplate, response);
+                $('#modalPayConfirm .modal-body').append(orderPayInfoContent);
+                $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'});
+
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe('.modal-dialog');
+        });
+    }
+</script>
+<?=$this->partial('sell/partial/order-add-product');?>

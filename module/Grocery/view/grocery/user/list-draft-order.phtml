@@ -1,0 +1,119 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+//$this->headTitle($this->escapeHtml($this->groceryCat->getName()))->setSeparator(' - ')->setAutoEscape(false)
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li class="active">Tạo đơn nháp</li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Chọn khách hàng cần tạo đơn</h3>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="tblGrocery" class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+
+                        foreach ($this->groceryCat as $groceryCatItem) {
+//                            $dateNow=date("Y-m-d",strtotime("now"));
+                            foreach ($groceryCatItem->getGrocery() as $grocery=>$groceryItem) {
+                                //check star
+                                $star='<span class="fa fa-star-o"></span>';
+                                $payTotal = $groceryItem->getPayTotal()/50000000;
+                                if($payTotal<=1 && $payTotal>0)
+                                    $star='<span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>1 && $payTotal<=2)
+                                    $star='<span class="fa fa-star"></span>';
+                                else if($payTotal>2 && $payTotal<=3)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>3 && $payTotal<=4)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>4 && $payTotal<=5)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>5 && $payTotal<=6)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>6 && $payTotal<=7)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>7 && $payTotal<=8)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+                                else if($payTotal>8 && $payTotal<=9)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
+                                else if($payTotal>=10)
+                                    $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
+
+                                echo '<tr>';
+                                echo '<td>';
+                                echo '<a href="'.$this->url('sell-user',['action'=>'add-draft-order','id'=>$groceryItem->getId()]).'"><p class="title">'.$this->escapeHtml($groceryItem->getGroceryName()).' '.$star.'</p>';
+                                echo '<p><b>'.$this->escapeHtml($groceryItem->getOwnerName()).'</b> Mobile: <b>'.$groceryItem->getMobile().'</b></p>';
+                                echo '<p><i>'.$this->escapeHtml($groceryItem->getAddress()).'</i></p>';
+                                echo '<p>Checkin: '.Common::formatDateTime($groceryItem->getCheckInDate()).'</p>';
+                                echo '</a></td>';
+                                echo '</tr>';
+                            }
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<style>
+    #tblGrocery a{color: #0d0d0d}
+    #tblGrocery .title{font-weight: bold; font-size: 14px; color: #067fad
+    }
+    #tblGrocery p{margin-bottom: 5px}
+    #tblGrocery td{padding-bottom: 5px; padding-top: 5px}
+    #tblGrocery td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
+    #tblGrocery tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+    .dataTables_filter label {float: unset; width: 100%}
+    .dataTables_filter label input {width: 80%}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblGrocery').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

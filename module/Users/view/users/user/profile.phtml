@@ -1,0 +1,156 @@
+<?php
+$title = 'User profile';
+$this->headTitle($title);
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$form=$this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+
+$form->prepare();
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li class="active"><?=$this->translate('User profile')?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body profile">
+                    <div class="profile-image">
+                        <?php
+                        if($this->userInfo->getAvatar()) $avatarSource= $this->userInfo->getAvatar();
+                        else $avatarSource = '/img/users/avatar.png'
+                        ?>
+                        <img src="<?=$avatarSource?>" alt="<?=$this->userInfo->getFullname()?>">
+                    </div>
+                    <div class="profile-data">
+                        <div class="profile-data-name"><?=$this->userInfo->getFullname()?></div>
+                        <div class="profile-data-title"><?=ucfirst($this->userInfo->getRole())?></div>
+                    </div>
+                    <div class="profile-controls">
+                        <a href="#" class="profile-control-left"><span class="fa fa-info"></span></a>
+                        <a href="#" class="profile-control-right"><span class="fa fa-phone"></span></a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="contact-info">
+                        <?php
+                        $email = $this->userInfo->getEmail();
+                        if(!$email) $email='-/-';
+
+                        $status = $this->userInfo->getStatus();
+                        if($status==1) $status='<span class="label label-success label-form">Active</span>';
+                        else $status = '<span class="label label-danger">Unactive</span>';
+                        ?>
+                        <p><b><?=$this->translate('Mobile')?></b>: <?=$this->userInfo->getMobile()?></p>
+                        <p><b>Email</b>: <?=$email?></p>
+                        <p><b><?=$this->translate('Balance')?></b>: <?=Common::formatMoney($this->userInfo->getBalance())?> <sup>đ</sup></p>
+                        <p><b><?=$this->translate('Status')?></b>: <?=$status?></p>
+                        <p><b><?=$this->translate('Created date')?></b>: <?=Common::formatDateTime($this->userInfo->getCreatedDate())?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <?=$this->form()->openTag($form)?>
+            <div class="panel panel-success panel-hidden-controls">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title"><?=$this->translate('Update information')?></h3>
+                    <ul class="panel-controls">
+                        <li><a href="#" class="panel-fullscreen"><span class="fa fa-expand"></span></a></li>
+                        <li><a href="#" class="panel-remove"><span class="fa fa-times"></span></a></li>
+                    </ul>
+                </div>
+
+                <div class="panel-body">
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('email'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('email'));
+                            echo $this->formElementErrors($form->get('email'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('fullname'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('fullname'));
+                            echo $this->formElementErrors($form->get('fullname'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('birthdate'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('birthdate'));
+                            echo $this->formElementErrors($form->get('birthdate'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label"><?=$this->translate('Upload avatar')?>:</label>
+                        <div class="col-md-9">
+                            <input type="file" name="file-avatar" id="file-avatar"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-9">
+                        <?=$this->formElement($form->get('btnSubmit'));?> <span class="label label-success label-form"><?=$this->message?></span>
+                    </div>
+
+                </div>
+            </div>
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+<script>
+    $("#file-avatar").fileinput({
+        showUpload: false,
+        showCaption: false,
+        browseClass: "btn btn-danger",
+        fileType: "any"
+    });
+</script>

@@ -1,0 +1,674 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Time</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fDate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->tDate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="tblGroceryCatList" class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Tên tuyến</th>
+                            <th>Nhân viên</th>
+                            <th>Ngày trên tuyến</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $url = parse_url($_SERVER['REQUEST_URI']);
+                        $uri='';
+                        if(@$url['query']) $uri='?'.$url['query'];
+                        $i=1;
+                        foreach ($this->groceryCatList as $k => $groceryCatItem) {
+                            $totalGroceryOrderMoney=$groceryCatItem->getTotalGroceryOrderMoney();
+                            echo '<tr>';
+                            echo '<td><a href="'.$this->url('report-admin',['action'=>'route','id'=>$groceryCatItem->getId()]).$uri.'">'.$this->escapeHtml($groceryCatItem->getName()).'</a></td>';
+                            echo '<td>'.$groceryCatItem->getUser()->getFullname().'</td>';
+                            echo '<td>Thứ '.$groceryCatItem->getDay(). '</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <?php
+            if($this->groceryCat){
+            ?>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <?='<h3>'.$this->groceryCat->getUser()->getFullname().': '.$this->groceryCat->getName().' | Thứ: '.$this->groceryCat->getDay().'</h3>';?>
+                    <table style="width: 100%">
+                        <tr>
+                            <th rowspan="2">Date</th>
+                            <th colspan="3" style="text-align: center">Morning</th>
+                            <th colspan="3" style="text-align: center">Afternoon</th>
+                            <th rowspan="2" style="text-align: center">Total (h)</th>
+                            <th rowspan="2" style="text-align: center">Customer</th>
+                            <th rowspan="2" style="text-align: center">Checkin (%)</th>
+                        </tr>
+                        <tr>
+                            <th style="text-align: center">Start</th>
+                            <th style="text-align: center">End</th>
+                            <th style="text-align: center">Checkin</th>
+                            <th style="text-align: center">Start</th>
+                            <th style="text-align: center">End</th>
+                            <th style="text-align: center">Checkin</th>
+                        </tr>
+                    <?php
+                        $totalArr=array();
+                        foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+                            if($analyticItem->getTotalDiffTimeOnRoute()>0) {
+                                echo '<tr>';
+                                echo '<td>' . Common::formatDate($analyticItem->getCreatedDate()) . '</td>';
+                                echo '<td style="text-align: center">' . Common::formatTime($analyticItem->getStartTimeMoning()).'</td>';
+                                echo '<td style="text-align: center">' . Common::formatTime($analyticItem->getEndTimeMoning()) . '</td>';
+                                echo '<td style="text-align: center">' . $analyticItem->getMoningCheckined() . '</td>';
+                                echo '<td style="text-align: center">' . Common::formatTime($analyticItem->getStartTimeAfternoon()) . '</td>';
+                                echo '<td style="text-align: center">' . Common::formatTime($analyticItem->getEndTimeAfternoon()) . '</td>';
+                                echo '<td style="text-align: center">' . $analyticItem->getAfternoonCheckined() . '</td>';
+                                echo '<td style="text-align: center">' . $analyticItem->getTotalDiffTimeOnRoute() . '</td>';
+                                echo '<td style="text-align: center">' . $analyticItem->getCustomerNumber() . '</td>';
+
+                                echo '<td style="text-align: center">' . round(($analyticItem->getMoningCheckined()+$analyticItem->getAfternoonCheckined())/$analyticItem->getCustomerNumber(),1)*100 . '</td>';
+                                echo '</tr>';
+                            }
+                            //data for chart order
+                            $owner=$analyticItem->getOrderOwnerCreated();
+                            if(!$owner) $owner=0;
+
+                            $admin=$analyticItem->getOrderAdminCreated();
+                            if(!$admin) $admin=0;
+
+                            $customer=$analyticItem->getOrderCustomerCreated();
+                            if(!$customer) $customer=0;
+
+                            $orderValue=$analyticItem->getTotalOrderValue();
+                            if(!$orderValue) $orderValue=0;
+
+                            $date[]=$analyticItem->getCreatedDate()->format('d/M');
+                            $arr['owner'][]=$owner;
+                            $arr['admin'][]=$admin;
+                            $arr['customer'][]=$customer;
+                            $arr['order-value'][]=$orderValue;
+
+                            //data for chart customer number
+                            $arr['customer-number'][]=$analyticItem->getCustomerNumber();
+                            $arr['checkined'][]=$analyticItem->getMoningCheckined()+$analyticItem->getAfternoonCheckined();
+                            $arr['time-on-route'][]=$analyticItem->getTotalDiffTimeOnRoute();
+
+                            $month=$analyticItem->getCreatedDate()->format('m/Y');;
+                            $totalArr[$month]['owner']=@$totalArr[$month]['owner']+$owner;
+                            $totalArr[$month]['admin']=@$totalArr[$month]['admin']+$admin;
+                            $totalArr[$month]['customer']=@$totalArr[$month]['customer']+$customer;
+                            $totalArr[$month]['order-value']=@$totalArr[$month]['order-value']+$orderValue;
+                        }
+//                    print_r($totalArr);
+                    ?>
+                    </table>
+                </div>
+            </div>
+            <?php
+            }
+            ?>
+            <!-- START LINE AND BAR CHART -->
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <figure class="highcharts-figure">
+                        <div id="chart-order-number"></div>
+                    </figure>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <figure class="highcharts-figure">
+                        <div id="chart-order-number-month"></div>
+                    </figure>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <figure class="highcharts-figure">
+                        <div id="chart-customer-number"></div>
+                    </figure>
+                </div>
+            </div>
+            <!-- END LINE AND BAR CHART -->
+        </div>
+    </div>
+</div>
+<style>
+    .odd{background-color:rgb(247, 247, 247)}
+    .odd td:first-child{padding-left: 20px}
+    .even td:first-child{padding-left: 20px}
+    #tblGroceryCatList a{color: #067fad; font-weight: bold}
+    tr.group td{padding-left: 10px;}
+    tr th:first-child{padding-left: 10px}
+    tr th{background-color: rgb(4, 143, 210); color: white; padding-top: 10px; padding-bottom: 10px}
+
+    td{padding-bottom: 5px; padding-top: 5px}
+    tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+
+    tr.group,
+    tr.group:hover {
+        background-color: #dbdcdd !important;
+        font-weight: bold;
+    }
+    tr.group{padding-left: 10px}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+
+        $('#btnSubmit').click(function(){
+            const url = window.location.pathname+'?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+
+        <?php
+        if($this->groceryCat){
+        ?>
+        Highcharts.chart('chart-order-number', {
+            chart: {
+                zoomType: 'xy'
+            },
+            title: {
+                text: 'Biều đồ số lượng / Giá trị đơn hàng',
+                align: 'left'
+            },
+            xAxis: {
+                categories: <?=json_encode($date)?>
+            },
+            yAxis: [{ // Primary yAxis
+                labels: {
+                    format: '{value} đ',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                },
+                title: {
+                    text: 'Giá trị',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                }
+            }, { // Secondary yAxis
+                title: {
+                    text: 'Số đơn',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                labels: {
+                    format: '{value}',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                opposite: true
+            }],
+            legend: {
+                align: 'center',
+                x: 10,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                borderColor: '#CCC',
+                borderWidth: 1,
+                shadow: false
+            },
+            tooltip: {
+                headerFormat: '<b>{point.x}</b><br/>',
+                // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                crosshairs: true,
+                shared: true
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true
+                    }
+                }
+            },
+            series: [
+                {
+                    name:"Nhân viên tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($arr['owner'])?>
+                },{
+                    name:"Admin tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($arr['admin'])?>
+                },{
+                    name:"Khách hàng tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($arr['customer'])?>
+                },
+                {
+                    name:"Giá trị đơn hàng",
+                    type: 'spline',
+                    data:<?=json_encode($arr['order-value'])?>
+                }
+            ],
+
+        });
+
+        Highcharts.chart('chart-order-number-month', {
+            chart: {
+                zoomType: 'xy'
+            },
+            title: {
+                text: 'Biều đồ số lượng / Giá trị đơn hàng theo tháng',
+                align: 'left'
+            },
+            xAxis: {
+                <?php
+                $categories=array();
+                foreach ($totalArr as $k=>$value){
+                    $categories[]=$k;
+                }
+                ?>
+                categories: <?=json_encode($categories)?>
+            },
+            yAxis: [{ // Primary yAxis
+                labels: {
+                    format: '{value} đ',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                },
+                title: {
+                    text: 'Giá trị',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                }
+            }, { // Secondary yAxis
+                title: {
+                    text: 'Số đơn',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                labels: {
+                    format: '{value}',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                opposite: true
+            }],
+            legend: {
+                align: 'center',
+                x: 10,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                borderColor: '#CCC',
+                borderWidth: 1,
+                shadow: false
+            },
+            tooltip: {
+                headerFormat: '<b>{point.x}</b><br/>',
+                // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                crosshairs: true,
+                shared: true
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true
+                    }
+                }
+            },
+            series: [
+                <?php
+                $series=array();
+                foreach ($totalArr as $k=>$value){
+                    $sOwner[]=$value['owner'];
+                    $sAdmin[]=$value['admin'];
+                    $sCustomer[]=$value['customer'];
+                    $sOrderValue[]=$value['order-value'];
+                }
+                ?>
+                {
+                    name:"Nhân viên tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($sOwner)?>
+                },{
+                    name:"Admin tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($sAdmin)?>
+                },{
+                    name:"Khách hàng tạo đơn",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($sCustomer)?>
+                },
+                {
+                    name:"Giá trị đơn hàng",
+                    type: 'spline',
+                    data:<?=json_encode($sOrderValue)?>
+                }
+            ],
+
+        });
+
+        Highcharts.chart('chart-customer-number', {
+
+            title: {
+                text: 'Biểu đồ khách hàng và chăm sóc khách hàng',
+                align: 'left'
+            },
+
+            yAxis: {
+                title: {
+                    text: ''
+                }
+            },
+
+            xAxis: {
+                categories: <?=json_encode($date)?>
+            },
+            tooltip: {
+                headerFormat: '<b>{point.x}</b><br/>',
+                crosshairs: true,
+                shared: true
+            },
+            legend: {
+                align: 'center',
+                x: 10,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                borderColor: '#CCC',
+                borderWidth: 1,
+                shadow: false
+            },
+
+            series: [{
+                name: 'Khách hàng',
+                data:<?=json_encode($arr['customer-number'])?>
+            },{
+                name: 'Checkin',
+                data:<?=json_encode($arr['checkined'])?>
+            },{
+                name: 'Thời gian trên tuyến (h)',
+                data:<?=json_encode($arr['time-on-route'])?>
+            }],
+
+            responsive: {
+                rules: [{
+                    condition: {
+                        maxWidth: 500
+                    },
+                    chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                    }
+                }]
+            }
+
+        });
+
+        <?php
+        }else{
+            $arr=array();
+            $chartCategories=array();
+            foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+                $catId = $analyticItem->getGroceryCat()->getId();
+                $catDay = $analyticItem->getGroceryCat()->getDay();
+                $catName = $analyticItem->getGroceryCat()->getName();
+                $staffName = $analyticItem->getGroceryCat()->getUser()->getFullname();
+                $arr[$catDay][$catId]["route_name"]=$catName;
+                $arr[$catDay][$catId]["staff"]=$staffName;
+
+                $owner=$analyticItem->getOrderOwnerCreated();
+                if(!$owner) $owner=0;
+
+                $admin=$analyticItem->getOrderAdminCreated();
+                if(!$admin) $admin=0;
+
+                $customer=$analyticItem->getOrderCustomerCreated();
+                if(!$customer) $customer=0;
+
+
+//                $arr[$catDay][$catId]["total_order_number"]=@$arr[$catDay][$catId]["total_order_number"]+$analyticItem->getTotalOrderNumber();
+                $arr[$catDay][$catId]["total_order_owner"]=@$arr[$catDay][$catId]["total_order_owner"]+$owner;
+                $arr[$catDay][$catId]["total_order_admin"]=@$arr[$catDay][$catId]["total_order_admin"]+$admin;
+                $arr[$catDay][$catId]["total_order_customer"]=@$arr[$catDay][$catId]["total_order_customer"]+$customer;
+
+                $arr[$catDay][$catId]["total_order_value"]=@$arr[$catDay][$catId]["total_order_value"]+$analyticItem->getTotalOrderValue();
+
+                $arr[$catDay][$catId]['time-on-route']=@$arr[$catDay][$catId]['time-on-route']+$analyticItem->getTotalDiffTimeOnRoute();
+            }
+
+        $chartSeriesTotalOrderNumberOwner=array();
+        $chartSeriesTotalOrderNumberAdmin=array();
+        $chartSeriesTotalOrderNumberCustomer=array();
+        $chartSeriesTotalOrderValue=array();
+        $chartTimeOnRoute=array();
+            foreach ($arr as $k=>$arr1){
+                foreach ($arr1 as $k1=>$value){
+//                    print_r($value);
+                    if($value['total_order_owner'] || $value['total_order_admin'] || $value['total_order_customer']){
+                        $chartCategories[]=$value['staff'].':'.$value['route_name'];
+//                        $chartSeriesTotalOrderNumber[]=$value['total_order_number'];
+                        $chartSeriesTotalOrderNumberOwner[]=$value['total_order_owner'];
+                        $chartSeriesTotalOrderNumberAdmin[]=$value['total_order_admin'];
+                        $chartSeriesTotalOrderNumberCustomer[]=$value['total_order_customer'];
+                        $chartSeriesTotalOrderValue[]=$value['total_order_value'];
+                        $chartTimeOnRoute[]=round($value['time-on-route'],1);
+                    }
+                }
+            }
+//            print_r($arr);
+//        print_r($chartCategories);
+            ?>
+            Highcharts.chart('chart-order-number', {
+                chart: {
+                    zoomType: 'xy'
+                },
+                title: {
+                    text: 'Biều đồ số lượng / Giá trị đơn hàng theo tuyến',
+                    align: 'left'
+                },
+                subtitle: {
+                    text: 'Số liệu tính tất cả các đơn hàng',
+                    align: 'left'
+                },
+                xAxis: {
+                    categories: <?=json_encode($chartCategories)?>
+                },
+                yAxis: [{ // Primary yAxis
+                    labels: {
+                        format: '{value} đ',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    },
+                    title: {
+                        text: 'Giá trị',
+                        style: {
+                            color: Highcharts.getOptions().colors[1]
+                        }
+                    }
+                }, { // Secondary yAxis
+                    title: {
+                        text: 'Số đơn',
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    labels: {
+                        format: '{value}',
+                        style: {
+                            color: Highcharts.getOptions().colors[0]
+                        }
+                    },
+                    opposite: true
+                }],
+                legend: {
+                    align: 'center',
+                    x: 10,
+                    verticalAlign: 'top',
+                    y: 20,
+                    floating: true,
+                    backgroundColor:
+                        Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                    borderColor: '#CCC',
+                    borderWidth: 1,
+                    shadow: false
+                },
+                tooltip: {
+                    headerFormat: '<b>{point.x}</b><br/>',
+                    // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                    crosshairs: true,
+                    shared: true
+                },
+                plotOptions: {
+                    column: {
+                        stacking: 'normal',
+                        dataLabels: {
+                            enabled: true
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name:"Đơn NV tạo",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($chartSeriesTotalOrderNumberOwner)?>
+                    },{
+                        name:"Đơn admin tạo",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($chartSeriesTotalOrderNumberAdmin)?>
+                    },{
+                        name:"Đơn khách tạo",
+                        type: 'column',
+                        yAxis: 1,
+                        data:<?=json_encode($chartSeriesTotalOrderNumberCustomer)?>
+                    },{
+                        name: 'Thời gian trên tuyến (h)',
+                        type: 'spline',
+                        yAxis: 1,
+                        data:<?=json_encode($chartTimeOnRoute)?>
+                    },{
+                        name:"Giá trị đơn hàng",
+                        type: 'spline',
+                        data:<?=json_encode($chartSeriesTotalOrderValue)?>
+                    }
+                ],
+
+            });
+        <?php
+        }
+        ?>
+
+        var groupColumn = 2;
+        var table = $('#tblGroceryCatList').DataTable({
+            columnDefs: [{ visible: false, targets: groupColumn }],
+            order: [[groupColumn, 'asc']],
+            paging: false,
+            displayLength: 25,
+            searching:false,
+            drawCallback: function (settings) {
+                var api = this.api();
+                var rows = api.rows({ page: 'current' }).nodes();
+                var last = null;
+
+                api
+                    .column(groupColumn, { page: 'current' })
+                    .data()
+                    .each(function (group, i) {
+                        if (last !== group) {
+                            $(rows)
+                                .eq(i)
+                                .before('<tr class="group"><td colspan="7">' + group + '</td></tr>');
+
+                            last = group;
+                        }
+                    });
+            },
+        });
+        // Order by the grouping
+        $('#tblGroceryCatList tbody').on('click', 'tr.group', function () {
+            // return;
+            var currentOrder = table.order()[0];
+            if (currentOrder[0] === groupColumn && currentOrder[1] === 'asc') {
+                table.order([groupColumn, 'desc']).draw();
+            } else {
+                table.order([groupColumn, 'asc']).draw();
+            }
+        });
+    })
+</script>

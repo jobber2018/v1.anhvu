@@ -1,0 +1,98 @@
+
+<div class="panel panel-default panel-order-note">
+    <div class="panel-body">
+        <?php
+
+        use Sulde\Service\Common\Common;
+
+        $summary='';
+        if($order->getSummary()){
+            $summary=$order->getSummary();
+            ?>
+            <div class="list-group-item">
+                <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                <span class="contacts-title"><b>Ghi chú</b></span>
+                <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime($order->getCreatedDate())?></span>
+                <p><i><?=$summary?></i></p>
+            </div>
+            <?php
+        }
+
+        $noteArr =explode("\n",$order->getNote());
+        if($order->getNote()){
+            if(count($noteArr)){
+                foreach ($noteArr as $value){
+                    $arrNote = explode("|",$value);
+                    ?>
+                    <div class="list-group-item">
+                        <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                        <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                        <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                        <p><i><?=@$arrNote[2]?></i></p>
+                    </div>
+                    <?php
+                }
+            }
+        }
+        ?>
+    </div>
+    <div class="panel-footer">
+        <div class="input-group">
+            <input type="text" id="txtOrderNote" name="txtOrderNote" class="form-control" placeholder="Ghi chú đơn hàng"/>
+            <span class="input-group-btn">
+                <button id="btnAddOrderNote" class="btn btn-default" type="button">
+                    <span class="fa fa-comment"></span>
+                    Send</button>
+            </span>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="message-template">
+    <div class="list-group-item">
+        <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+        <span class="contacts-title"><b>{{username}}</b></span>
+        <span class="pull-right" style="color: #cccccc">{{time}}</span>
+        <p><i>{{content}}</i></p>
+    </div>
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#btnAddOrderNote').click(function() {
+            let orderNote = $("#txtOrderNote").val();
+            let orderId = <?=$order->getId()?>;
+
+            if(!orderNote){return;}
+
+            run_waitMe('.panel-order-note');
+            var url = '<?=$this->url('sell-admin',['action'=>'add-note'])?>';
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: {id:orderId,note:orderNote}
+            }).done(function (msg) {
+                if(msg.status){
+                    let noteItemTemplate = $('#message-template').text();
+                    var currentDate = new Date();
+                    let data={
+                        username:'<?=$userInfo->getFullname()?>',
+                        content:orderNote,
+                        time:currentDate.getSeconds()+'s ago'
+                    }
+                    let noteItemContent = Mustache.render(noteItemTemplate, data);
+                    $('.panel-order-note .panel-body').append(noteItemContent);
+                    $("#txtOrderNote").val('');
+                }else{
+                    noty({text: msg.message, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe('.panel-order-note');
+            });
+        });
+        $("#txtOrderNote").keyup(function(event) {
+            if (event.keyCode === 13) {
+                $("#btnAddOrderNote").click();
+            }
+        });
+    });
+</script>

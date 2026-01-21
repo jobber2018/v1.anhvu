@@ -1,0 +1,77 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<div style="padding-top: 10px" >
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="tblProduct" class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->product as $productItem) {
+                            echo '<tr>';
+                            if(is_null($productItem->getImg()))
+                                echo '<td><img src="/img/icons/no-image-icon.png" class="pull-left" width="40px"></td>';
+                            else
+                                echo '<td><img src="'.$productItem->getImg().'" style ="max-width:40px; max-height:30px"></td>';
+                            echo '<td>';
+                            echo '<p class="title"><a href="'.$this->url('product-front',['action'=>'detail','id'=>$productItem->getId()]).'">'.$this->escapeHtml($productItem->getName()).' | '.$productItem->getWeight().'</a></p>';
+                            echo '<p class="content"> Mã: <strong>'.$productItem->getCode().'</strong> | ';
+                            echo 'Quy cách: <strong>'.$productItem->getBoxUnit().' '.$productItem->getUnit()->getName() .'/Thùng</strong></p>';
+                            echo '<p>Giá bán: <strong>'.Common::formatMoney($productItem->getActivePrice()->getPrice()).'đ / '.$productItem->getUnit()->getName().' | '.Common::formatMoney($productItem->getActivePrice()->getPrice()*$productItem->getBoxUnit()).'đ / Thùng</strong></p>';
+                            echo '</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align: center; padding-top: 15px;">
+                    <i>RẤT HÂN HẠNH ĐƯỢC PHỤC VỤ QUÝ KHÁCH!</i>
+                    <label><a href="zalo://0877427569">Zalo: 0877 427 569</a> </label>
+                    <p style="background-color: rgb(240, 114, 4); margin-bottom: 0px; margin-top: 15px"><img src="/img/logo.png" width="80%"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    #tblProduct a{color: #01688f}
+    #tblProduct .title{font-weight: bold; color: #01688f; font-size: 16px}
+    #tblProduct .content{font-size: 13px}
+    #tblProduct td{padding-bottom: 10px; padding-top: 10px; font-size: 14px}
+    #tblProduct p{margin-bottom: 5px}
+    #tblProduct td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
+    #tblProduct tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+    .dataTables_filter label {float: unset; width: 100%}
+    .dataTables_filter label input {width: 80%}
+    .title-warning{color: red;font-weight: bold; text-decoration-line: line-through}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm theo tên, mã sản phẩm"
+            },
+            initComplete: function () {
+                // $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

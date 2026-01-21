@@ -1,0 +1,7 @@
+<div class="col-md-4">
+    <label class="check">
+        <input type="checkbox" name="amenities" class="ckAmenities" value="<?=$amenities->getId();?>" <?=$disabled?> <?php if($checked) echo 'checked="checked"'; ?>/>
+        <?=$amenities->getName()?><span id="sp_<?=$amenities->getId();?>"></span>
+    </label>
+
+</div>

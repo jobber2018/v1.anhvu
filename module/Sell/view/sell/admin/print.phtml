@@ -1,0 +1,289 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Don-hang-<?=Common::convertAlias($this->sellOrder->getGrocery()->getGroceryName())?></title>
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+</head>
+<body>
+<div> <!--style="border: 1px solid red; width: 793.7px; height: 1100px"-->
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <?php
+                $odn=$this->sellOrder->getOrderCode();
+                ?>
+                <table>
+                    <tr>
+                        <td>
+                            <img src="/img/logo1.png" width="80px" style="padding-right: 10px">
+                        </td>
+                        <td style="width: 100%">
+                            <h4 style="padding-bottom: 0px; margin-bottom: 5px;">NPP ANH VŨ</h4>
+                            <div style="padding-bottom: 3px">KĐT Thanh Hà, Hà Đông</div>
+                            <div><b>Điện thoại:</b> 0946 021 021</div>
+                            <div><b>Zalo</b>: 0367 459 253</div>
+<!--                            <div><b>Số tài khoản:</b> 1018 7770 9178 | Vu Thi Thuy | Ngân hàng Viettinbank</div>-->
+                        </td>
+                        <td>
+                            <img id="bank-qrcode" width="83px"><br>
+                        </td>
+                        <td nowrap="">
+                            <label>Số TK:</label><label style="font-weight: bold;"> 800.0155.9933</label><br>
+                            <label style="font-weight: bold; text-decoration-line: underline ">VU THI THUY</label> <br>
+                            <label>Ngân hàng MSB</label><br>
+                            <label>Nội dung: <?=$odn?></label>
+                        </td>
+                    </tr>
+                </table>
+                <h3 style="text-align: center; margin-bottom: 5px; margin-top: 0px">HOÁ ĐƠN BÁN HÀNG</h3>
+                <div style="text-align: center; padding-bottom: 10px">Mã đơn hàng: <?=$odn?></div>
+
+                <?php
+                 $deliveryNote = $this->sellOrder->getGrocery()->getDeliveryNote();
+                 if($deliveryNote) $deliveryNote=' <i>('.$deliveryNote.')</i>';
+
+                ?>
+                <div style="padding-bottom: 3px"><b>Khách hàng</b>: <?=mb_strtoupper($this->sellOrder->getGrocery()->getGroceryName(), "UTF-8") .$deliveryNote?></div>
+                <div><b>Địa chỉ</b>: <?=$this->sellOrder->getGrocery()->getAddress()?> | <b>Điện thoại</b>: <?=$this->sellOrder->getGrocery()->getMobile()?></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div style="text-align: right; padding-right: 5px; padding-bottom: 5px;"><i><?=date("H:i")?> Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
+            <div class="info-order">
+                <?php
+                $isProductDiscount = $this->sellOrder->isProductDiscount();
+                ?>
+                <table id="tblProduct">
+                    <tr>
+                        <th style="text-align: center; ">STT<br>(1)</th>
+                        <th style="">Mã hàng<br>(2)</th>
+                        <th style="text-align: left">Tên hàng hoá<br>(3)</th>
+                        <th style="text-align: center">Loại<br>(4)</th>
+                        <th style="text-align: center">ĐVT<br>(5)</th>
+                        <th style="text-align: center">Số lượng <br>(6)</th>
+                        <th style="text-align: right">Đơn giá <br>(7)</th>
+                        <?=($isProductDiscount==1?'<th style="text-align: right">Chiết khấu<br>(8)</th>':'')?>
+                        <th style="text-align: right">Thành tiền <br>(=6*7)</th>
+                    </tr>
+                    <?php
+                    $i=1;
+                    $total_order_product_discount=0;
+                    $total_product_discount=0;
+                    $total_order_price=0;
+                    foreach ($this->sellOrder->getSell() as $sell){
+                        if($sell->getQuantity()>0) {
+                            $qty = $sell->getQuantity();
+                            $boxUnit=$sell->getPackUnit();
+                            $unitName=$sell->getProduct()->getUnit()->getName();
+                            $price=$sell->getPriceValue();
+                            $discount=$sell->getDiscount();
+
+                            $clsTip ='';
+                            if($sell->isPack()){
+                                $qty=$sell->isPack();;
+                                $unitName="Thùng";
+                                $price=$boxUnit*$price;
+                                $clsTip='tip';
+                            }
+                            $total_order_product_discount+=$discount*$qty;
+                            $totalProductPrice=$qty*$price;
+                            $total_order_price+=$totalProductPrice;
+
+                            echo '<tr>';
+                            echo '<td style="text-align: center">' . $sell->getProduct()->getSort() . '</td>';
+                            echo '<td style="text-align: center">' . $sell->getProduct()->getSubCode() . '</td>';
+                            echo '<td>' . $sell->getProduct()->getName() . '</td>';
+                            echo '<td style="text-align: center">' . $sell->getProduct()->getWeight() . '</td>';
+                            echo '<td style="text-align: center" class="'.$clsTip.'">' . $unitName . '</td>';
+                            echo '<td style="text-align: center" class="'.$clsTip.'">' . $qty. '</td>';
+                            echo '<td style="text-align: right" nowrap="">' . Common::formatMoney($price) . '</td>';
+                            if($isProductDiscount==1)
+                                echo '<td style="text-align: right" nowrap="">' . Common::formatMoney($discount) . '</td>';
+                            echo '<td style="text-align: right">' . Common::formatMoney($totalProductPrice) . '</td>';
+                            echo '</tr>';
+                        }
+                    }
+                    ?>
+                </table>
+            </div>
+            <div>
+                <div>
+                    <div>
+                        <table>
+                            <?php
+        //                    $totalAmountToPaid=$totalPrice = $this->sellOrder->getTotalPrice();
+                            $cong_thuc_tinh_so_tien_phai_thanh_toan='';
+                            if($isProductDiscount==1 || $this->sellOrder->getDiscount()>0) {
+                                echo '<tr>';
+                                echo '<td style="width: 100%"></td>';
+                                echo '<td style="padding-top: 3px; text-align: right" nowrap="">Tổng cộng (1):</td>';
+                                echo '<td style="padding-top: 3px; font-weight: bold; padding-right: 5px; text-align: right">' . Common::formatMoney($total_order_price) . '</td>';
+                                echo '</tr>';
+                                $cong_thuc_tinh_so_tien_phai_thanh_toan='1';
+                                if ($isProductDiscount == 1) {
+                                    echo '<tr>';
+                                    echo '<td style="width: 100%"></td>';
+                                    echo '<td style="padding-top: 3px; text-align: right" nowrap="">Chiết khấu theo sản phẩm(2):</td>';
+                                    echo '<td style="font-weight: bold; padding-top: 3px; padding-right: 5px; text-align: right">' . Common::formatMoney($total_order_product_discount) . '</td>';
+                                    echo '</tr>';
+                                    $cong_thuc_tinh_so_tien_phai_thanh_toan.='-2';
+                                }
+
+                                if ($this->sellOrder->getDiscount() > 0) {
+                                    echo '<tr>';
+                                    echo '<td style="width: 100%"></td>';
+                                    echo '<td style="padding-top: 3px;" nowrap="">Chiết khấu theo đơn (' . round(($this->sellOrder->getDiscount() / $total_order_price) * 100, 2) . '%) (3):</td>';
+                                    echo '<td style="font-weight: bold; padding-top: 3px; padding-right: 5px; text-align: right">' . Common::formatMoney($this->sellOrder->getDiscount()) . '</td>';
+                                    echo '</tr>';
+                                    $cong_thuc_tinh_so_tien_phai_thanh_toan.='-3';
+                                }
+                                $totalAmountToPaid =round(($total_order_price-$total_order_product_discount-$this->sellOrder->getDiscount())/1000)*1000;
+                                echo '<tr>';
+                                echo '<td style="width: 100%"></td>';
+                                echo '<td style="padding-top: 3px; text-align: right" nowrap="">Số tiền phải thanh toán ('.$cong_thuc_tinh_so_tien_phai_thanh_toan.'):</td>';
+                                echo '<td style="font-weight: bold; padding-top: 3px; padding-right: 5px; text-align: right">' . Common::formatMoney($totalAmountToPaid) . '</td>';
+                                echo '</tr>';
+                            }else{
+                                $totalAmountToPaid=round($total_order_price/1000)*1000;
+                                echo '<tr>';
+                                echo '<td style="width: 100%"></td>';
+                                echo '<td style="padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>';
+                                echo '<td style="font-weight: bold; padding-top: 3px; padding-right: 5px; text-align: right">' . Common::formatMoney($totalAmountToPaid) . '</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding-top: 3px; padding-right: 5px">Viết bằng chữ: <b><?=Common::convertNumberToWords($totalAmountToPaid)?> đồng</b></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="padding-top: 5px; padding-right: 5px; font-style: italic;">Quý khách vui lòng kiểm tra thật kỹ hàng hoá, đối chiếu sản phẩm với chứng từ trước khi nhận hàng. Sau khi đã giao hàng thành công, NPP Anh Vũ chỉ chịu trách nhiệm nếu xảy ra lỗi do sản xuất, mọi trường hợp khác sẽ không thuộc trách nhiệm của chúng tôi.</div>
+                </div>
+            </div>
+            <div class="info-sender">
+                <table style="width: 100%">
+                    <tr>
+                        <th>Kế toán</th>
+                        <th>Người giao hàng</th>
+                        <th>Người mua hàng</th>
+                    </tr>
+                    <tr>
+                        <td>(Ký, ghi rõ họ tên)</td>
+                        <td>(Ký, ghi rõ họ tên)</td>
+                        <td>(Ký, ghi rõ họ tên)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    .tip{font-weight: bold; text-decoration: underline}
+    table{
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        // Handler for .ready() called.
+        sortTable();
+        <?php
+        $info=$odn.' '.ucfirst(str_replace("-"," ",Common::convertAlias($this->sellOrder->getGrocery()->getGroceryName())));
+        ?>
+        //$('#bank-qrcode').attr("src", "https://anhvu.store/qrcode.php?amount=<?//=$totalAmountToPaid?>//&info=<?//=$info?>//");
+        $('#bank-qrcode').attr("src", "https://anhvu.store/qrcode.php?info=<?=$info?>");
+        //$('#bank-qrcode').attr("src", "https://api.vietqr.io/image/970415-101877709178-ASo7x4d.jpg?amount=<?//=$totalAmountToPaid?>//&addInfo=<?//=$info?>//");
+    });
+    function sortTable() {
+        var table, rows, switching, i, x, y, shouldSwitch;
+        table = document.getElementById("tblProduct");
+        switching = true;
+        /*Make a loop that will continue until
+        no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.rows;
+            /*Loop through all table rows (except the
+            first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+                one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[0];
+                y = rows[i + 1].getElementsByTagName("TD")[0];
+                //check if the two rows should switch place:
+                if (parseInt(x.innerHTML.toLowerCase()) > parseInt(y.innerHTML.toLowerCase())) {
+                    //if so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+                //console.log(x.innerHTML.toLowerCase());
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+                and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+            }
+        }
+
+        //sap xem lai stt
+        for (i = 1; i < (rows.length); i++) {
+            x = rows[i].getElementsByTagName("TD")[0].innerHTML=i;
+            // console.log(x)
+        }
+    }
+</script>
+</body>
+</html>

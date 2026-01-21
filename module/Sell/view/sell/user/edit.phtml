@@ -1,0 +1,355 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$this->headTitle("Tạo đơn bán hàng");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($this->grocery->getId())])?>"><?=$this->grocery->getGroceryName()?></a></li>
+    <li class="active">Sửa đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Sửa đơn hàng <small class="badge badge-success clearfix"><?=ConfigManager::getOrderStatus()[$this->sellOrder->getStatus()]?></small></h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form action="<?=$this->url('sell-user',['action'=>'note'])?>" method="post">
+                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                        <div class="input-group" style="padding-bottom: 10px">
+                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                            <span class="input-group-btn">
+                                    <button class="btn btn-default" type="submit">Ghi chú</button>
+                                </span>
+                        </div>
+                    </form>
+
+                    <?php
+                    $noteArr =explode("\n",$this->sellOrder->getNote());
+                    if($this->sellOrder->getNote()){
+                        if(count($noteArr)){
+                            //                echo '<div class="col-md-4">';
+                            //                echo '<div class="panel panel-default">';
+                            //                echo '<div class="panel-body">';
+                            foreach ($noteArr as $value){
+                                $arrNote = explode("|",$value);
+                                ?>
+                                <div class="list-group-item">
+                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                    <p><i><?=@$arrNote[2]?></i></p>
+                                </div>
+                                <?php
+                            }
+                            //                echo '</div></div></div>';
+                        }
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Thôn tin đơn hàng</h3>
+                    <ul class="panel-controls">
+                        <button onclick="showModalSelectProduct()" class="btn btn-info"><span class="fa fa-plus-square"></span>Thêm sản phẩm</button>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group" style="padding-bottom: 15px">
+                        <span class="pull-right price" id="total-price">Thành tiền: <?=Common::formatMoney(round($this->sellOrder->getTotalPrice()/1000)*1000)?> đ</span>
+                    </div>
+                    <ul id="productList" class="list-group">
+                        <?php
+                        foreach ($this->sellOrder->getSell() as $sell){
+                            ?>
+                            <li id="li<?=$sell->getProduct()->getId()?>" href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1 title">
+                                        <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?>
+                                        <span class="fa fa-trash-o pull-right" style="cursor: pointer" title="Bỏ sản phẩm khỏi đơn hàng" alt="Bỏ sản phẩm khỏi đơn hàng" onclick="removeProduct('<?=$sell->getId()?>')"></span>
+                                    </h5>
+                                </div>
+                                <table style="width: 100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="padding-right: 5px; width: 40px">
+                                            <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                        </td>
+                                        <td>
+                                            <table style=" width: 100%;" >
+                                                <tbody>
+                                                <tr>
+                                                    <td style="padding-left: 10px;" nowrap="">Giá bán:</td>
+                                                    <td style="padding-left: 10px; padding-right: 10px" nowrap="">Số lượng:</td>
+                                                    <td style="padding-left: 5px">Thành tiền:</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-left: 10px; font-weight: bold;" nowrap=""><?=Common::formatMoney($sell->getPrice()->getPrice())?> đ
+                                                    </td>
+                                                    <td style="padding-left: 10px;"><?=$sell->getQuantity().' '.$sell->getProduct()->getUnit()->getName()?><small class="warning-color"><?=($sell->getReturn()>0?' (Trả lại: '.$sell->getReturn().')':'')?></small></td>
+
+                                                    <td style="padding-left: 5px"><?=Common::formatMoney($sell->getQuantity()*$sell->getPrice()->getPrice())?> đ</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <small id="msg<?=$sell->getId()?>" class="warning-color"></small>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                    </ul>
+                    <div class="form-group" style="padding-top: 15px">
+                        <button onclick="cancelOrder(<?=$this->sellOrder->getId()?>)" class="btn btn-danger pull-right"><span class="fa fa-trash-o"></span>Huỷ đơn</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Chọn sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                        <?php
+                        foreach ($this->productList as $product){
+                            $arrTmp["id"]=$product->getId();
+                            $arrTmp["name"]=$product->getName();
+                            $arrTmp["cat_id"]=$product->getProductCat()->getId();
+                            $arrTmp["cat_name"]=$product->getProductCat()->getName();
+                            $arrTmp["unit_name"]=$product->getUnit()->getName();
+                            $arrTmp["box_unit"]=$product->getBoxUnit();
+                            $arrTmp["inventory"]=$product->getInventory();
+                            $arrTmp["weight"]=$product->getWeight();
+                            $arrTmp["price"]=$product->getActivePrice()->getPrice();
+                            if(is_null($product->getImg()))
+                                $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                            else
+                                $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                            $json = json_encode($arrTmp);
+
+                            if($product->getInventory()==0)
+                                $class='class="special"';
+                            else
+                                $class='';
+                            echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getCode().'|'.$product->getName(). " (".$product->getWeight().')</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div id="productInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" id="btnAddProductToOrder" class="btn btn-success">Thêm sản phẩm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+<style>
+    .special {
+        color: #fff !important;
+        background: #bc0000 !important;
+    }
+    .warning-color{color: red}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+
+</style>
+<script>
+    $( document ).ready(function() {
+
+    })
+    function showModalSelectProduct(){
+        $('#productInfo').html('');
+        $('#btnAddProductToOrder').prop('disabled', true);
+        $('#modalSelectProduct').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            var data = $(this).find(':selected').attr('data');
+            var obj = jQuery.parseJSON(data);
+            var msg='',cls='',defaultQuantity=1;
+            if(obj.inventory==0){
+                msg='Thiếu sản phẩm để bán!';
+                cls='warning-color';
+                defaultQuantity=0;
+            }
+            obj.odd=defaultQuantity;
+
+            var html='<div style="margin-top: 15px; border: 1px solid #e0dcdc; padding: 5px 10px">';
+                html+='<table style="width: 100%">';
+                html+='<tr>';
+                html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+                html+='<td>';
+                html+='<small><span class="'+cls+'">Có thể bán: '+obj.inventory+' '+obj.unit_name+' </span>| '+ obj.box_unit+' '+obj.unit_name+'/Thùng</small>';
+                html+='<table>';
+                html+='<tr>';
+                html+='<td nowrap="">Giá:</td>';
+                html+='<td style="padding-left: 10px; font-weight: bold;" nowrap="">'+formatCurrency(obj.price.toString())+' đ</td>';
+                html+='<td style="padding-left: 10px; padding-right: 10px" nowrap="">SL:</td>';
+                html+='<td style="width: 60px">';
+                html+='<input id="proId" name="proId" type="hidden" value="'+obj.id+'">';
+                html+='<input id="txtQty" name="quantity" type="number" value="'+defaultQuantity+'" min="0" max="'+obj.inventory+'" class="form-control">';
+                html+='</td>';
+                html+='<td style="padding-left: 5px">'+obj.unit_name+'</td>';
+                html+='</tr>';
+                html+='</table>';
+                html+='<small id="msgInventory" class="warning-color">'+msg+'</small>';
+                html+='</td></tr></table>';
+                html+='</div>';
+
+            $('#productInfo').html(html);
+            $('#btnAddProductToOrder').prop('disabled', false);
+            $('#txtQty').blur(function(){
+                if(parseInt($(this).val()) > parseInt($(this).attr('max'))){
+                    $('#msgInventory').html('Tối đa có thể bán '+$(this).attr('max')+ ' sản phẩm!');
+                    $('#btnAddProductToOrder').prop('disabled', true);
+                }else if(parseInt($(this).val())<0){
+                    $('#msgInventory').html('Không thể nhập số âm!');
+                    $('#btnAddProductToOrder').prop('disabled', true);
+                }else{
+                    $('#msgInventory').html('');
+                    $('#btnAddProductToOrder').prop('disabled', false);
+                }
+            } );
+        });
+
+    function removeProduct(id){
+        run_waitMe();
+        var url = "<?=$this->url('sell-user',['action'=>'delete-pro-in-order'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status)
+                location.reload();
+            else
+                stop_waitMe();
+        })
+    }
+
+    $('#btnAddProductToOrder').click(function(){
+        run_waitMe();
+        var orderId = <?=$this->sellOrder->getId()?>;
+        var proId = $('#proId').val();
+        var qty = $('#txtQty').val();
+
+        var url = "<?=$this->url('sell-user',['action'=>'add-pro-to-order'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {oid:orderId,pid:proId,qty:qty}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status){
+                location.reload();
+                // stop_waitMe();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+
+    });
+
+    function cancelOrder(oId){
+        let text = "Nhấn OK nếu bạn muốn huỷ đơn hàng!";
+        if (confirm(text) == true) {
+            run_waitMe();
+            var url = "<?=$this->url('sell-user',['action'=>'cancel-order'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: {id:oId}
+            }).done(function(res) {
+                alert(res.msg);
+                if(res.status==1){
+                    location.reload();
+                }
+                stop_waitMe();
+            });
+        }
+    }
+
+    function backToCheckIn(){
+        run_waitMe();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position){
+                    stop_waitMe();
+                    location.href="<?=$this->url('grocery-user',['action'=>'check-in','id'=>$this->grocery->getId()])?>?lat="+position.coords.latitude+"&lng="+position.coords.longitude;
+                },
+                function(error) {
+                    alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                    stop_waitMe();
+                }
+            );
+        }
+    }
+
+    function formatCurrency(value){
+        var result=0;
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            result= numFormat.format(value.replace( ",","" ));
+        }else{
+            result= value;
+        }
+        return result;
+    }
+</script>

@@ -1,0 +1,324 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$title="Admin dashboard";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li class="active">Admin dashboard</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12" id="panelButton">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <a href="<?=$this->url('product-admin')?>" class="btn btn-default">
+                        <i class="fa fa-barcode" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sản phẩm</p>
+                    </a>
+                    <a href="<?=$this->url('product-user',['action'=>'export-price'])?>" class="btn btn-default">
+                        <i class="fa fa-print" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">In báo giá</p>
+                    </a>
+                    <a href="<?=$this->url('sell-admin')?>" class="btn btn-default">
+                        <i class="fa fa-tags" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn hàng</p>
+                    </a>
+                    <a href="<?=$this->url('grocery-admin')?>" class="btn btn-default">
+                        <i class="fa fa-shopping-cart" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Tạo đơn bán</p>
+                    </a>
+
+                    <a href="<?=$this->url('werehouse-admin',['action'=>'choice-supplier'])?>" class="btn btn-default">
+                        <i class="fa fa-book" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Nhập kho</p>
+                    </a>
+
+                    <a href="<?=$this->url('grocery-admin',['action'=>'list'])?>" class="btn btn-default">
+                        <i class="fa fa-users" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Khách hàng</p>
+                    </a>
+
+                    <a href="<?=$this->url('grocery-admin',['action'=>'cat-list'])?>" class="btn btn-default">
+                        <i class="fa fa-random" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Tuyến</p>
+                    </a>
+
+                    <a href="<?=$this->url('report-admin')?>" class="btn btn-default">
+                        <i class="fa fa-bar-chart-o" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Report</p>
+                    </a>
+
+                    <a href="<?=$this->url('sell-staff',['action'=>'select-delivery-car'])?>" class="btn btn-default">
+                        <i class="fa fa-truck" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn đang giao</p>
+                    </a>
+
+                    <a href="<?=$this->url('product-admin',['action'=>'recommend'])?>" class="btn btn-default">
+                        <i class="glyphicon glyphicon-bullhorn" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sản phẩm gợi ý trên APP</p>
+                    </a>
+
+                    <a href="<?=$this->url('product-admin',['action'=>'sortable'])?>" class="btn btn-default">
+                        <i class="fa fa-sort" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sort bảng giá</p>
+                    </a>
+
+                    <a href="<?=$this->url('product-user',['action'=>'export-price-sort'])?>" class="btn btn-default">
+                        <i class="fa fa-sort-amount-asc" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sort sản phẩm</p>
+                    </a>
+
+                    <a href="<?=$this->url('sell-admin',['action'=>'delivery-route'])?>" class="btn btn-default">
+                        <i class="fa fa-code-fork" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Phân tuyến giao hàng</p>
+                    </a>
+
+                    <a href="<?=$this->url('sell-admin',['action'=>'delivered-route']).'?date='.(new \DateTime())->format('Y-m-d')?>" class="btn btn-default">
+                        <i class="glyphicon glyphicon-send" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Bản đồ đã giao</p>
+                    </a>
+
+                    <a href="<?=$this->url('grocery-admin',['action'=>'map-location'])?>" class="btn btn-default">
+                        <i class="glyphicon glyphicon-map-marker" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Cửa hàng gần nhất</p>
+                    </a>
+
+                    <a href="<?=$this->url('sell-check-admin')?>" class="btn btn-default">
+                        <i class="fa fa-check-circle" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Kiểm đơn</p>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-title" style="padding-bottom: 20px;">
+        <span id="btnModal" style="width: 30px" class="input-group-addon add-on">
+            <span class="glyphicon glyphicon-calendar"></span> <?=$this->strReportDate?>
+        </span>
+    </div>
+    <div class="row">
+        <div class="col-md-5">
+            <!-- START TABS -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#tab-first" role="tab" data-toggle="tab">Doanh thu</a></li>
+                    <li><a href="#tab-second" role="tab" data-toggle="tab">Lợi nhuận</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab-first" style="text-align: center">
+                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
+                        <h4>DOANH THU</h4>
+                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold"><?=Common::formatMoney($this->totalRevenue)?></div>
+                        <div><b>Tổng đơn hàng: <?=$this->orderNumber?></b></div>
+                        <div style="text-align: left; padding-top: 30px"><b>Doanh thu:</b> Bằng tổng giá trị các đơn hàng giao thành công đã trừ trả hàng.</div>
+                    </div>
+                    <div class="tab-pane" id="tab-second">
+                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
+                        <h4 style="text-align: center">LỢI NHUẬN GỘP</h4>
+                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold; text-align: center;"><?php /*=Common::formatMoney($this->totalProfit)*/?>--</div>
+                        <?php
+                        $totalProfit=0;
+                        if(($this->totalRevenue-$this->totalProfit)>0){
+                            $totalProfit=@round(($this->totalProfit/$this->totalRevenue)*100,2);
+                        }
+                        ?>
+                        <div style="text-align: center; padding-bottom: 15px"><b>Tỷ suất LN: <?php /*=$totalProfit*/?>0%</b></div>
+                        <div style="padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid #cccccc; border-top: 1px solid #cccccc">
+                            <span><b>Doanh thu:</b> <?=Common::formatMoney($this->totalRevenue)?></span>
+                            <span class="pull-right"><b>Giá vốn:</b> <?=Common::formatMoney($this->totalRevenue-$this->totalProfit)?></span>
+                        </div>
+                        <div style="text-align: left; padding-top: 20px"><b>Lợi nhuận gộp = Doanh thu - Giá vốn * SL bán</b></div>
+                        <div>Giá vốn là giá vốn bình quân của sản phẩm được tính sau mỗi lần nhập hàng.</div>
+                    </div>
+                </div>
+            </div>
+            <!-- END TABS -->
+
+            <!-- START DONUT CHART -->
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="morris-donut-cat" style="height: 300px;"></div>
+                </div>
+            </div>
+            <!-- END DONUT CHART -->
+        </div>
+
+        <div class="col-md-7">
+            <!-- START LINE CHART -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#tab-analytic-first" style="background-color: #ff6200; color: white" role="tab" data-toggle="tab">Chú ý</a></li>
+                    <li><a href="#tab-analytic-second" style="background-color: red; color: white" role="tab" data-toggle="tab">Đặc biệt chú ý</a></li>
+                    <li><a href="#tab-analytic-3" style="background-color: #9900ff; color: white" role="tab" data-toggle="tab">Khả năng mất cao</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab-analytic-first">
+                        <div style="padding: 10px 0px; color: #ff6200">Đã đến ngày lên đơn nhưng chưa thấy khách lên đơn.</div>
+                        <table id="tbl1" class="table nowrap table-hover display">
+                            <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Đơn gần nhất</th>
+                                <th>Tuyến</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            foreach ($this->orderAnalytic as $k=>$v) {
+                                if($v->getDiff()<10) {
+                                    echo '<tr>';
+                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-danger">'.$v->getDiff().' day ago</small></td>';
+                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
+                                    echo '</tr>';
+                                }
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane" id="tab-analytic-second">
+                        <div style="padding: 10px 0px; color: red">Đã quá ngày lên đơn nhưng chưa thấy khách lên đơn.</div>
+                        <table id="tbl2" class="table nowrap table-hover display">
+                            <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Đơn gần nhất</th>
+                                <th>Tuyến</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            foreach ($this->orderAnalytic as $k=>$v) {
+                                if($v->getDiff()>=10 & $v->getDiff()<=20) {
+                                    echo '<tr>';
+                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
+                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
+                                    echo '</tr>';
+                                }
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane" id="tab-analytic-3">
+                        <div style="padding: 10px 0px; color: #9900ff;">Có thể khách đã lấy hàng nơi khác.</div>
+                        <table id="tbl3" class="table nowrap table-hover display">
+                            <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Đơn gần nhất</th>
+                                <th>Tuyến</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            foreach ($this->orderAnalytic as $k=>$v) {
+                                if($v->getDiff()>20) {
+                                    echo '<tr>';
+                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
+                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
+                                    echo '</tr>';
+                                }
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+            <!-- END LINE CHART -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade bottom" id="modalDate" tabindex="-1" role="dialog" aria-labelledby="modalDate" aria-hidden="true">
+    <input id="local" value="" type="hidden">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content">
+            <div class="row" style="padding: 10px">
+                <label class="col-md-2 control-label">Từ ngày</label>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="<?=date("Y-m-d", strtotime("first day of this month"))?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                        <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                    </div>
+                </div>
+                <label class="col-md-2 control-label">Đến ngày</label>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="<?=date("Y-m-d")?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                        <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                    </div>
+                </div>
+                <div class="col-md-12" style="padding: 10px">
+                    <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<style>
+    #panelButton a{margin-bottom: 5px}
+    #panelButton .btn{padding: 5px 10px; line-height:10px}
+</style>
+
+<script>
+    $("#tdate,#fdate").datepicker();
+    month = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    
+    $( document ).ready(function() {
+        $('#btnModal').click(function(){
+            $('#modalDate').modal('show')
+        })
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('admin-dashboard')?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+
+        $('#tbl3, #tbl2, #tbl1').DataTable({
+            paging: true,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+            }
+        });
+
+    });
+    
+    var morrisCharts = function() {
+        Morris.Donut({
+            element: 'morris-donut-cat',
+            data: [
+                <?php
+                foreach ($this->arrRevenueByProductCat as $k=>$v){
+                    echo '{label: "'.$v['name'].'", value: '.$v['revenue'].'},';
+                }
+                ?>
+            ],
+            colors: ['#95B75D', '#1caf9a', '#FEA223']
+        });
+    }();
+</script>

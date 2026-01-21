@@ -1,0 +1,62 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$title = "Quản lý đóng hàng";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$title?></h2>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="col-md-2">
+                        <a href="<?=$this->url('sell-check-admin',['action'=>'list'])?>">
+                            <p class="font-icon text-center"><span class="fa fa-list"></span></p>
+                            <p class="title text-center">Danh sách đơn</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .font-icon{font-size: 30pt}
+    .title{font-weight: bold}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+    });
+</script>

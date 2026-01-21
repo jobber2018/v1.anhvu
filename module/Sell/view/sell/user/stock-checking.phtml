@@ -1,0 +1,20 @@
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Title</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Thông báo.</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <strong>Đang kiểm kho, vui lòng không tạo đơn hàng, bạn có thể tạo đơn hàng sau khi có thông báo hoặc <a href="<?=$this->url('sell-user',['action'=>'add-draft-order','id'=>$this->groceryID])?>" style="color: white; text-decoration: underline"> nhấn vào đây để tạo đơn nháp</a>.</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,118 @@
+<html lang="en">
+<head>
+    <title>NPP Anh Vũ: Bảng giá sản phẩm</title>
+    <meta name="description" content="Phân phối các sản phẩm Unilever, P&G, Xmen, Pantene, Dove  và hàng tiêu dùng thiết yếu..."/>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:site_name" content="anhvu.store"/>
+    <meta property="og:rich_attachment" content="true"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" itemprop="url" content="https://anhvu.store"/>
+    <meta property="og:image" itemprop="thumbnailUrl" content="/img/logo1.png"/>
+    <meta property="og:image:width" content="470"/>
+    <meta property="og:image:height" content="415"/>
+    <!-- END META SECTION -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+</head>
+<body>
+<?php
+use Sulde\Service\Common\Common;
+?>
+<div style="margin-top: 10px" >
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="col-md-6" style="margin-bottom:0px; padding-left: 0px">
+                        <h4 style="padding-bottom: 0px; margin-bottom: 5px">
+                            <a style="font-weight: bold; font-size: 13px; color: #000000; text-decoration:unset" href="#">NHÀ PHÂN PHỐI ANH VŨ - BẢNG BÁO GIÁ SẢN PHẦM</a>
+                        </h4>
+                        <div style="padding-bottom: 3px"><b>Địa chỉ:</b> KĐT Thanh Hà, Hà Đông, TP. Hà Nội</div>
+                    </div>
+                    <div class="col-md-6" style="padding-left: 0px; margin-bottom:0px">
+                        <div style="padding-bottom: 3px">Điện thoại: <b>0946 021 021</b> Zalo: <b>0877 427 569</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table id="tblProduct" class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->product as $productItem) {
+                            $cls='title';
+                            if($productItem->getInventory()==0) $cls='title-warning';
+                            echo '<tr>';
+                            if(is_null($productItem->getImg()))
+                                echo '<td><img src="/img/icons/no-image-icon.png" class="pull-left" width="40px"></td>';
+                            else
+                                echo '<td><img src="'.$productItem->getImg().'" style ="max-width:40px; max-height:30px"></td>';
+                            echo '<td>';
+                            echo '<p class="'.$cls.'">'.$this->escapeHtml($productItem->getName()).' | '.$productItem->getWeight().'</p>';
+                            echo '<p class="content"> Mã: <strong>'.$productItem->getCode().'</strong> | ';
+                            echo 'Quy cách: <strong>'.$productItem->getBoxUnit().' '.$productItem->getUnit()->getName() .'/Thùng</strong></p>';
+                            echo '<p>Giá bán: <strong>'.Common::formatMoney($productItem->getActivePrice()->getPrice()).'đ / '.$productItem->getUnit()->getName().' | '.Common::formatMoney($productItem->getActivePrice()->getPrice()*$productItem->getBoxUnit()).'đ / Thùng</strong></p>';
+                            echo '</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align: center; padding-top: 15px;">
+                    <i>RẤT HÂN HẠNH ĐƯỢC PHỤC VỤ QUÝ KHÁCH!</i>
+                    <p style="background-color: rgb(240, 114, 4); margin-bottom: 0px; margin-top: 15px"><img src="/img/logo.png" width="80%"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    #tblProduct a{color: #0d0d0d}
+    #tblProduct .title{font-weight: bold; color: #01688f; font-size: 16px}
+    #tblProduct .content{font-size: 13px}
+    #tblProduct td{padding-bottom: 10px; padding-top: 10px; font-size: 14px}
+    #tblProduct p{margin-bottom: 5px}
+    #tblProduct td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
+    #tblProduct tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+    .dataTables_filter label {float: unset; width: 100%}
+    .dataTables_filter label input {width: 80%}
+    .title-warning{color: red;font-weight: bold; text-decoration-line: line-through}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm theo tên, mã sản phẩm"
+            },
+            initComplete: function () {
+                // $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>
+</body>
+</html>

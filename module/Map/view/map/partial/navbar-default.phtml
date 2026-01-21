@@ -1,0 +1,95 @@
+<!-- START X-NAVIGATION VERTICAL -->
+<?php
+if($userInfo){
+?>
+<ul class="x-navigation x-navigation-horizontal">
+    <li class="xn-logo">
+        <a href="<?=$this->url('user-dashboard')?>" style="padding-top: 2px"><img src="/img/logo-user-admin.png" width="120px"></a>
+        <a href="#" class="x-navigation-control"></a>
+    </li>
+
+    <li class="xn-openable">
+        <a href="#"><span class="fa fa-random"></span> <span class="xn-text">Tuyến đi</span></a>
+        <ul class="animated zoomIn">
+            <li><a href="<?=$this->url('grocery-user')?>"><span class="fa fa-heart"></span> Danh sách tuyến</a></li>
+            <li><a href="<?=$this->url('product-user',['action'=>'export-price'])?>"><span class="fa fa-heart"></span> Lấy báo giá</a></li>
+            <li><a href="<?=$this->url('sell-front')?>"><span class="fa fa-heart"></span> Đơn đang giao</a></li>
+        </ul>
+    </li>
+
+    <li class="xn-openable">
+        <a href="#"><span class="fa fa-file-text-o"></span> <span class="xn-text">User</span></a>
+        <ul class="animated zoomIn">
+            <li class="xn-profile">
+                <?php
+                if($userInfo->getAvatar())
+                    $avatarSource = $userInfo->getAvatar();
+                else
+                    $avatarSource='/img/users/avatar.png';
+                ?>
+
+                <div class="profile">
+                    <div class="profile-image">
+                        <a href="<?=$this->url('user-front',['action'=>'profile'])?>" class="profile-control-left"><img src="<?=$avatarSource?>" alt=""/></a>
+                    </div>
+                    <div class="profile-data">
+                        <div class="profile-data-name"><?=$userInfo->getFullname();?></div>
+                        <div class="profile-data-title">Vai trò: <?=ucfirst($userInfo->getRole());?></div>
+                    </div>
+                    <div class="profile-controls">
+                        <a href="<?=$this->url('user-front',['action'=>'profile'])?>" class="profile-control-left"><span class="fa fa-info"></span></a>
+                        <a href="#" class="profile-control-right"><span class="fa fa-envelope"></span></a>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <a href="<?=$this->url('user-front',['action'=>'profile'])?>">
+                    <span class="glyphicon glyphicon-user"></span><?=$this->translate('User Profile')?>
+                </a>
+            </li>
+            <li>
+                <a href="<?=$this->url('user-front',['action'=>'change-password'])?>">
+                    <span class="glyphicon glyphicon-edit"></span><?=$this->translate('Change password')?>
+                </a>
+            </li>
+            <?php
+            if($userInfo->getRole()=='admin'){
+                ?>
+                <li>
+                    <a href="<?=$this->url('admin-dashboard')?>">
+                        <span class="glyphicon glyphicon-retweet"></span> Quản trị hệ thống
+                    </a>
+                </li>
+                <?php
+            }
+            ?>
+        </ul>
+    </li>
+
+    <!-- SIGN OUT -->
+    <li class="xn-icon-button pull-right">
+        <a href="#" class="mb-control" data-box="#mb-signout"><span class="fa fa-sign-out"></span></a>
+    </li>
+    <!-- END SIGN OUT -->
+</ul>
+<?php }?>
+<!-- END X-NAVIGATION VERTICAL -->
+<!-- MESSAGE BOX-->
+<div class="message-box animated fadeIn" data-sound="alert" id="mb-signout">
+    <div class="mb-container">
+        <div class="mb-middle">
+            <div class="mb-title"><span class="fa fa-sign-out"></span> Đăng <strong>Xuất</strong> ?</div>
+            <div class="mb-content">
+                <p>Bạn chắc chắn muốn thoát phiên làm việc?</p>
+                <p>Bấm No nếu bạn muốn tiếp tục công việc. Bấm Yes để đăng xuất người dùng hiện tại.</p>
+            </div>
+            <div class="mb-footer">
+                <div class="pull-right">
+                    <a href="/user-logout.html" class="btn btn-success btn-lg">Yes</a>
+                    <button class="btn btn-default btn-lg mb-control-close">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MESSAGE BOX-->

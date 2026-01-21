@@ -1,0 +1,162 @@
+/* ---------------------------------------------------
+    SIDEBAR STYLE
+----------------------------------------------------- */
+
+#sidebar {
+  width: 250px;
+  position: fixed;
+  top: 0;
+  left: -250px;
+  height: 100vh;
+  z-index: 999;
+  background: #f8f9fa;
+  color: #fff;
+  transition: all 0.3s;
+  overflow-y: scroll;
+  box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
+}
+
+#sidebar.active {
+  left: 0;
+}
+#sidebar .sidebar-header {
+  padding: 20px;
+  text-align: center;
+}
+#dismiss {
+  width: 35px;
+  height: 35px;
+  line-height: 35px;
+  text-align: center;
+  background: #7386D5;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  -webkit-transition: all 0.3s;
+  -o-transition: all 0.3s;
+  transition: all 0.3s;
+}
+
+#dismiss:hover {
+  background: #fff;
+  color: #7386D5;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 998;
+  opacity: 0;
+  transition: all 0.5s ease-in-out;
+}
+.overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* ---------------------------------------------------
+    SIDEBAR PROFILE
+----------------------------------------------------- */
+.profile {
+  width: 100%;
+  float: left;
+  padding: 15px 10px;
+  position: relative;
+  background: #e28b0b;
+}
+.profile .profile-image {
+  float: left;
+  width: 100%;
+  margin: 0px 0px 10px;
+  text-align: center;
+}
+.profile .profile-image img {
+  width: 100px;
+  border: 3px solid #FFF;
+  -moz-border-radius: 20%;
+  -webkit-border-radius: 20%;
+  border-radius: 20%;
+}
+.profile .profile-data {
+  width: 100%;
+  float: left;
+  text-align: center;
+}
+.profile .profile-data .profile-data-name {
+  width: 100%;
+  float: left;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FFF;
+}
+.profile .profile-data .profile-data-title {
+  width: 100%;
+  float: left;
+  font-size: 11px;
+  font-weight: 400;
+  color: #961207;
+}
+.profile .profile-controls a {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  color: #DDD;
+  border: 2px solid #DDD;
+  line-height: 25px;
+  position: absolute;
+  -moz-border-radius: 20%;
+  -webkit-border-radius: 20%;
+  border-radius: 20%;
+  padding: 0px;
+  -webkit-transition: all 200ms ease;
+  -moz-transition: all 200ms ease;
+  -ms-transition: all 200ms ease;
+  -o-transition: all 200ms ease;
+  transition: all 200ms ease;
+}
+.profile .profile-controls a.profile-control-left {
+  left: 15px;
+  top: 53px;
+  text-align: center;
+}
+.profile .profile-controls a.profile-control-right {
+  right: 15px;
+  top: 53px;
+  text-align: center;
+}
+.profile .profile-controls a .fa,
+.profile .profile-controls a .glyphicon {
+  width: auto;
+  margin-right: auto;
+}
+.profile .profile-controls a:hover {
+  border-color: #FFF;
+  color: #FFF;
+}
+
+/* ---------------------------------------------------
+    SIDEBAR Contact info
+----------------------------------------------------- */
+
+.contact-info {
+  float: left;
+  width: 100%;
+  color: #0C1021;
+}
+.contact-info p {
+  margin-bottom: 0px;
+  padding: 5px 10px;
+}
+.contact-info strong {
+  font-size: 13px;
+}
+.contact-info small {
+  font-weight: 700;
+}
+.contact-info span{
+  padding-left:15px}
+.panel-body{}

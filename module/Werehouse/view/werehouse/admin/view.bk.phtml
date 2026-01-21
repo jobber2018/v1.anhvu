@@ -1,0 +1,362 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$this->headTitle("Tạo đơn nhập");
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('werehouse-admin')?>">Danh sách đơn nhập</a></li>
+    <li class="active">Đơn nhập</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> [<?=$this->werehouseOrder->getCodeOrder()?>] NCC <?=$this->supplier->getName()?></h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-9">
+            <!-- CONTACT LIST WIDGET -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Danh sách sản phẩm</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-body">
+                        <table class="table table-hover display" id="tblProduct">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>Mã </th>
+                                <th>Tên sản phẩm</th>
+                                <th>Giá nhập</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            foreach ($this->werehouse as $k=>$werehouse){
+                            ?>
+                                <tr>
+                                    <td>
+                                        <?php
+                                        if(is_null($werehouse->getProduct()->getImg()))
+                                            echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                        else
+                                            echo '<img src="'.$werehouse->getProduct()->getImg().'" style="max-width:40px; max-height:40px">';
+                                        ?>
+                                    </td>
+                                    <td><?=$werehouse->getProduct()->getCode()?></td>
+                                    <td>
+                                        <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$werehouse->getProduct()->getId()])?>"><span style="font-weight: bold"><?=$werehouse->getProduct()->getName()?> | <?=$werehouse->getProduct()->getWeight();?></span></a>
+                                        <p>Có thể bán: <b><?=$werehouse->getProduct()->getInventory(). " ". $werehouse->getProduct()->getUnit()->getName()?></b></p>
+                                    </td>
+                                    <td><?=Common::formatMoney($werehouse->getPrice())?> đ</td>
+                                    <td><?=$werehouse->getQuantity()?> Thùng</td>
+                                    <td><?=Common::formatMoney($werehouse->getQuantity()*$werehouse->getPrice())?> đ</td>
+                                    <td>
+                                        <?php
+                                        if($this->werehouseOrder->getStatus()==1){
+                                            echo '<button onclick="backToSupplier('.$werehouse->getId().',\''.$werehouse->getProduct()->getName().'|'.$werehouse->getProduct()->getWeight().'\')" class="btn btn-primary btn-rounded"><span class="fa fa-trash-o"></span> Trả lại NCC</button>';
+                                        }
+                                        ?>
+                                    </td>
+                                </tr>
+                                <?php
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+                <!-- END CONTACT LIST WIDGET -->
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="panel-title-box">
+                        <h3>Thông tin đơn hàng</h3>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Mã đơn hàng:</b></td>
+                            <td style="padding-bottom: 10px" id="total-product"><?=$this->werehouseOrder->getCodeOrder()?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Tổng sản phẩm:</b></td>
+                            <td style="padding-bottom: 10px" id="total-product"><?=count($this->werehouse)?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Tổng tiền:</b></td>
+                            <td style="padding-bottom: 10px" id="total-price"><?=Common::formatMoney($this->werehouseOrder->getTotalPrice())?> đ</td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Ngày nhập:</b></td>
+                            <td style="padding-bottom: 10px" id="total-price"><?=Common::formatDateTime($this->werehouseOrder->getCreatedDate())?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Người nhập:</b></td>
+                            <td style="padding-bottom: 10px" id="total-price"><?=$this->werehouseOrder->getUser()->getFullname()?></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="panel-title-box">
+                        <h3>Thông tin thanh toán</h3>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="padding-bottom: 10px; padding-top: 10px"><b>Thanh toán</b></td>
+                            <td style="padding-bottom: 10px"><?=Common::formatMoney($this->werehouseOrder->getPay())?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Ngày thanh toán</b></td>
+                            <td style="padding-bottom: 10px"><?=Common::formatDateTime($this->werehouseOrder->getPayDate())?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <?php
+                                    $difference=$this->werehouseOrder->getPay()-$this->werehouseOrder->getTotalPrice();
+                                    if($difference!=0){
+                                ?>
+                                <button type="button" name="btnShowModalPayConfirm"  id="btnShowModalPayConfirm" class="btn btn-info">
+                                    <i class="fa fa-credit-card"></i>
+                                    Xác nhận thanh toán
+                                </button>
+                                <?php } else echo 'Đã thanh toán hết.';?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="panel-title-box">
+                        <h3>Thông tin NCC</h3>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table style="width: 100%">
+                        <tr>
+                            <td style="padding-bottom: 10px; padding-top: 10px"><b>Tên NCC</b></td>
+                            <td style="padding-bottom: 10px"><?=$this->supplier->getName()?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Điện thoại</b></td>
+                            <td style="padding-bottom: 10px"><?=$this->supplier->getMobile()?></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <i><?=$this->supplier->getAddress()?></i>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <div class="panel-title-box">
+                        <h3>Hoá đơn nhập hàng</h3>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <?=$this->form()->openTag($form)?>
+                    <table style="width: 100%">
+                        <tr>
+                            <td colspan="2" style="padding-top: 10px">
+                                <?php if($this->werehouseOrder->getInvoice()){ ?>
+                                    <!-- Image view -->
+                                    <a href="<?=$this->werehouseOrder->getInvoice()?>" target="_blank">
+                                        <img class="file-preview-image" src="<?=$this->werehouseOrder->getInvoice()?>" height="50px">
+                                    </a>
+                                <?php }?>
+                                <?php
+                                echo $this->formElement($form->get('imageFile'));
+                                echo $this->formElementErrors($form->get('imageFile'),['class' => 'error']);
+                                ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding-top: 10px">
+                                <button type="submit" name="btnSubmit"  id="btnSubmit" class="btn btn-success">
+                                    <i class="fa fa-save"></i>
+                                    Upload hoá đơn
+                                </button>
+                            </td>
+                        </tr>
+                    </table>
+                    <?=$this->form()->closeTag()?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPayConfirm" tabindex="-1" role="dialog" aria-labelledby="modalPayConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <input type="hidden" id="cancelUrl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalPayConfirmLabel">Xác thanh toán đơn hàng <b><?=$this->werehouseOrder->getCodeOrder()?></b></h4>
+            </div>
+            <div class="modal-body">
+                <div>Nhập số tiền bạn đã thanh toán cho NCC <b><?=$this->supplier->getName()?></b></div>
+                <div><input type="text" onblur="priceOnblur()" name="txtPayMoney" id="txtPayMoney" class="form-control" value="<?=Common::formatMoney($this->werehouseOrder->getTotalPrice())?>"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button onclick="btnPayConfirm()" class="btn btn-success">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .file-preview-image{width: 100%!important;}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tblProduct').DataTable({
+                paging: false,
+                // pageLength:50,
+                ordering: false,
+                info: false,
+                // order: [[ 1, "desc" ]],
+                language: {
+                    searchPlaceholder: "Tìm kiếm sản phẩm"
+                },
+                initComplete: function () {
+                    $('.dataTables_filter label input').focus();
+                }
+            });
+
+            $("#imageFile").fileinput({
+                showUpload: false,
+                showCaption: false,
+                browseClass: "btn btn-danger",
+                fileType: "any",
+            });
+
+            $('#btnShowModalPayConfirm').click(function(){
+                $('#modalPayConfirm').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                });
+            });
+        });
+
+        function btnPayConfirm(){
+            run_waitMe();
+            let money = $('#txtPayMoney').val().replaceAll( ",","" );
+            if(!money) money=0;
+            $.ajax({
+                method: "POST",
+                url: '<?=$this->url('werehouse-admin',['action'=>'pay-confirm','id'=>$this->werehouseOrder->getId()])?>',
+                data: {m:money}
+            }).done(function(res) {
+                if(res.status==1){
+                    $('#modalPayConfirm').modal('hide');
+                    location.reload();
+                }
+                else
+                    noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+                stop_waitMe();
+            });
+        }
+        function priceOnblur(){
+            let obj=$('#txtPayMoney');
+            let value=obj.val().replaceAll( ",","" );
+            obj.val(formatCurrency(value));
+        }
+        function formatCurrency(value){
+            if (value && value.length >3){
+                var numFormat = new Intl.NumberFormat("en-US");
+                return numFormat.format(value.replaceAll( ",","" ));
+            }else{
+                return value;
+            }
+        }
+        function backToSupplier(wid,pName){
+            if (!wid){
+                alert("Lỗi!!!!")
+                return;
+            }
+            let text = pName +" bị xoá khỏi đơn nhập và tính toán lại tồn kho. bạn có chắc muốn trả lại NCC?";
+            if (confirm(text) == false) {
+                return;
+            }
+            run_waitMe();
+            $.ajax({
+                method: "POST",
+                url: '<?=$this->url('werehouse-admin',['action'=>'back-supplier'])?>',
+                data: {id:wid}
+            }).done(function (data) {
+                if(data.status==0){
+                    alert(data.msg);
+                }else{
+                    location.reload();
+                }
+                stop_waitMe();
+            })
+        }
+    </script>

@@ -1,0 +1,34 @@
+<?php
+$title = "Delete user";
+$this->headTitle($title)
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('user-admin')?>">User List</a></li>
+    <li class="active">Delete user</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$this->escapeHtml($title)?></h2>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-success">
+            <div class="panel-body">
+                <h2>Bạn có chắc chắn muốn xóa user:
+                    <br>Mobile: <b><?=$user->getMobile()?></b>
+                    <br>Email: <b><?=$user->getEmail()?></b> không?
+                </h2>
+                <form action="<?=$this->url('user-admin',['action'=>'delete','id'=>$user->getId()])?>" method="POST">
+                    <input type="submit" name="delete" value="No" class="btn btn-default">
+                    <input type="submit" name="delete" value="Yes" class="btn btn-success">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

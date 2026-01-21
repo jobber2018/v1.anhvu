@@ -1,0 +1,108 @@
+<div class="modal" id="modalChangePrice" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="defModalHead">Chiết khấu đơn hàng</h4>
+
+            </div>
+            <div class="modal-body">
+                <div class="input-group" style="margin-bottom: 10px">
+                    <label>Tổng đơn trước chiết khấu: </label>
+                    <label id="lblTotalMoney" style="font-weight:bold;font-size:12pt;color: red"></label>
+                </div>
+                <div class="input-group">
+                    <input id="txt_discount_number" autocomplete="off" type="text" class="form-control" value="0"/>
+                    <span class="input-group-btn">
+                        <button id="btnPercent" class="btn btn-default btn-success" type="button">%</button>
+                    </span>
+                    <span class="input-group-btn">
+                        <button id="btnVnd" class="btn btn-default" type="button">NVĐ</button>
+                    </span>
+                </div>
+                <div class="input-group" style="margin-top: 10px">
+                    <label>Tổng đơn Sau chiết khấu: </label>
+                    <label id="lblTotalMoneyAfterCK" style="font-weight:bold;font-size:12pt;color: #0052ff;"></label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnDiscountSubmit" class="btn btn-success">Xác nhận</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    let discount_type=2;//=1 vnd, =2 discount %
+    let dis_id=<?=$order->getId()?>;
+    let discount_option = 1;
+
+    $(document).ready(function () {
+        $("#txt_discount_number").on("input", function() {
+            let discount_input = $(this).val();
+            let discount=0;
+            if(!discount_input) discount_input=0;
+            if ($.isNumeric(discount_input)) {
+                var total_price = $('#lblTotalMoney').html().replaceAll(",", "");
+                if (discount_type == 1) {
+                    discount = total_price - discount_input;
+                    $('#lblTotalMoneyAfterCK').html(formatCurrency(discount.toString()));
+                } else {
+                    discount = total_price - (total_price * discount_input) / 100;
+                    $('#lblTotalMoneyAfterCK').html(formatCurrency(discount.toFixed(0)));
+                }
+            } else {
+                noty({text: 'Giá phải là số!', layout: 'topRight', type: 'error', timeout: 4000});
+            }
+        });
+    });
+
+    function showDiscountModal(){
+        discount_option=2;
+        $('#lblTotalMoney').html('<?=\Sulde\Service\Common\Common::formatMoney($order->getTotalAmountToPaid())?>');
+        $('#lblTotalMoneyAfterCK').html('<?=\Sulde\Service\Common\Common::formatMoney($order->getTotalAmountToPaid())?>');
+        $('#modalChangePrice').modal('show').on('shown.bs.modal', function (e) {
+            $('#txt_discount_number').val('').focus();
+        });
+    }
+
+    $('#btnVnd').click(function() {
+        discount_type = 1;//giam gia theo tien vnd
+        $(this).addClass('btn-success');
+        $('#txt_discount_number')
+            .val('')
+            .focus();
+        $('#btnPercent').removeClass('btn-success');
+        $('#lblTotalMoneyAfterCK').html($('#lblTotalMoney').html());
+    });
+
+    $('#btnPercent').click(function() {
+        discount_type=2;//giam gia theo %
+        $(this).addClass('btn-success');
+        $('#txt_discount_number')
+            .val('')
+            .focus();
+        $('#btnVnd').removeClass('btn-success');
+        $('#lblTotalMoneyAfterCK').html($('#lblTotalMoney').html());
+    });
+    $('#btnDiscountSubmit').click(function(){
+        run_waitMe();
+        let discount_number = $('#txt_discount_number').val();
+        var url = "<?=$this->url('sell-admin',['action'=>'discount'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {id:dis_id,dis_type:discount_type,dis_num:discount_number,dis_opt:discount_option}
+        }).done(function (data) {
+            if(data.status){
+                noty({text: data.message, layout: 'topRight', type: 'success',timeout: 8000});
+                location.reload();
+            }
+            else{
+                noty({text: data.message, layout: 'topRight', type: 'error',timeout: 4000});
+                stop_waitMe();
+            }
+        })
+    });
+</script>

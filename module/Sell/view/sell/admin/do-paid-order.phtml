@@ -1,0 +1,173 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-admin',['action'=>'paid-order'])?>">Danh sách đơn hàng</a></li>
+    <li class="active">Chi tiết đơn hàng đã thanh toán</li>
+</ul>
+<div class="page-title">
+    <h2>
+        <span class="fa fa-arrow-circle-o-left"></span>
+        Chi tiết đơn hàng đã thanh toán
+    </h2>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a class="btn btn-info" href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" >
+                        <span class="fa fa-print"></span>In đơn
+                    </a>
+                    <button onclick="showDiscountModal()" class="btn btn-danger">
+                        <span class="fa fa-gift"></span>
+                        Chiết khấu theo đơn
+                    </button>
+                    <?=$this->partial('sell/partial/order-discount', ['order'=>$this->sellOrder]);?>
+                    <ul class="panel-controls">
+                        <li>
+                            <button onclick="showModalSelectProduct()" class="btn btn-success">
+                                <span class="fa fa-plus-circle"></span>
+                                Thêm sản phẩm
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <?=$this->partial('sell/partial/order-edit-product', ['order'=>$this->sellOrder,'action'=>['edit','return'],'url'=>'do-paid-order']);?>
+                </div>
+                <div class="panel-footer">
+                    <ul class="panel-controls">
+                        <li>
+                            <button onclick="showModalSelectProduct()" class="btn btn-success">
+                                <span class="fa fa-plus-circle"></span>
+                                Thêm sản phẩm
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-note', ['order'=>$this->sellOrder,'userInfo'=>$this->userInfo]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/customer-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Lịch sử thay đổi</h3>
+                </div>
+                <div class="panel-body">
+                    <!-- START TIMELINE -->
+                    <div class="timeline timeline-right" style="padding: 10px; background: rgba(223, 226, 226, 0.74)">
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date">Activity</div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                        <?php
+                        foreach ($this->sellOrder->getActivity() as $activityItem){
+
+                            ?>
+                            <!-- START TIMELINE ITEM -->
+                            <div class="timeline-item timeline-item-right">
+                                <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
+                                <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
+                                <div class="timeline-item-content">
+                                    <div class="timeline-body">
+                                        <b><?=$activityItem->getActionBy()?></b><br>
+                                        <i><?=$activityItem->getAction()?></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END TIMELINE ITEM -->
+                            <?php
+                        }
+                        ?>
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+                    <!-- END TIMELINE -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script type="text/html" id="order-pay-info-template">
+    <style>
+        .tplOrderPayInfo tr:first-child td{border-top: 0px}
+        .tplOrderPayInfo td:first-child{font-weight: bold}
+        .tplOrderPayInfo{margin-bottom: 0px}
+    </style>
+    <table class="table nowrap table-hover display tplOrderPayInfo">
+        <tr>
+            <td>Khách hàng:</td>
+            <td class="title">{{customer_name}}</td>
+        </tr>
+        <tr>
+            <td>Mã đơn hàng:</td>
+            <td>{{order_code}}</td>
+        </tr>
+        <tr>
+            <td>Số tiền:</td>
+            <td><span class="highlight" style="font-size: 10pt">{{total_amount_payable}}</span> [{{order_payment_method_name}}]</td>
+        </tr>
+        <tr>
+            <td>Ngày giao:</td>
+            <td>{{delivered_date}}</td>
+        </tr>
+        <tr>
+            <td>Người giao:</td>
+            <td class="price">{{delivered_by}}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <label class="check">
+                    <input type="radio" class="iradio" name="payMethod" value="1" checked="checked"/>Hoàn thành
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <label class="check">
+                    <input type="radio" class="iradio" name="payMethod" value="2"/>Chưa thanh toán hoặc Thanh toán một phần
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <textarea type="text" class="form-control" id="orderNote" name="orderNote" placeholder="Ghi chú" rows="3"></textarea>
+            </td>
+        </tr>
+    </table>
+</script>
+
+<style>
+</style>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+
+    });
+
+</script>
+<?=$this->partial('sell/partial/order-add-product');?>

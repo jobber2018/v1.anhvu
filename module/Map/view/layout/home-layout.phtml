@@ -1,0 +1,60 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<?= $this->doctype() ?>
+
+<html lang="vi" class="h-100">
+<head>
+    <meta charset="utf-8">
+    <?= $this->headTitle('NPP Anh vũ')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()
+        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+    ?>
+    <meta data-n-head="true" name="robots" content="index,follow">
+    <meta data-n-head="true" name="author" content="AnhVu">
+    <meta data-n-head="true" name="description" content="Phân phối các mặt hàng tiêu dùng, unilever, P&G, omo, sunlight, romano.">
+
+    <!-- Le styles -->
+    <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/favicon.png'])?>
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/vendor/fontawesome-free/css/all.css"/>
+    <link rel="stylesheet" type="text/css" id="theme" href="/vendor/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/jquery.mCustomScrollbar.min.css">
+    <link rel="stylesheet" type="text/css" id="theme" href="/css/global.css"/>
+	<script data-ad-client="ca-pub-9910654742181507" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript" src="/vendor/jquery/jquery.min.js"></script>
+    <script src="/vendor/bootstrap/js/popper.min.js"></script>
+    <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <script src="/js/global.js"></script>
+    <?php include_once(ROOT_PATH . "/css/svg-icons.svg"); ?>
+</head>
+<body class="d-flex flex-column h-100">
+
+<div id="circle">
+    <div class="loader">
+        <div class="loader">
+            <div class="loader">
+                <div class="loader"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<?=$this->partial('map/partial/sidebar', ['userInfo'=>$this->authIdentity]);?>
+<!-- Begin page content -->
+<main role="main" class="h-100">
+    <?=$this->partial('map/partial/navbar', ['userInfo'=>$this->authIdentity]);?>
+    <div>
+        <?= $this->content ?>
+    </div>
+</main>
+
+<?=$this->partial('map/partial/footer', ['userInfo'=>$this->authIdentity]);?>
+
+
+</body>
+</html>

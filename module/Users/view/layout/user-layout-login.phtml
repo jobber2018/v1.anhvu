@@ -1,0 +1,64 @@
+<?php
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<?= $this->doctype() ?>
+
+<html lang="vi" class="h-100">
+<head>
+    <meta charset="utf-8">
+    <?= $this->headTitle('Anh Vũ - Thế giới hàng tiêu dùng')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()
+        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+    ?>
+
+    <meta name="robots" content="index,follow">
+    <meta name="author" content="Anhvu">
+    <meta name="description" content="">
+    <meta name="apple-mobile-web-app-title" content="anhvu.store">
+    <!-- Le styles -->
+    <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/favicon.png'])?>
+
+    <!-- CSS INCLUDE -->
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- START NOTY -->
+    <script type='text/javascript' src='/joli/js/plugins/noty/jquery.noty.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/layouts/topRight.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/themes/default.js'></script>
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+</head>
+<body class="d-flex flex-column h-100">
+
+<div class="page-content">
+    <div class="page-content-wrap">
+        <?= $this->content ?>
+    </div>
+</div>
+<style>
+    .x-navigation > li.xn-logo > a:first-child{background-color: #ff6700}
+</style>
+</body>
+</html>

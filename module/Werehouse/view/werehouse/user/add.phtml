@@ -1,0 +1,49 @@
+<?php
+$this->headTitle($this->translate('Tile'));
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Tile</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Name</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="panel panel-default">
+            <?=$this->form()->openTag($form)?>
+            <div class="panel-body">
+
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <input type="submit" name="btnSubmit"  id="btnSubmit" class="btn btn-success" value="Thêm mới">
+                        <span class="error" id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+</div>

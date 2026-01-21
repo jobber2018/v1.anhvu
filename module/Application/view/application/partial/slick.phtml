@@ -1,0 +1,83 @@
+<div class="slider variable-width">
+    <?php foreach($photos as $photo):?>
+    <div>
+        <div class="image">
+            <img class="image-size" data-lazy="<?= $photo->getPath()?>" />
+        </div>
+    </div>
+    <?php endforeach?>
+</div>
+<section class="secUploadSlick" style="display: none;">
+    <div class="form-container">
+        <form action="#" id="uploadForm" name="frmupload" method="post" enctype="multipart/form-data">
+            <input type="file" id="uploadImage" name="uploadImage" />
+            <input type="text" name="hotelId" value="<?=$hotelId?>">
+            <input id="submitButton" type="submit" name='btnSubmit' value="Submit Image" />
+        </form>
+    </div>
+</section>
+<script>
+    $(document).ready(function(){
+        //Slide
+        $('.variable-width').slick({
+            dots: false,
+            lazyLoad: 'ondemand',
+            // prevArrow: false,
+            // nextArrow: false,
+            infinite: true,
+            speed: 500,
+            slidesToShow: 3,
+            centerMode: false,
+            variableWidth: true,
+            autoplay: true,
+            autoplaySpeed: 2000,
+        });
+
+        /*add slick upload image*/
+
+       /* var iconUploadImage ='<div class="avatar-wrapper">' +
+            '           <img class="profile-pic" src="/img/icon-camera.png" />\n' +
+            '           <div class="upload-button">\n' +
+            '               <i class="fa fa-arrow-circle-up" aria-hidden="true"></i>\n' +
+            '           </div>\n' +
+            '</div>';
+         $('.variable-width').slick('slickAdd',iconUploadImage);
+
+        $(".upload-button").on('click', function() {
+            $('#uploadImage').trigger('click');
+        });
+
+        var imageUploading = function(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var itemUploading = '<div>\n' +
+                        '          <div class="image">\n' +
+                        '            <img class="image-size" src="'+e.target.result+'" />\n' +
+                        '          </div>\n' +
+                        '       </div>'
+                    $('.variable-width').slick('slickAdd',itemUploading);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        };
+
+        $("#uploadImage").on('change', function(){
+            imageUploading(this);
+             $('.secUploadSlick #submitButton').trigger('click');
+        });
+
+
+        $('#submitButton').click(function () {
+            $('#uploadForm').ajaxForm({
+                url: '$this->url("guest-upload-image")',
+                complete: function (xhr) {
+                    response = xhr.responseJSON;
+                    if(response.status==0){
+                        alert(response.message);
+                    }
+                }
+            });
+        });*/
+    });
+</script>

@@ -1,0 +1,83 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Kho</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fdate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->tdate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div style="text-align: center"><span class="fa fa-book" style="font-size: 40pt; color: #2db3dc"></span></div>
+                    <h4 style="text-align: center; padding-top: 20px; margin-bottom: 5px">TỒN KHO HIỆN TẠI</h4>
+                    <div style="color: #2db3dc; font-size: 14pt; font-weight: bold; text-align: center;"><?=Common::formatMoney($this->inventoryValue)?></div>
+                    <div style="text-align: center; padding-top: 10px; color: #868686"> Số liệu bao gồm các sản phẩm đang giao dịch.</div>
+                    <div style="margin-top: 20px; border-top: 1px solid #e6e3e3; padding-top: 10px; border-bottom: 1px solid #e6e3e3; padding-bottom: 10px;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div style="font-weight: bold; color: #9d9d9d; font-size: 14px">Nhập trong kỳ</div>
+                                <div style="font-weight: bold"><?=Common::formatMoney($this->totalPriceInput)?></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div style="font-weight: bold; color: #9d9d9d; font-size: 14px">Xuất trong kỳ</div>
+                                <div style="font-weight: bold"><?=Common::formatMoney($this->totalPriceOutput)?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px; margin-top: 15px">
+                        <div><b>Giá trị tồn kho = Số lượng * Giá vốn</b></div>
+                        <div>Giá vốn (MAC) là bình quân giá sản phẩm được tính sau mỗi lần nhập hàng</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'werehouse'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+    })
+</script>

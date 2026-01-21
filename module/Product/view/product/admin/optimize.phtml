@@ -1,0 +1,142 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Optimize data";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách sản phẩm</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Dữ liệu cần kiểm tra lại</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblProduct">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Mã </th>
+                            <th>Tên sản phẩm</th>
+                            <th>TB giá</th>
+                            <th>Giá bán</th>
+                            <th>+/-</th>
+                            <th>Tồn kho</th>
+                            <th>Quy cách</th>
+                            <th style="width: 200px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->product as $product){
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php
+                                    if(is_null($product->getImg()))
+                                        echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                    else
+                                        echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                    ?>
+                                </td>
+                                <td><?=$product->getCode()?></td>
+                                <td><a href="<?=$this->url('product-admin',['action'=>'price','id'=>$product->getId()])?>"><?=$product->getName() .' | '.$product->getWeight()?></a></td>
+                                <td><?=Common::formatMoney($product->getAveragePrice())?></td>
+                                <td><?=Common::formatMoney($product->getActivePrice()->getPrice())?> đ/<?=$product->getUnit()->getName()?></td>
+                                <?php
+
+                                if($product->getAveragePrice()==0)
+                                    $profit = '-/-';
+                                else{
+                                    $profit=$product->getActivePrice()->getPrice()-$product->getAveragePrice();
+                                    $percentProfit=round(($profit/$product->getAveragePrice())*100,2).'%';
+                                    if($profit<0)
+                                        $profit='<span style="color:red">'.Common::formatMoney($profit).' ('.$percentProfit.')</span>';
+                                    else
+                                        $profit='<span style="color:dodgerblue">'.Common::formatMoney($profit).' ('.$percentProfit.')</span>';
+                                }
+                                ?>
+                                <td><?=$profit?></td>
+                                <td><?=$product->getInventory()?></td>
+                                <td><?=$product->getBoxUnit() ." ".$product->getUnit()->getName()."/Thùng"?></td>
+                                <td>
+                                    <a href="<?=$this->url('product-admin',['action'=>'edit','id'=>$product->getId()])?>"><span class="fa fa-edit"> Sửa</span></a> |
+                                    <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$this->escapeHtml($product->getId())])?>"><span class="fa fa-money"> Quản lý giá</span></a>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: true,
+            pageLength:50,
+            ordering: true,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            language: {
+                searchPlaceholder: "Tìm kiếm sản phẩm"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,133 @@
+<?php
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Report</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="row text-center">
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'route'])?>">
+                                <p class="font-icon"><span class="fa fa-random"></span></p>
+                                <p class="title">Tuyến</p>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'time'])?>">
+                                <p class="font-icon"><span class="fa fa-calendar"></span></p>
+                                <p class="title">Doanh thu</p>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'user'])?>">
+                                <p class="font-icon"><span class="fa fa-user"></span></p>
+                                <p class="title">Nhân viên</p>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'product'])?>">
+                                <p class="font-icon"><span class="fa fa-barcode"></span></p>
+                                <p class="title">Sản phẩm</p>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'category'])?>">
+                                <p class="font-icon"><span class="fa fa-dropbox"></span></p>
+                                <p class="title">Loại sản phẩm</p>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'grocery'])?>">
+                                <p class="font-icon"><span class="fa fa-group"></span></p>
+                                <p class="title">Top khách hàng</p>
+                            </a>
+                        </div>
+
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'diary-accounting'])?>">
+                                <p class="font-icon"><span class="glyphicon glyphicon-list-alt"></span></p>
+                                <p class="title">Accounting</p>
+                            </a>
+                        </div>
+
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('grocery-admin',['action'=>'map'])?>">
+                                <p class="font-icon"><span class="fa fa-map-marker"></span></p>
+                                <p class="title">Bản đồ khách hàng</p>
+                            </a>
+                        </div>
+
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'werehouse'])?>">
+                                <p class="font-icon"><span class="fa fa-book"></span></p>
+                                <p class="title">Kho</p>
+                            </a>
+                        </div>
+
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'finance'])?>">
+                                <p class="font-icon"><span class="fa fa-book"></span></p>
+                                <p class="title">Tài chính</p>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <a href="<?=$this->url('report-admin',['action'=>'zalo-app'])?>">
+                                <img src="/img/zalo/logo.svg" style="width: 50px; padding-top: 10px">
+                                <p class="title" style="padding-top: 10px">Zalo App</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .font-icon{font-size: 30pt}
+    .title{font-weight: bold}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $( document ).ready(function() {
+
+    })
+</script>

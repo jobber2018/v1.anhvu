@@ -1,0 +1,79 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$title = "";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->groceryDetail->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->groceryDetail->getId()])?>">Chức năng</a></li>
+    <li>Bỏ khách hàng ra khỏi tuyến</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$this->groceryDetail->getGroceryName()?></h2>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form id="jvalidate" role="form" class="form-horizontal" method="post" action="<?=$this->url('grocery-user',['action'=>'reject','id'=>$this->groceryDetail->getId()])?>">
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">Hãy ghi thêm ghi chú vì sao bạn bỏ ra khỏi tuyến:</label>
+                            <div class="col-md-8">
+                                <textarea class="form-control" name="note" id="note" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-8">
+                                <button class="btn btn-info" type="submit">OK</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.grocery-info div{padding-bottom: 5px; padding-top: 5px; border-bottom: 1px solid #E5E5E5}
+.grocery-info div:last-child{border-bottom: 0px}
+</style>
+<script type='text/javascript' src='/joli/js/plugins/jquery-validation/jquery.validate.js'></script>
+<script type="text/javascript">
+    var jvalidate = $("#jvalidate").validate({
+        ignore: [],
+        rules: {
+            note: {
+                required: true
+            }
+        }
+    });
+
+</script>

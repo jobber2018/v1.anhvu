@@ -1,0 +1,157 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-admin')?>">Danh sách đơn hàng</a></li>
+    <li class="active">Đổi trả đơn hàng</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Đổi trả đơn hàng <?=$this->sellOrder->getOrderCode()?></h3>
+</div>
+<div class="page-content-wrap">
+    <div class="panel panel-warning">
+        <div class="panel-body">
+            <ul id="productList" class="list-group">
+                <?php
+                $orderProduct=[];
+                foreach ($this->sellOrder->getSell() as $sell){
+                    $arrTmp["id"]=$sell->getId();
+                    $arrTmp["product_id"]=$sell->getProduct()->getId();
+                    $arrTmp["quantity"]=$sell->getQuantity();
+                    $arrTmp["price"]=$sell->getPrice()->getPrice();
+                    $arrTmp["return"]=0;
+                    $orderProduct[]=$arrTmp;
+//                        $json = json_encode($arrTmp);
+                    ?>
+                    <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1 title"><?=$sell->getProduct()->getName()?></h5>
+                        </div>
+                        <table style="width: 100%">
+                            <tbody>
+                            <tr>
+                                <td style="padding-right: 5px; width: 40px">
+                                    <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                </td>
+                                <td>
+                                    <table style=" width: 100%;" >
+                                        <tbody>
+                                        <tr>
+                                            <td style="padding-left: 10px;" nowrap="">Giá bán:</td>
+                                            <td style="padding-left: 10px; padding-right: 10px" nowrap="">Số lượng lên đơn:</td>
+                                            <td>Số lượng trả lại: </td>
+                                            <td style="padding-left: 5px">Thành tiền:</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-left: 10px; font-weight: bold;" nowrap=""><?=Common::formatMoney($sell->getPrice()->getPrice())?> đ</td>
+                                            <td style="padding-left: 10px;"><?=$sell->getQuantity().' '.$sell->getProduct()->getUnit()->getName()?></td>
+                                            <td><input onchange="returnOnchange(<?=$sell->getId()?>)" id="txtReturn<?=$sell->getId()?>" style="width: 80px" min="0" max="<?=$sell->getQuantity()?>" type="number" class="form-control" value="0"></td>
+                                            <td style="padding-left: 5px" id="money<?=$sell->getId()?>"><?=Common::formatMoney($sell->getQuantity()*$sell->getPrice()->getPrice())?> đ</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <small id="msg15" class="warning-color"></small>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                    <?php
+                }
+                ?>
+                <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 title" id="totalOrder" style="color: #26a9d1; text-align: right">Tổng đơn: <?=Common::formatMoney($this->sellOrder->getTotalPrice())?> đ</h5>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="panel-footer">
+            <button id="btnSubmit" class="btn btn-success pull-left">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<style>
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+</style>
+<script>
+    var myPro=jQuery.parseJSON('<?=json_encode($orderProduct)?>');
+    // console.log(myPro);
+    function returnOnchange(id){
+        var obj=$('#txtReturn'+id);
+        var valueReturn=obj.val();
+        if(!valueReturn) valueReturn=0;
+        //var dataReturn=jQuery.parseJSON(obj.attr('data'));
+
+        $.each( myPro, function( key, data ) {
+            if(data.id==id){
+                if(valueReturn>data.quantity){
+                    $('#msg'+id).html('Tối đa có thể trả '+data.quantity);
+                    obj.val(data.quantity);
+                    valueReturn=data.quantity;
+                }else{
+                    $('#msg'+id).html('');
+                }
+
+                $.extend(data,{
+                    return:parseInt(valueReturn)
+                });
+
+                var money=(data.quantity-valueReturn)*data.price;
+                $('#money'+id).html(formatCurrency(money.toString())+' đ');
+            }
+        });
+        showInforOrder();
+    }
+
+    function showInforOrder(){
+        var totalPrice=0;
+
+        $.each( myPro, function( key, data ) {
+            var price=data.price;
+            var quantity=data.quantity-data.return;
+
+            totalPrice+=price*quantity;
+
+        });
+        $('#totalOrder').html('Tổng đơn: '+formatCurrency(totalPrice.toString())+" đ");
+        // console.log(myProSelect);
+    }
+
+    function formatCurrency(value){
+        var result=0;
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            result= numFormat.format(value.replace( ",","" ));
+        }else{
+            result= value;
+        }
+        return result;
+    }
+
+    $('#btnSubmit').click(function(){
+        run_waitMe();
+        var url = "<?=$this->url('sell-user',['action'=>'return'])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {pro:myPro}
+        }).done(function (data) {
+            if(data.status){
+                stop_waitMe();
+            }
+            else{
+                alert(data.msg);
+                stop_waitMe();
+            }
+        })
+    })
+</script>

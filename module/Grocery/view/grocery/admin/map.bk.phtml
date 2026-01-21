@@ -1,0 +1,202 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Danh sách cửa hàng</li>
+</ul>
+
+<div class="page-title">
+    <h3>
+        <span class="fa fa-arrow-circle-o-left"></span>
+        Bản đồ tuyến toàn tuyến <i>(<?=count($this->groceryList);?> cửa hàng)</i>
+    </h3>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div id="google_map" style="height: 500px"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>
+
+<script>
+    <?php
+    if($this->groceryList){
+        $dateNow=strtotime(date("Y-m-d"));
+        foreach ($this->groceryList as $grocery=>$groceryItem) {
+            if(!is_null($groceryItem->getLat()) && !is_null($groceryItem->getLng())){
+                $arrTam["name"]=$groceryItem->getGroceryName();
+                $arrTam["url"]=$this->url('grocery-user',['action'=>'panel','id'=>$groceryItem->getId()]);
+                $arrTam["lat"]=$groceryItem->getLat();
+                $arrTam["lng"]=$groceryItem->getLng();
+                $arrTam["check_in_date"]=Common::formatDateTime($groceryItem->getCheckInDate());
+
+                if($groceryItem->getCheckInDate())
+                    $checkInDate =strtotime($groceryItem->getCheckInDate()->format('Y-m-d'));
+                else
+                    $checkInDate=0;
+
+//                echo $dateNow.'/'.$checkInDate."\n";
+                if($dateNow==$checkInDate)
+                    $arrTam["icon"]='icon-grocery-blue.png';
+                else if($groceryItem->getCheckInDate())
+                    $arrTam["icon"]='icon-grocery-yeallow.png';
+                else
+                    $arrTam["icon"]='icon-grocery-red.png';
+
+                $data[]=$arrTam;
+            }
+        }
+    }
+    ?>
+    var map;
+    var dataObj = jQuery.parseJSON( '<?=json_encode($data)?>' );
+
+    var myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        }
+    ];
+    function initMap() {
+        var geoMapHeight = function () {
+            var headerH = 70 + $('.x-navigation').innerHeight() + $('.breadcrumb').innerHeight() + $('.page-title').innerHeight();
+            var mapH = $(window).height() - (headerH);
+            $('#google_map').height(mapH);
+        };
+
+        // geoMapHeight();
+
+        map = new google.maps.Map(document.getElementById('google_map'), {
+            disableDefaultUI: true,
+            fullscreenControl: true,
+            zoom: 15,
+            styles: myStyles
+        });
+
+        <?php
+        $strokeColor=array("#0a65ee","#074096FF","#D0052AFF","#EE5C0DFF","#17DA09FF");
+        $fillColor = array("#4590f3","#486898FF","#C95B6FFF","#EFA176FF","#92EA8CFF");
+        $color=0;
+        foreach ($this->groceryCat as $k=>$groceryCat){
+            if($groceryCat->getPolygon()){
+
+            ?>
+        var triangleCoords = jQuery.parseJSON('<?=$groceryCat->getPolygon()?>');
+        // Construct the polygon.
+        var bermudaTriangle = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: "<?=$strokeColor[$color]?>",
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: "<?=$fillColor[$color]?>",
+            fillOpacity: 0.25,
+        });
+
+        bermudaTriangle.setMap(map);
+        <?php
+                if($color==4) $color=0;
+                else $color++;
+            }
+        }
+        ?>
+
+        $.each(dataObj, function (key, data) {
+            var latLng = new google.maps.LatLng(data.lat, data.lng);
+            var marker = new google.maps.Marker({
+                map: map,
+                position: latLng,
+                icon:{
+                    url:"/img/icons/"+data.icon,
+                    scaledSize: new google.maps.Size(35, 35)
+                }
+            });
+
+            var infowindow = new google.maps.InfoWindow({
+                content: '<div id="content"><a target="_blank" href="'+data.url+'">'+data.name+'</a> <br><i>Checkin: '+data.check_in_date+'</i></div>'
+            });
+
+            // infowindow.open(map, marker);
+            marker.addListener("click", () => {
+                infowindow.open(map, marker);
+            });
+        });
+
+        var pos = {lat: parseFloat(dataObj[0]["lat"]), lng: parseFloat(dataObj[0]["lng"])};
+        map.setCenter(pos);
+
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+                var center = new google.maps.LatLng(position.coords.latitude,
+                    position.coords.longitude);
+
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: center,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        strokeColor: 'white',
+                        strokeWeight: 2,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.6
+                    }
+                });
+                marker.setMap(map);
+                marker.setPosition(center);
+                // var infoWindow = new google.maps.InfoWindow();
+                // infoWindow.open(map,marker);
+
+                var markerWaveCurrent = new google.maps.Marker({
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                        strokeColor: 'white',
+                        strokeWeight: 1,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.3
+                    },
+                });
+                markerWaveCurrent.setMap(map);
+                markerWaveCurrent.setPosition(center);
+
+                var count=0;
+                window.setInterval(function() {
+                    var icon = markerWaveCurrent.get('icon');
+                    if(icon.scale<30){
+                        icon.scale = icon.scale+1;
+                    }else{
+                        count = count+1;
+                        icon.scale = 8;
+                    }
+                    markerWaveCurrent.set('icon', icon);
+                }, 35);
+
+            }, function () {
+                handleLocationError(true, infowindow, map.getCenter());
+                // stop_waitMe();
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infowindow, map.getCenter());
+            // stop_waitMe();
+        }
+    }
+</script>

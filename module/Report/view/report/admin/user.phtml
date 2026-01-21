@@ -1,0 +1,102 @@
+<?php
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">User</li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Doanh thu theo nhân viên</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->fdate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-2 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="<?=$this->tdate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="morris-bar-user" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .ladmin{color:#0f85d9; padding-bottom: 5px; margin-bottom:0px; padding-top: 10px}
+    .luser{color: #781ee8}
+    .lcus{color: #d97503}
+    .ltotal{font-weight: bold}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script>
+    $( document ).ready(function() {
+        $("#tdate,#fdate").datepicker();
+
+        Morris.Bar({
+            element: 'morris-bar-user',
+            data: [<?php
+                $revenueTotal=0;
+                foreach ($this->arrUser as $k=>$value){
+                    $revenueAdmin=$revenueUser=$revenueCus=0;
+                    if(@$value['revenue'][3]>0)
+                        $revenueAdmin=$value['revenue'][3];
+                    if (@$value['revenue'][0]>0)
+                        $revenueUser=$value['revenue'][0];
+                    if(@$value['revenue'][-1]>0)
+                        $revenueCus = $value['revenue'][-1];
+                    $revenueTotal=$revenueAdmin+$revenueUser+$revenueCus;
+                    echo "{ y: '".$value['name']."', admin: ". $revenueAdmin .", user: ".$revenueUser .", cus: ".$revenueCus.",total:".$revenueTotal."},";
+                }
+                ?>],
+            xkey: 'y',
+            ykeys: ['admin', 'user','cus'],
+            labels: ['Admin', 'User', 'KH'],
+            barColors: ['#0f85d9', '#781ee8','#d97503'],
+            hoverCallback: function (index, options, content, row) {
+                var hover = "<div class='morris-hover-row-label'>"+row.y+"</div><div class='morris-hover-point'><p><span class='ladmin'>Admin: "+formatCurrency(row.admin.toString())+"</span><br><span class='luser'>User: "+formatCurrency(row.user.toString())+"</span><br><span class='lcus'>KH: "+formatCurrency(row.cus.toString())+"</span><br><span class='ltotal'>Total: "+formatCurrency(row.total.toString())+"</span></div>";
+                return hover;
+            },
+        });
+
+
+        $('#btnSubmit').click(function(){
+            var url='<?=$this->url('report-admin',['action'=>'user'])?>?fd='+$('#fdate').val()+'&td='+$('#tdate').val();
+            location.href=url;
+        })
+
+    })
+</script>

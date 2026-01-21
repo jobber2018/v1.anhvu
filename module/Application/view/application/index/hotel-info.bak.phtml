@@ -1,0 +1,274 @@
+<div style="position: absolute; left: 100%; z-index: 1000; margin-left: -35px; padding-top: 5px;cursor:pointer" data-dismiss="modal">
+    <svg viewBox="0 0 52 52" class="icon"><use xlink:href="#close"></use></svg>
+</div>
+<?php
+use Sulde\Service\Common\Common;
+echo $this->partial('application/partial/slick', ['photos' => $this->hotel->getPhotos(),'hotelId'=>$this->hotel->getId()]);
+?>
+<div class="container model-header-name-address">
+    <div class="row">
+        <div class="col-md-12"><h4 class="modal-title"><?=$this->escapeHtml($this->hotel->getName())?></h4></div>
+    </div>
+    <div class="row address">
+        <div class="col-md-12">
+            <svg viewBox="0 0 512 512" class="icon"><use xlink:href="#place"></use></svg>
+            <?=$this->hotel->getAddress()?>
+        </div>
+        <?php if($this->hotel->getPrice()){?>
+        <div class="col-md-12">
+            <svg viewBox="0 0 512 512" class="icon"><use xlink:href="#save-money"></use></svg>
+            <?=$this->escapeHtml($this->hotel->getPrice())?>/ <?=$this->translate('Night')?>
+            <?php if(strlen($this->hotel->getPromotion())>5){?>
+                <span class="badge badge-pill badge-success"><?=$this->escapeHtml($this->hotel->getPromotion())?></span>
+            <?php }?>
+        </div>
+        <?php }?>
+        <div class="col-md-12" id="directionsText"></div>
+    </div>
+</div>
+<div class="modal-header-action">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 col-4 action">
+                <span id="call">
+                    <span class="alZPUd">
+                        <i class="fa fa-phone fTCcEc fa-lg"></i>
+                    </span>
+                    <p><?=$this->translate('Call')?></p>
+                </span>
+            </div>
+
+            <div class="col-md-4 col-4 action">
+                <span id="directions">
+                    <span class="alZPUd">
+                        <i class="fa fa-directions fTCcEc fa-lg"></i>
+                    </span>
+                    <p><?=$this->translate('Direction')?></p>
+                </span>
+            </div>
+
+            <div class="col-md-4 col-4 action">
+                <span id="copyURL">
+                    <span class="alZPUd">
+                        <i class="fa fa-copy fTCcEc fa-lg"></i>
+                    </span>
+                    <p><?=$this->translate('Copy')?></p>
+                </span>
+<!--                <span type="hidden" value="https://vnhomestay.net/123/1223/134" id="copyURLValue" />-->
+            </div>
+        </div>
+        <div class="collapse" id="collapseBookroom">
+            <div class="card card-body margin-bottom-15">
+                <input type="hidden" id="requestType" value="">
+                <div class="row">
+                    <span class='col-md-12 col-12 font-weight-bold' id="requestText"></span>
+                </div>
+                <div class="row">
+                    <span class='col-md-5 col-5'><?=$this->translate('Your phone')?></span>
+                    <div class='col-md-7 col-7'>
+                        <?php
+                        if($this->userInfo) $mobile=$this->userInfo->getMobile();
+                        ?>
+                        <input type='number' value="<?=$mobile?>" maxlength="11" min="0" step="1" data-bind="value:replyNumber" class="form-control" name="phone" id='phone' data-container="body" data-toggle="popover" data-placement="top" data-content="<?=$this->translate('Please input your phone number.');?>" />
+                    </div>
+                </div>
+                <div class="row">
+                    <span class='col-md-5 col-5'><?=$this->translate('Check in')?></span>
+                    <div class='col-md-7 col-7'>
+                        <input type='text' class="form-control" name="datepicker-start" id='datepicker-start' />
+                    </div>
+                </div>
+                <div class="row">
+                    <span class='col-md-5 col-5'><?=$this->translate('Check out')?></span>
+                    <div class='col-md-7 col-7'>
+                        <input type='text' class="form-control" name="datepicker-end" id='datepicker-end' />
+                    </div>
+                </div>
+                <div class="row">
+                    <span class='col-md-5 col-5'><?=$this->translate('Guest number')?></span>
+                    <div class='col-md-7 col-7'>
+                        <input type='text' class="form-control" name="guest" id='guest' maxlength="3" min="0" step="1" data-bind="value:replyNumber" />
+                    </div>
+                </div>
+                <div class="row">
+                    <span class='col-md-5 col-5'></span>
+                    <div class='col-md-7 col-7'>
+                        <button type="button" id="sendRequestBooking" class="btn btn-success"><?=$this->translate('Send')?></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <button id="btnBookroom" type="button" style="width: 100%" class="btn btn-outline-primary" data-toggle="collapse" aria-expanded="false" aria-controls="collapseBookroom"><?=$this->translate('Request a booking')?></button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="tab-content-hotel">
+    <div class="tab-header">
+        <ul class="nav nav-tabs" id="hotelTabInfo" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="overview-tab" data-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true"><?=$this->translate('Overview')?></a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" id="amenities-tab" data-toggle="tab" href="#amenities" role="tab" aria-controls="amenities" aria-selected="false"><?=$this->translate('Amenities')?></a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="landmarks-tab" data-toggle="tab" href="#landmarks" role="tab" aria-controls="landmarks" aria-selected="false"><?=$this->translate('Places Of Interest')?></a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content" id="hotelTabInfoContent">
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="home-tab">
+            <div class="container">
+                <?php
+                if($this->hotel->getSummary()){
+                ?>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="module padding-bottom-15">
+                            <section class="collapse" id="collapseSummary" aria-expanded="false"><?=$this->hotel->getSummary()?></section>
+                            <a role="button" class="collapsed" data-toggle="collapse" href="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary"></a>
+                        </div>
+                    </div>
+                </div>
+                <?php };?>
+
+                <?php
+                if($this->hotel->getPriceList()){
+                ?>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="padding-top-15 padding-bottom-15 border-top"><b><?=$this->translate('Price list')?></b></div>
+                        <?=$this->hotel->getPriceList()?>
+                    </div>
+                </div>
+                <?php };?>
+                <!--Rating-->
+                <?=$this->partial('application/partial/rating', ['reviews' => $this->hotel->getReviews(),'hotelId'=>$this->hotel->getId(),'userInfo'=>$this->userInfo]);?>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="amenities" role="tabpanel" aria-labelledby="amenities-tab">
+            <?=$this->partial('application/partial/amenities', ['amenities' => $this->hotel->getAmenities()]);?>
+        </div>
+        <div class="tab-pane fade" id="landmarks" role="tabpanel" aria-labelledby="landmarks-tab"></div>
+    </div>
+</div>
+<div class="modal-body"></div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+</div>
+<script>
+    $(document).ready(function(){
+
+        /* Linked date and time picker */
+        // start date date and time picker
+        $('#datepicker-start').datetimepicker({
+            format: 'DD/MM/YYYY'
+        });
+
+        // End date date and time picker
+        $('#datepicker-end').datetimepicker({
+            useCurrent: false,
+            format: 'DD/MM/YYYY'
+        });
+
+        // start date picke on chagne event [select minimun date for end date datepicker]
+        $("#datepicker-start").on("dp.change", function (e) {
+            $('#datepicker-end').data("DateTimePicker").minDate(e.date);
+        });
+        // Start date picke on chagne event [select maxmimum date for start date datepicker]
+        $("#datepicker-end").on("dp.change", function (e) {
+            $('#datepicker-start').data("DateTimePicker").maxDate(e.date);
+        });
+
+        $( "#call" ).click(function() {
+            $.ajax({
+                method: "POST",
+                url: "/guest-call.html",
+                data: { hotelId: <?=$this->hotel->getId()?>}
+            }).done(function(response) {
+                // window.open('tel:'+response.data);
+                window.location.href="tel://"+response.data;
+            });
+        });
+
+        $( "#btnBookroom" ).click(function() {
+            $('#requestType').val('<?=$this->translate("Request a booking")?>');
+            $('#requestText').text('<?=$this->translate("Request a booking")?>');
+            $('#collapseBookroom').collapse('toggle')
+        });
+
+        $( "#directions" ).click(function() {
+            alert( "Directions" );
+        });
+
+        $( "#copyURL" ).click(function() {
+            var $temp = $("<input>");
+            $("#copyURL").append($temp);
+            var copyContent = 'https://vnhomestay.net/?lat=<?=$this->hotel->getLat()?>&lng=<?=$this->hotel->getLng()?>&if=<?=$this->hotel->getId()?>';
+            $temp.val(copyContent);
+
+            $temp.select();
+            document.execCommand("copy");
+            $temp.remove();
+        });
+
+        $( "#sendRequestBooking" ).click(function() {
+            var requestType = $('#requestType').val();
+            var checkIn = $('#datepicker-start').val();
+            var checkOut = $('#datepicker-end').val();
+            var guest = $('#guest').val();
+            var phone = $('#phone').val();
+            var hotelId = <?=$this->hotel->getId();?>;
+
+            $('#phone').popover('dispose');
+            if(!phone) {
+                $('#phone').popover('show');
+                $('#phone').focus();
+                return;
+            }
+
+            var r= $('<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>');
+            $( "#sendRequestBooking" ).append(r);
+            $( "#sendRequestBooking" ).attr("disabled", "disabled");
+
+            $.ajax({
+                method: "POST",
+                // url: "/guest-add-message.html",
+                url: "<?=$this->url('booking-guest',['action'=>'bookRoom'])?>",
+                data: { requestType: requestType, checkIn: checkIn,checkOut:checkOut,guest:guest,phone:phone,hotelId:hotelId}
+            }).done(function(response) {
+                if(response.status==0){
+                    alert(response.message);
+                }else{
+                    alert('<?=$this->translate("Successfully sent, we will contact you in a few minutes.")?>');
+                    $('#requestType').val('');
+                    $('#datepicker-start').val('');
+                    $('#datepicker-end').val('');
+                    $('#guest').val('');
+                    $('#phone').val('');
+                }
+                $(".spinner-grow").remove();
+                $( "#sendRequestBooking" ).removeAttr("disabled", "disabled");
+                $('#collapseBookroom').collapse('hide');
+            });
+        });
+
+        $('#landmarks-tab').on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                method: "POST",
+                url: '<?=$this->url('landmarks-get-by-local')?>',
+                data:{lat: '<?=$this->hotel->getLat()?>',lng: '<?=$this->hotel->getLng()?>'}
+            }).done(function(response) {
+                $('#landmarks').html(response);
+            });
+        });
+    });
+</script>

@@ -1,0 +1,287 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NPP ANH VŨ</title>
+    <meta name="viewport" content="width&#x3D;device-width,&#x20;initial-scale&#x3D;1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE&#x3D;edge">
+    <!-- Le styles -->
+    <link href="&#x2F;favicon.png" rel="shortcut&#x20;icon" type="image&#x2F;x-icon">
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div id="infoCar"></div>
+            </div>
+        </div>
+    </div>
+    <div id="map-canvas"></div>
+</div>
+</body>
+</html>
+<style>
+    html, body, #wrapper{
+        height: 100%;
+        width: 100%;
+    }
+    #header{
+        background-color:#ff6700;
+        padding:5px;
+        margin:10px;
+        position: absolute;
+        z-index: 1000;
+    }
+    #map-canvas{
+        height: 100%;
+        width: 100%;
+    }
+</style>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>
+<script>
+    var map;
+    let marketSelected=[];
+    <?php
+    echo PHP_EOL;
+    echo 'jsonObj = [];'.PHP_EOL;
+    echo 'carInfo = [];'.PHP_EOL;
+
+    if($this->sellOrder){
+        $arrCarInfo=array();
+        foreach ($this->sellOrder as $sellOrderItem) {
+            if(!is_null($sellOrderItem['lat']) && !is_null($sellOrderItem['lng'])){
+                echo PHP_EOL;
+                echo 'item = {};'.PHP_EOL;
+                echo 'item["name"]=\''.htmlspecialchars(trim($sellOrderItem['name']),ENT_QUOTES).'\';'.PHP_EOL;
+                echo 'item["id"]=\''.$sellOrderItem['id'].'\';'.PHP_EOL;
+                echo 'item["delivered_date"]=\''.$sellOrderItem['delivered_date'].'\';'.PHP_EOL;
+                echo 'item["sid"]=\''.$sellOrderItem['sid'].'\';'.PHP_EOL;
+                echo 'item["lat"]=\''.trim($sellOrderItem['lat']).'\';'.PHP_EOL;
+                echo 'item["lng"]=\''.trim($sellOrderItem['lng']).'\';'.PHP_EOL;
+                echo 'item["delivery_car"]=\''.$sellOrderItem['delivery_car'].'\';'.PHP_EOL;
+                echo 'item["delivered_time"]=\''.$sellOrderItem['delivered_time'].'\';'.PHP_EOL;
+                if($sellOrderItem['delivery_car']&&$sellOrderItem['delivery_car_time']){
+                    $icon=$sellOrderItem['delivery_car_time'].'-'.$sellOrderItem['delivery_car'].'.png';
+                    @$arrCarInfo[$sellOrderItem['delivery_car']][$sellOrderItem['delivery_car_time']]['totalOrderNumber']+=1;
+                }else{
+                    $icon='yeallow.png';
+                }
+                echo 'item["icon"]=\''.$icon.'\';'.PHP_EOL;
+                echo 'jsonObj.push(item);'.PHP_EOL;
+            }
+        }
+        echo 'carInfo='.json_encode($arrCarInfo).';'.PHP_EOL;
+    }
+    ?>
+
+    let tbl='<table>';
+    $.each(carInfo, function (key, data) {
+        $.each(data, function (k, d) {
+            tbl+='<tr>';
+            tbl+='<td style="text-align: center; padding-right: 10px; padding-top:10px;border-bottom: 1px solid #cccccc"><img src="/img/icons/icon-grocery-'+k+'-'+key+'.png" style="width: 35px"><br><b>'+key+'</b></td>';
+            tbl+='<td>'+k+':</td>';
+            tbl+='<td style="padding-left: 10px; font-weight: bold"> ('+d.totalOrderNumber+' đơn)</td>';
+            tbl+='</tr>';
+        })
+    });
+    tbl+='</table>';
+    $('#infoCar').html(tbl);
+
+    let myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        },{
+            "featureType": "administrative",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        },{
+            "elementType": "labels",
+            "stylers": [
+                { "visibility": "on" }
+            ]
+        },{
+            "featureType": "poi",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        }
+    ];
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+            disableDefaultUI: true,
+            fullscreenControl: true,
+            zoom: 15,
+            styles: myStyles
+        });
+
+        var bounds = new google.maps.LatLngBounds();
+
+
+
+        // let infowindow;
+        $.each(carInfo, function (carId, value) {
+            let i=1;
+            let j=1;
+            let sort=1;
+            let timeShow=0;
+            let deliveredTime=0;
+            $.each(jsonObj, function (key, data) {
+                let latLng = new google.maps.LatLng(data.lat, data.lng);
+                let marker = new google.maps.Marker({
+                    id:data.id,
+                    map: map,
+                    position: latLng,
+                    icon:{
+                        url:"/img/icons/icon-grocery-"+data.icon,
+                        scaledSize: new google.maps.Size(35, 35)
+                    }
+                });
+                if(carId==data.delivery_car){
+                    sort=i;
+                    i++;
+                }else{
+                    sort=j;
+                    j++
+                }
+
+                let infowindow = new google.maps.InfoWindow({
+                    content: '<div id="content"><b>'+data.name+'</b><br>Time: <i>'+data.delivered_date+'</i><br>'+sort+'</div>',
+                    headerDisabled:true
+                });
+
+                marker.addListener("mouseover", () => {
+                    infowindow.headerDisabled=true;
+                    infowindow.open(map, marker);
+                });
+
+                marker.addListener("mouseout", () => {
+                    infowindow.close(map, marker);
+                });
+
+                marker.addListener('click', function (event) {
+                    infowindow.headerDisabled=false;
+                    infowindow.open(map, marker);
+                });
+
+                marker.setVisible(false);
+
+                if(data.delivered_time>0 && deliveredTime==0){
+                    deliveredTime=data.delivered_time;
+                    marker.setVisible(true);
+                }
+                else if(data.delivered_time>0 && deliveredTime>0){
+                    timeShow=parseInt(data.delivered_time)-parseInt(deliveredTime);
+                    setTimeout(() => {
+                        marker.setVisible(true);
+                    }, timeShow);
+                }
+                bounds.extend(latLng);
+            });
+        });
+
+        var mapBound = 0;
+        if(jsonObj.length>0){
+            map.fitBounds(bounds);
+             mapBound = 1;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+                var center = new google.maps.LatLng(position.coords.latitude,
+                    position.coords.longitude);
+
+                if(mapBound == 0)
+                    map.setCenter(center);
+
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: center,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        strokeColor: 'white',
+                        strokeWeight: 2,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.6
+                    }
+                });
+                marker.setMap(map);
+                marker.setPosition(center);
+
+                var markerWaveCurrent = new google.maps.Marker({
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                        strokeColor: 'white',
+                        strokeWeight: 1,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.3
+                    },
+                });
+                markerWaveCurrent.setMap(map);
+                markerWaveCurrent.setPosition(center);
+
+                var count=0;
+                window.setInterval(function() {
+                    var icon = markerWaveCurrent.get('icon');
+                    if(icon.scale<30){
+                        icon.scale = icon.scale+1;
+                    }else{
+                        count = count+1;
+                        icon.scale = 8;
+                    }
+                    markerWaveCurrent.set('icon', icon);
+                }, 35);
+
+            }, function () {
+                // handleLocationError(true, infowindow, map.getCenter());
+                // stop_waitMe();
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            // handleLocationError(false, infowindow, map.getCenter());
+            // stop_waitMe();
+        }
+
+    }
+    function handleLocationError(){}
+</script>

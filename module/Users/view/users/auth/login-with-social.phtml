@@ -1,0 +1,42 @@
+<style>
+    .card {
+        margin: auto; /* Added */
+        float: none; /* Added */
+        margin-bottom: 10px; /* Added */
+        max-width: 500px;
+        margin-top: 100px;
+    }
+</style>
+
+<div class="user-reset-password">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-xs-12">
+                <h1 class="title"><?=$this->translate('GO AND DISCOVER IN YOUR WAY')?></h1>
+            </div>
+            <div class="col-md-5 col-xs-12">
+                <div class="card" style="margin-bottom: 40px">
+                    <div class="card-body">
+                        <form action="<?=$this->url('social-register')?>" id="frmRegister" method="post">
+                            <input type="hidden" name="social_id" value="<?=$this->user["id"]?>">
+                            <input type="hidden" name="image" value="<?=$this->user["image"]?>">
+                            <p><?=$this->translate('Confirm information')?></p>
+                            <p><input type="text" value="<?=$this->user["name"]?>" class="form-control" name="name" /></p>
+                            <p><input type="text" value="<?=$this->user["email"]?>" class="form-control" name="email" /></p>
+                            <p><input type="number" value="<?=$this->user["mobile"]?>" name="mobile" placeholder="<?=$this->translate('Your phone')?>" maxlength="11" min="0" step="1" data-bind="value:replyNumber" class="form-control"></p>
+                            <?php if($this->errorMessage) echo '<div class="alert alert-danger" role="alert">'.$this->errorMessage.'</div>';?>
+
+                            <p><button type="submit" id="register" class="btn btn-success"><?=$this->translate('Register')?></button></p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" type="text/css" href="/css/application/user.css"/>
+<script>
+    $(document).ready(function(){
+        $('body').addClass('user-reset-password-bag');
+    });
+</script>

@@ -1,0 +1,25 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <table class="table nowrap table-hover display tblCustomerInfo">
+            <tbody>
+            <tr>
+                <td nowrap="">Khách hàng</td>
+                <td><a href="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$order->getGrocery()->getId()])?>" class="highlight"><?=$order->getGrocery()->getGroceryName()?></a></td>
+            </tr>
+            <tr>
+                <td>Địa chỉ</td>
+                <td><?=$order->getGrocery()->getAddress()?></td>
+            </tr>
+            <tr>
+                <td>Điện thoại</td>
+                <td><?=$order->getGrocery()->getMobile()?></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<style>
+    .tblCustomerInfo tr:first-child td{border-top: 0px}
+    .tblCustomerInfo td:first-child{font-weight: bold}
+    .tblCustomerInfo{margin-bottom: 0px}
+</style>

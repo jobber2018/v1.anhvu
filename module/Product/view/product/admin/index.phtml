@@ -1,0 +1,215 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách sản phẩm";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách sản phẩm</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('product-admin',['action'=>'add'])?>" class="btn btn-info pull-left"><span class="fa fa-plus"></span>Thêm mới sản phẩm</a>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover" id="tblProduct">
+                        <thead>
+                        <tr>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5"></th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">No.</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Image</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Mã sản phẩm</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Mã thùng</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Tên sản phẩm</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giá bán</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giảm giá</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giá sau giảm</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5;">Tồn kho</th>
+                        </tr>
+                        <tr>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .warning-red{color: red}
+    .warning-yeallow{color: #ff9100
+    }
+</style>
+<script type="text/javascript" src="/js/jquery.scannerdetection.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<script>
+    let tblProduct,stt=1;
+    $(document).ready(function () {
+        tblProduct =$('#tblProduct').DataTable({
+            info:false,
+            paging: true,
+            pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
+            ordering: true,
+            processing: true,
+            serverSide: true,
+            stateSave: true,
+            autoWidth: false,
+            order: [[0, 'desc']],
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, mã sản phẩm."
+            },
+            search: {
+                return: true
+            },
+            columnDefs: [
+                { name:'id', targets: 0, visible: false},
+                { name: 'no', targets: 1,orderable:false, width: '5%',className: 'dt-body-center'
+                },{ name: 'image',
+                    targets: 2,
+                    orderable: false,
+                    width: '5%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let imageSrc=rowData[0].image;
+                        if(!imageSrc) imageSrc='/img/icons/no-image-icon.png';
+                        $(td).html('<img src="'+imageSrc+'" width="40px">');
+                    }
+                },{ name: 'code',
+                    targets: 3,
+                    orderable:false,
+                    width: '5%',
+                },{ name: 'pack_code',
+                    targets: 4,
+                    orderable:false,
+                    width: '5%',
+                },{ name: 'name',
+                    targets: 5,
+                    className:'title',
+                    width: '100%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let url='<?=$this->url('product-admin',['action'=>'detail'])?>';
+                        url+='/'+rowData[0].id;
+                        let name='<a href="'+url+'">'+cellData+' | '+rowData[0].weight+'</a>';
+                        name+='<small class="help-block font-small text-info">QC:'+rowData[0].pack_unit+' | Đơn vị: '+rowData[0].unit_name+'</small>';
+                        $(td).html(name);
+                    }
+                },{
+                    orderable:false,
+                    targets: [6,7,8,9,10,11,12],
+                    className:'dt-body-right',
+                    width: '5%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(formatPrice(cellData));
+                    }
+                }
+
+            ],
+            ajax: {
+                url: '<?=$this->url('product-admin')?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=1;
+                    $.each( json.data, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(stt++);
+                        dataItem.push(value.image);
+                        dataItem.push(value.product_code);
+                        dataItem.push(value.pack_code);
+                        dataItem.push(value.name);
+                        dataItem.push(value.product_price);
+                        dataItem.push(value.pack_price);
+                        dataItem.push(value.product_price_sale);
+                        dataItem.push(value.pack_price_sale);
+                        dataItem.push(value.product_price_after_sale);
+                        dataItem.push(value.pack_price_after_sale);
+                        dataItem.push(value.inventory);
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblProduct.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+
+
+    });
+
+    $(document).scannerDetection({
+        timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+        startChar: [120], // Prefix character for the cabled scanner (OPL6845R)
+        endChar: [13], // be sure the scan is complete if key 13 (enter) is detected
+        avgTimeByChar: 40, // it's not a barcode if a character takes longer than 40ms
+        onComplete: function(barcode, qty){
+            // console.log('scannerDetection:'+barcode +'/'+qty);
+            // $('.prompt').val('');
+            // $('.prompt').focus();
+            tblProduct.search(barcode).draw();
+        } // main callback function
+    });
+
+    function format3(n, currency) {
+        return new Intl.NumberFormat('ru', {
+            style: 'currency',
+            currency: currency
+        }).format(n);
+    }
+    function format2(n) {
+        console.log(n);
+        return n.toString().replace(/(\d)(?=(\d{3})+\.)/g, '$1.');
+    }
+</script>

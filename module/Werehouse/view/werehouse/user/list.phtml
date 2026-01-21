@@ -1,0 +1,37 @@
+<?php
+$this->headTitle($this->escapeHtml($this->groceryCat->getName()))->setSeparator(' - ')->setAutoEscape(false)
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Title</li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Tuyến <?=$this->groceryCat->getName()." <i>(".$this->groceryCat->getGroceryActiveCount()?> cửa hàng)</i></h3>
+    <button class="btn btn-info active" onclick="location.href='#';"><i class="fa fa-plus"></i>Thêm mới</button>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                content here
+            </div>
+        </div>
+    </div>
+</div>

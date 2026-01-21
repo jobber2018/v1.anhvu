@@ -1,0 +1,19 @@
+<div class="container">
+    <p><b><i><?=$this->translate('Accommodation facilities')?></i></b></p>
+    <div class="row amenities">
+        <?php
+            $i=1;
+            foreach ($amenities as $item){
+                if($i%2 ==0) $paddingLeft0='padding-left-0';
+                ?>
+        <div class="col-md-6 col-6 <?=$paddingLeft0?>">
+            <svg style="fill:#4c4b4b" viewBox="0 0 24 24" class="icon-lg"><use xlink:href="#<?=$item->getIcon()?>"></use></svg>
+            <span><?=$item->getName()?></span>
+        </div>
+        <?php
+                $i++;
+                $paddingLeft0='';
+            }
+            ?>
+    </div>
+</div>

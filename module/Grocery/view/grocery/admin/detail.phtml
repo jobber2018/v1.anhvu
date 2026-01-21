@@ -1,0 +1,345 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$title = $this->groceryDetail->getGroceryName();
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-admin',['action'=>'list','id'=>$this->groceryDetail->getGroceryCat()->getId()])?>">Danh sách khách hàng</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> Cửa hàng: <?=$this->groceryDetail->getGroceryName()?></h2>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Thông tin</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="grocery-info">
+                        <div>
+                            <label>Tên cửa hàng: </label> <a href="<?=$this->url('grocery-admin',['action'=>'edit','id'=>$this->groceryDetail->getId()])?>"><?=$this->groceryDetail->getGroceryName()?></a>
+                            <small class="label label-info"><?=($this->groceryDetail->getActive()==1?'Active':'No Active')?></small>
+                        </div>
+                        <div><label>Chủ cửa hàng: </label> <?=$this->groceryDetail->getOwnerName()?> </div>
+                        <div><label>Điện thoại: </label> <?=$this->groceryDetail->getMobile()?></div>
+                        <div><label>Địa chỉ: </label> <a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=<?=$this->groceryDetail->getLat().','.$this->groceryDetail->getLng()?>"><?=$this->groceryDetail->getAddress()?></a></div>
+                        <div>
+                            <label>Tuyến: </label>
+                            <a href="<?=$this->url('grocery-admin',['action'=>'cat-detail','id'=>$this->groceryDetail->getGroceryCat()->getId()])?>"><?=$this->groceryDetail->getGroceryCat()->getName()?></a>
+                            <span class="fa fa-random"></span> <a href="#" id="aChangeTuyen">Thay đổi tuyến</a>
+                        </div>
+                        <div><label>Nhân viên: </label> <?=$this->groceryDetail->getGroceryCat()->getUser()->getFullname()?></div>
+                        <div><label>Ghi chú giao hàng: </label> <?=$this->groceryDetail->getDeliveryNote()?></div>
+                    </div>
+
+                    <?php
+                    $zaloApp=$this->groceryDetail->getZaloAppItem();
+                    $zaloName='';
+                    $zaloPhone='';
+                    $avatar='/img/zalo/logo.svg';
+                    $zaloAccess='';
+                    $appInstall='';
+                    if($zaloApp){
+                        $zaloName=$zaloApp->getName();
+                        $avatar=$zaloApp->getAvatar();
+                        $zaloPhone=$zaloApp->getPhone();
+                        $appInstall=Common::formatDateTime($zaloApp->getCreatedDate());
+                        $zaloAccess=Common::formatDateTime($zaloApp->getAccessDate());
+                    }
+                    ?>
+                    <div class="widget widget-primary widget-item-icon">
+                        <div class="widget-item-left">
+                            <img src="<?=$avatar?>" style="width: 100%">
+                        </div>
+                        <div class="widget-data">
+                            <div class="widget-subtitle"><label>Connect: </label> <?=($this->groceryDetail->getZaloConnect()==1?'Đã kết nối':'Chưa kết nối')?></div>
+                            <div class="widget-subtitle"><label>Chăm sóc: </label> <?=$this->groceryDetail->getStringIsApproach()?></div>
+                            <div class="widget-subtitle"><label>Name: </label> <?=$zaloName?></div>
+                            <div class="widget-subtitle"><label>Phone: </label> <?=$zaloPhone?></div>
+                            <div class="widget-subtitle"><label>Install App: </label> <?=$appInstall?></div>
+                            <div class="widget-subtitle"><label>Open App: </label> <?=$zaloAccess?></div>
+                        </div>
+                    </div>
+                    <div id="checkIn" href="#">
+                        <lable class="btn btn-info">
+                            <span class="fa fa-map-marker" style="font-size: 15px"></span>Check in
+                        </lable>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">CRM</h3>
+                    <ul class="panel-controls">
+                        <li><a href="<?=$this->url('grocery-admin',['action'=>'crm','id'=>$this->groceryDetail->getId()])?>" class=""><span class="fa fa-plus"></span></a></li>
+                    </ul>
+                </div>
+                <div class="panel-body grocery-info">
+                    <table class="table nowrap table-hover display datatable_simple" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th style="height: 0px; padding: 0px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            foreach ($this->groceryDetail->getGroceryCrm() as $orderCrmItem){
+                                echo '<tr>';
+                                echo '<td>';
+                                echo '<p style="margin-bottom: 0px"><label>'.$orderCrmItem->getUser()->getFullname().'</label><span class="pull-right">'.Common::formatDateTime($orderCrmItem->getCreatedDate()).'</span></p>';
+                                echo '<i>'.$orderCrmItem->getNote().'</i>';
+                                echo '</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm đã nhập</h3>
+                </div>
+                <div class="panel-body grocery-order">
+                    <div id="morris-donut-example" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Đơn hàng</h3>
+                    <ul class="panel-controls">
+                        <li><a href="<?=$this->url('sell-admin',['action'=>'add','id'=>$this->groceryDetail->getId()])?>" class=""><span class="fa fa-plus"></span></a></li>
+                    </ul>
+                </div>
+                <div class="panel-body grocery-order">
+                    <div id="morris-bar-grocery" style="max-height: 300px; max-width: 100%"></div>
+                    <table class="table nowrap table-hover display datatable_simple" style="width:100%" id="tblOrder">
+                        <thead>
+                            <tr>
+                                <th>Ngày tạo</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $arrRevenueOfMonth =array();
+                            $arrProCat =array();
+                            foreach ($this->groceryDetail->getSellOrder() as $orderItem){
+                                $totalOrderPrice=$orderItem->getTotalPrice();
+                                if($orderItem->getStatus()==3){
+                                    //thong ke san pham ban chay theo cat
+                                    $sells = $orderItem->getSell();
+                                    foreach ($sells as $sell){
+                                        $price = $sell->getPrice()->getPrice();
+                                        $quantity = $sell->getQuantity();
+                                        $product= $sell->getProduct();
+                                        $productCat = $product->getProductCat();
+                                        $proUnit = $product->getUnit()->getName();
+                                        $proCatId=$productCat->getId();
+                                        $arrProCat[$proCatId]["name"]=$productCat->getName();
+                                        $arrProCat[$proCatId]["price"]=@$arrProCat[$proCatId]["price"]+$price*$quantity;
+                                        $arrProCat[$proCatId]["quantity"]=@$arrProCat[$proCatId]["quantity"]+$quantity;
+                                        $arrProCat[$proCatId]["unit"]=$proUnit;
+                                    }
+
+
+                                    $month = $orderItem->getCreatedDate()->format('Y.m');
+                                    $arrRevenueOfMonth[$month]=@$arrRevenueOfMonth[$month]+$totalOrderPrice;
+                                }
+
+                                if($orderItem->getMethod()>0)
+                                    $method='<span class="fa fa-phone-square"></span> Admin';
+                                else if($orderItem->getMethod()==-1)
+                                    $method='<span class="glyphicon glyphicon-user"></span> Customer';
+                                else
+                                    $method=$orderItem->getUser()->getFullname();
+
+                                echo '<tr>';
+                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.$orderItem->getCreatedDate()->format('d/M').'|'.$method.'</a></td>';
+                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.Common::formatMoney($totalOrderPrice) .' đ</a></td>';
+                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.ConfigManager::getOrderStatus()[$orderItem->getStatus()] .'</a></td>';
+                                echo '</tr>';
+                            }
+//                            print_r($arrRevenueOfMonth);
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Checkin/Checkout</h3>
+                </div>
+                <div class="panel-body grocery-order">
+                    <table class="table nowrap table-hover display datatable_simple" style="width:100%" id="tblInOut">
+                        <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Ngày check</th>
+                            <th>Người check</th>
+                            <th>Lat/Lng</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->groceryDetail->getGroceryInOut() as $inOutItem){
+                            $latlng=$inOutItem->getLatLng();
+                            echo '<tr>';
+                            echo '<td>'.$inOutItem->getType() .'</td>';
+                            echo '<td>'.Common::formatDateTime($inOutItem->getCreatedDate()).'</td>';
+                            echo '<td>'.$inOutItem->getUser()->getFullname().'</td>';
+                            echo '<td style="text-align: center">'.($latlng?'<a target="_blank" href="https://www.google.com/maps/dir/?api=1&destination='.$inOutItem->getLat().','.$inOutItem->getLng().'"><i class="fa fa-map-marker"></i></a>':'-/-').'</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade bottom" id="modal" tabindex="-1" role="dialog" aria-labelledby="modal" aria-hidden="true">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content">
+            <form method="post" action="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$this->groceryDetail->getId()])?>">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="defModalHead">Chọn tuyến cần thay đổi</h4>
+            </div>
+            <div class="row" style="padding: 10px">
+                <div class="form-group">
+                    <?php
+                    foreach ($this->groceryCat as $catItem){
+                        if($catItem->getId()!=$this->groceryDetail->getGroceryCat()->getId()){
+                            echo '<div class="col-md-6">';
+                            echo '<label class="check"><input type="radio" value="'.$catItem->getId().'" class="iradio" name="route"/> ['.$catItem->getUser()->getFullname().']: '.$catItem->getName().'</label>';
+                            echo '</div>';
+                        }
+                    }
+                    ?>
+                </div>
+                <div class="col-md-12" style="padding: 10px">
+                    <button id="btnSubmit" class="btn btn-success">OK</button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+.grocery-info div{padding-bottom: 5px; padding-top: 5px; border-bottom: 1px solid #E5E5E5}
+.grocery-info div:last-child{border-bottom: 0px}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        <?php
+        if(count($arrRevenueOfMonth)>0){
+        ?>
+        Morris.Bar({
+            element: 'morris-bar-grocery',
+            data: [<?php
+                foreach ($arrRevenueOfMonth as $k=>$value){
+                    echo "{ y: ".$k.", revenue: ". $value ."},";
+                }
+                ?>],
+            xkey: 'y',
+            ykeys: ['revenue'],
+            labels: ['Doanh thu'],
+            barColors: ['#0f85d9', '#781ee8'],
+            hoverCallback: function (index, options, content, row) {
+                var hover = "<div class='morris-hover-row-label'>Tháng: "+row.y+"</div><div class='morris-hover-point'><p style='color:#0f85d9; padding-bottom: 5px; margin-bottom:0px; padding-top: 10px'>Doanh thu: "+formatCurrency(row.revenue.toString())+"đ</p></div>";
+                return hover;
+            },
+        });
+        <?php }?>
+        $( "#checkIn" ).click(function() {
+            run_waitMe();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position){
+                        stop_waitMe();
+                        location.href="<?=$this->url('grocery-user',['action'=>'check-in','id'=>$this->groceryDetail->getId()])?>?lat="+position.coords.latitude+"&lng="+position.coords.longitude;
+                    },
+                    function(error) {
+                        alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                        stop_waitMe();
+                    }
+                );
+            }
+        });
+
+
+        <?php
+        if(count($arrProCat)>0){
+        ?>
+        Morris.Donut({
+            element: 'morris-donut-example',
+            data: [<?php
+                foreach ($arrProCat as $value){
+                    echo '{"label" : "'.$value["name"].'","value" : '.$value["price"].'},';
+                }
+                ?>],
+            colors: ["#33414E","#8DCA35","#00BFDD","#FF702A","#DA3610",
+                "#80CDC2","#A6D969","#D9EF8B","#FFFF99","#F7EC37","#F46D43",
+                "#E08215","#D73026","#A12235","#8C510A","#14514B","#4D9220",
+                "#542688", "#4575B4", "#74ACD1", "#B8E1DE", "#FEE0B6","#FDB863",
+                "#C51B7D","#DE77AE","#EDD3F2"]
+        });
+        <?php }?>
+
+        $('#aChangeTuyen').click(function(){
+            $('#modal').modal('show');
+        })
+
+
+    });
+</script>

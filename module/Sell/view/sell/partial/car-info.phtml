@@ -1,0 +1,54 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <table style="width: 100%">
+            <tr>
+                <td>
+                    <select class="form-control" name="cboCar" id="cboCar">
+                        <option value="0">...</option>
+                        <option value="30M71302" <?=$order->getDeliveryCar()=='30M71302'?'selected':''?>>30M-71302</option>
+                        <option value="30M61300" <?=$order->getDeliveryCar()=='30M61300'?'selected':''?>>30M-61300</option>
+                        <option value="29H23118" <?=$order->getDeliveryCar()=='29H23118'?'selected':''?>>29H-23118</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-control" name="cboTime" id="cboTime">
+                        <option value="0">...</option>
+                        <option value="AM" <?=$order->getDeliveryCarTime()=='AM'?'selected':''?>>Sáng</option>
+                        <option value="PM" <?=$order->getDeliveryCarTime()=='PM'?'selected':''?>>Chiều</option>
+                        <option value="ALL" <?=$order->getDeliveryCarTime()=='ALL'?'selected':''?>>Cả ngày</option>
+                    </select>
+                </td>
+                <td>
+                    <button id="btnUpdateCarToOrder" class="btn btn-info"><span class="fa fa-save"></span>Cập nhật</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#btnUpdateCarToOrder').click(function() {
+            let car = $("#cboCar").val();
+            let time = $("#cboTime").val();
+
+            let option=(car==0?0:1);
+            run_waitMe();
+            let url='<?=$this->url('sell-admin',['action'=>'delivery-car'])?>';
+            $.ajax({
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                },
+                method: "POST",
+                data: {orderId:<?=$order->getId()?>,option:option,car:car,time:time},
+                url: url
+            }).done(function(response) {
+                if(response.status==1){
+                    noty({text: 'Đã cập nhật xe giao đơn!', layout: 'topRight', type: 'success',timeout: 4000});
+                }else{
+                    noty({text: 'Lỗi cập nhật xe giao đơn!', layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe();
+            });
+        });
+    })
+</script>

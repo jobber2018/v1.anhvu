@@ -1,0 +1,189 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <?php
+    $orderStatus = $this->sellOrder->getStatus();
+    $url=$this->url('sell-admin');
+    if($orderStatus==1)
+        $url=$this->url('sell-admin');
+    else if($orderStatus==11)
+        $url=$this->url('sell-admin',['action'=>'packing']);
+    else if($orderStatus==111)
+        $url=$this->url('sell-admin',['action'=>'packed']);
+    else if($orderStatus==2)
+        $url=$this->url('sell-admin',['action'=>'delivering']);
+    else if($orderStatus==21)
+        $url=$this->url('sell-admin',['action'=>'delivered']);
+    else if($orderStatus==3)
+        $url=$this->url('sell-admin',['action'=>'paid-order']);
+    else if($orderStatus==31)
+        $url=$this->url('sell-admin',['action'=>'wait-for-pay']);
+    else if($orderStatus==-1)
+        $url=$this->url('sell-admin',['action'=>'draft']);
+    ?>
+    <li><a href="<?=$url?>">Danh sách đơn hàng</a></li>
+    <li class="active">Đổi trả đơn hàng</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Trả hàng | <?=$this->sellOrder->getGrocery()->getGroceryName()?> (<?=$this->sellOrder->getOrderCode()?>)</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="panel panel-warning">
+        <div class="panel-body">
+            <ul id="productList" class="list-group">
+                <?php
+                $orderProduct=[];
+                foreach ($this->sellOrder->getSell() as $sell){
+
+                    $priceValue = $sell->getPriceValue();
+                    $qty=$sell->getQuantity();
+                    $packUnit=$sell->getPackUnit();
+                    //mua theo thung
+                    if($sell->isPack()){
+                        $qtySale=$sell->isPack();
+                        $unitSale='Thùng';
+                        $price=$packUnit*$priceValue;//gia ban theo thung
+                    }else{
+                        $qtySale=$qty;
+                        $unitSale=$sell->getProduct()->getUnit()->getName();
+                        $price=$priceValue;//gia ban le
+                    }
+                    $totalPrice = $price*$qtySale;
+
+                    $arrTmp["id"]=$sell->getId();
+                    $arrTmp["quantity"]=$qtySale;
+                    $arrTmp["price"]=$price;
+                    $arrTmp["return"]=0;
+                    $orderProduct[]=$arrTmp;
+
+                    $return='';
+                    $returnNumber = $sell->getReturn();
+                    if($returnNumber >0){
+                        if($returnNumber%$packUnit==0)
+                            $return = 'Đã trả lại: '.$returnNumber/$packUnit . ' thùng';
+                        else
+                            $return = 'Đã trả lại : '.$returnNumber.' '.$sell->getProduct()->getUnit()->getName();
+                    }
+                    ?>
+
+                    <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1 title"><?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></h5>
+                        </div>
+                        <table style="width: 100%">
+                            <tbody>
+                            <tr>
+                                <td style="padding-right: 5px; width: 40px">
+                                    <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                </td>
+                                <td>
+                                    <table style=" width: 100%;" >
+                                        <tbody>
+                                        <tr>
+                                            <td class="row_col" nowrap="">Giá bán</td>
+                                            <td class="row_col" nowrap="">Số lượng</td>
+                                            <td class="row_col">Trả lại</td>
+                                            <td class="row_col">Thành tiền</td>
+                                        </tr>
+                                        <tr>
+                                            <td nowrap=""><?=Common::formatMoney($price)?></td>
+                                            <td style="color: #2691ec; font-weight: bold;"><?=$qtySale.' '.$unitSale?> <small style="color: red"><?=$return?></small></td>
+                                            <td><input onchange="returnOnchange(<?=$sell->getId()?>)" id="txtReturn<?=$sell->getId()?>" style="width: 80px" min="0" max="<?=$qtySale?>" type="number" class="form-control" value="0"></td>
+                                            <td id="money<?=$sell->getId()?>"><?=Common::formatMoney($totalPrice)?></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <small id="msg<?=$sell->getId()?>" class="warning-color"></small>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </li>
+                    <?php
+                }
+                ?>
+            </ul>
+        </div>
+        <div class="panel-footer">
+            <button id="btnSubmit" class="btn btn-success pull-right">Cập nhật</button>
+        </div>
+    </div>
+</div>
+<style>
+    .row_col{min-width: 50px; max-width: 100px}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+</style>
+<script>
+    var myPro=jQuery.parseJSON('<?=json_encode($orderProduct)?>');
+    // console.log(myPro);
+    function returnOnchange(id){
+        var obj=$('#txtReturn'+id);
+        var valueReturn=obj.val();
+        if(!valueReturn) valueReturn=0;
+        //var dataReturn=jQuery.parseJSON(obj.attr('data'));
+
+        $.each( myPro, function( key, data ) {
+            if(data.id==id){
+                if(valueReturn>data.quantity){
+                    $('#msg'+id).html('Tối đa có thể trả '+data.quantity);
+                    obj.val(data.quantity);
+                    valueReturn=data.quantity;
+                }else{
+                    $('#msg'+id).html('');
+                }
+
+                $.extend(data,{
+                    return:parseInt(valueReturn)
+                });
+
+                var money=(data.quantity-valueReturn)*data.price;
+                $('#money'+id).html(formatCurrency(money.toString())+' đ');
+            }
+        });
+        showInforOrder();
+    }
+
+    function showInforOrder(){
+        var totalPrice=0;
+
+        $.each( myPro, function( key, data ) {
+            var price=data.price;
+            var quantity=data.quantity-data.return;
+
+            totalPrice+=price*quantity;
+
+        });
+        // $('#totalOrder').html('Tổng đơn: '+formatCurrency(totalPrice.toString()));
+        // console.log(myProSelect);
+    }
+
+    $('#btnSubmit').click(function(){
+        run_waitMe();
+        var url = "<?=$this->url('sell-admin',['action'=>'return','id'=>$this->sellOrder->getId()])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {pro:myPro}
+        }).done(function (data) {
+            if(data.status){
+                stop_waitMe();
+                window.location.href = '<?=$url?>';
+            }
+            else{
+                alert(data.msg);
+                stop_waitMe();
+            }
+        })
+    })
+</script>

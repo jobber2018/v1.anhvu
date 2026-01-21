@@ -1,0 +1,232 @@
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=<?=$this->geoKey?>&client=gme-addictive&channel=geocoder-tool&libraries=places"></script>
+<script src="/map/mustache-bundle.js"></script>
+<script src="/map/constants.js"></script>
+<script src="/map/state.js"></script>
+<script src="/map/util.js"></script>
+
+<?=$this->partial('map/script/map');?>
+<div id="geomap"></div>
+<div id="location" style="display: none"><img src="/img/icons/gps.png" alt="location" width="24px"></div>
+<!-- Modal -->
+<div class="modal fade bottom" id="modalHotelInfo" tabindex="-1" role="dialog" aria-labelledby="modalHotelInfo" aria-hidden="true">
+    <input id="local" value="" type="hidden">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content"></div>
+    </div>
+</div>
+<script type="text/html" id="quick-view-window-info-template">
+    <div class="card">
+        <div class="row no-gutters">
+            <div class="col-auto">
+                <img src="{{img}}" style="max-height: 100px; max-width: 130px" class="img-fluid" alt="{{name}}">
+            </div>
+            <div class="col">
+                <div class="card-block px-2">
+                    <h5 class="card-title">{{name}}</h5>
+                    <p class="card-text">
+                        <svg viewBox="0 0 24 24" class="icon text-muted"><use xlink:href="#place24"></use></svg>
+                        <span class="text-muted">{{address}}</span><br>
+                        <svg viewBox="0 0 24 24" class="icon"><use xlink:href="#save-money"></use></svg> {{price}}/ <?=$this->translate('Night')?>
+                        <span class="badge badge-pill badge-success">{{promotion}}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<div id="notification-panel">
+    <div class="card" id="notification-control-ui">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h3>Tìm kiếm, đặt thuê homestay</h3>
+                </div>
+                <div class="clearfix">
+                    <i id="icon-show-down" style="cursor: pointer" onclick="$('#notification-panel').css('display','none')" class="fa fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="row" content="body">
+
+                <div class="col-md-2 icon margin-top-15">
+                    <i style="font-size:56px" class="fa fa-concierge-bell"></i>
+                </div>
+                <div class="col-md-10 margin-top-15">
+                    <h5>Hỗ trợ khách hàng 24/7</h5>
+                    <div class="text">Ngày cũng như đêm, VN homestay luôn sẵn sàng hỗ trợ, đừng ngần ngại, hãy liên hệ với chúng tôi khi bạn cần.</div>
+                </div>
+
+
+                <div class="col-md-2 icon margin-top-15">
+                    <i style="font-size:56px" class="fa fa-star"></i>
+
+                </div>
+                <div class="col-md-10 margin-top-15">
+                    <h5>Tiêu chuẩn dịch vụ lưu trú toàn cầu</h5>
+                    <div class="text">Khách hàng đánh giá chủ nhà và chỗ ở sau mỗi lần lưu trú. Mọi chủ nhà đều phải duy trì mức xếp hạng tối thiều và tiêu chuẩn dịch vụ lưu trú của chúng tôi để được tham gia hệ thống.</div>
+                </div>
+
+                <div class="col-md-2 icon margin-top-15">
+                    <i style="font-size:56px" class="fa fa-laugh-beam"></i>
+                </div>
+                <div class="col-md-10 margin-top-15">
+                    <h5>Chủ nhà 5 sao</h5>
+                    <div class="text">
+                        Từ những tấm ga trải giường mới ủi đến những gợi ý về nơi dùng bữa ngon nhất, các chủ nhà của chúng tôi sẽ khiến bạn cảm thấy luôn được chào đón.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card" id="notification-sologan">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-7 text">Kiếm lời <b>$750/Tháng</b> từ việc đón tiếp khách hàng tại chỗ ở của bạn.</div>
+                <div class="col-md-5 text become"><a style="color: #e27100" href="<?=$this->url('user-login')?>"><b>Trở thành chủ nhà</b> <i style="padding-left: 20px" class="fa fa-chevron-right"></i></a></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<link rel="stylesheet" type="text/css" href="/vendor/slick-1.8.1/slick/slick.css"/>
+<link rel="stylesheet" type="text/css" href="/vendor/slick-1.8.1/slick/slick-theme.css"/>
+<style>/*slick slide*/
+    .slick-next{right: 10px}
+
+    .slick-prev{
+        left: 10px;
+        z-index: 10;}
+
+    #notification-panel{
+        margin-top:20px;
+        margin-left: 20px;
+        max-width: 470px;
+    }
+    #notification-panel .card-body{
+        padding: 1rem;
+    }
+
+    #notification-panel h5{
+        font-size: 1.1rem;
+        color: #ffffff;
+    }
+
+    #notification-panel h3{
+        font-size: 1.5rem;
+        color: #ffffff;
+    }
+
+    #notification-control-ui{
+        border: 1px solid rgba(0,0,0,.125);
+        border-radius:.25rem;
+        -webkit-box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        -moz-box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        background: #212529;
+        opacity: 0.8;
+    }
+    #notification-control-ui .icon{ text-align: center}
+    #notification-control-ui, #notification-sologan .text{
+        font-size: 14px;
+        color: #ccc;
+        line-height: 1.6;
+    }
+
+    #notification-sologan .become{
+        text-align:center;
+        line-height:40px;
+        border-left:1px solid #ccc;
+    }
+    #notification-sologan{
+        margin-top: 10px;
+        -webkit-box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        -moz-box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.24);
+        background: #212529;
+        opacity: 0.8;
+    }
+
+    .accommodation-marker {
+        background-color: #ffffff;
+        border-radius: 5px;
+        cursor: pointer !important;
+        min-width: 80px;
+        margin-left: -40px; /* margin-left = -width/2 */
+        /*margin-top: -50px; !* margin-top = -height + arrow *!*/
+        bottom: 7px;
+        padding: 0px;
+        position: absolute;
+    }
+
+    /* Arrow on bottom of container */
+    /*.accommodation-marker:after {
+        border-color: #6c757d transparent;
+        border-style: solid;
+        border-width: 7px 7px 0;
+        margin-top: 0px;
+        content: '';
+        display: block;
+        left: 45%;
+        position: absolute;
+        width: 0;
+    }*/
+
+
+
+
+    .accommodation-marker div.accommodation-marker-content {
+        background-color: #697379;
+        background-position: center center;
+        background-size: cover;
+        border-radius: 5px;
+        white-space:nowrap;
+        padding:5px 10px;
+        color: white;
+        margin: 1px;
+        text-align:center;
+        font-weight: 500;
+    }
+    .accommodation-marker div.accommodation-marker-content:hover{
+        background-color: #159add;
+    }
+    .accommodation-marker:hover .accommodation-marker-arrow:after{
+        border-color: #159add transparent;
+    }
+
+    .accommodation-marker-arrow{
+        position: relative;
+        /*top: 12px;*/
+        border-radius: 100%;
+        /*height: 6px;*/
+        width: 12px;
+        margin: 0px auto 0;
+        background-color: rgba(0,0,0,.25);
+    }
+    .accommodation-marker-arrow:after {
+        border-color: #6c757d transparent;
+        border-style: solid;
+        border-width: 7px 7px 0;
+        margin-top: 0px;
+        content: '';
+        display: block;
+        /*left: 50%;*/
+        position: absolute;
+        width: 0;
+    }
+    @media (max-width:420px){
+        #notification-panel{
+            display: none;
+        }
+    }
+</style>
+<script type="text/javascript" src="/vendor/jquery/jquery-migrate-1.2.1.min.js"></script>
+<script type="text/javascript" src="/vendor/slick-1.8.1/slick/slick.min.js"></script>
+
+<!--datetimepicker-->
+<link rel="stylesheet" href="/vendor/datetimepicker/css/bootstrap-datetimepicker.min.css">
+<script src="/js/moment.min.js" type="text/javascript"></script>
+<script src="/vendor/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+
+<!--upload file-->
+<script src="/vendor/jquery/jquery.form.min.js"></script>

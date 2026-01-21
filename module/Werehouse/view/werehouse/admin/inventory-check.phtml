@@ -1,0 +1,370 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$this->headTitle("Kiểm kho");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Kiểm kho</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Kiểm kho</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title"></h3>
+                    <ul class="panel-controls">
+                        <button onclick="showModalSelectProduct()" class="btn btn-info"><span class="fa fa-plus"></span>Thêm sản phẩm</button>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblWerehouse">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th></th>
+                            <th>Mã sản phẩm</th>
+                            <th>Mã thùng</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Tồn kho</th>
+                            <th>Tồn thực tế</th>
+                            <th>Chênh lệch</th>
+                            <th>Ngày kiểm</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        foreach ($this->werehouseSheet->getWerehouseCheck() as $werehouseCheckItem){
+                            $actualInventory = $werehouseCheckItem->getActualInventory();
+                            $bookInventory = $werehouseCheckItem->getBookInventory();
+                            $difference = $actualInventory-$bookInventory;
+                            if($difference!=0) $cls='warning-color';
+                            else $cls='success-color'
+                            ?>
+                            <tr id="tr_<?=$werehouseCheckItem->getId()?>">
+                                <td><?=$i++?></td>
+                                <td>
+                                <?php
+                                if(is_null($werehouseCheckItem->getProduct()->getImg()))
+                                    echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                else
+                                    echo '<img src="'.$werehouseCheckItem->getProduct()->getImg().'" style ="max-width:40px; max-height:30px">';
+                                ?>
+                                </td>
+                                <td><?=$werehouseCheckItem->getProduct()->getCode()?></td>
+                                <td><?=$werehouseCheckItem->getProduct()->getPackCode()?></td>
+                                <td><a href="<?=$this->url('product-admin',['action'=>'price','id'=>$werehouseCheckItem->getProduct()->getId()])?>">
+                                    <?=$werehouseCheckItem->getProduct()->getName().' | '.$werehouseCheckItem->getProduct()->getWeight()?>
+                                    </a>
+                                </td>
+                                <td><?=$bookInventory?></td>
+                                <td><?=$actualInventory ?></td>
+                                <td class="<?=$cls?>"><?=$difference?></td>
+                                <td><?=Common::formatDateTime($werehouseCheckItem->getCreatedDate())?></td>
+                                <td>
+                                    <?php
+                                    if($werehouseCheckItem->getIsUpdate()==0){
+                                    ?>
+                                        <button onclick="removeCheck(<?=$werehouseCheckItem->getId()?>)" data-toggle="tooltip" data-placement="bottom" title="Xoá sản phẩm" type="button" class="btn btn-danger btn-rounded">
+                                            <span class="fa fa-trash-o"></span>
+                                        </button>
+
+                                        <button onclick="updateCheck(<?=$werehouseCheckItem->getId()?>)" data-toggle="tooltip" data-placement="bottom" title="Cập nhật" type="button" class="btn btn-success btn-rounded">
+                                            <span class="fa fa-exchange"></span>
+                                        </button>
+
+                                    <?php } ?>
+                                    <button onclick="showModalUpdateBarcode(<?=$werehouseCheckItem->getProduct()->getId()?>)" data-toggle="tooltip" data-placement="bottom" title="Barcode" type="button" class="btn btn-info btn-rounded">
+                                        <span class="fa fa-edit"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <button id="btnUpdateAllCheck" class="btn btn-danger pull-right">Cập nhật</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?=$this->partial('product/partial/update-barcode');?>
+
+<div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Chọn sản phẩm cần kiểm kho</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                        <?php
+                        foreach ($this->productList as $product){
+                            $arrTmp["id"]=$product->getId();
+                            $arrTmp["name"]=$product->getName();
+//                            $arrTmp["cat_id"]=$product->getProductCat()->getId();
+//                            $arrTmp["note"]=($product->getNoteOrder()?$product->getNoteOrder():'');
+                            $arrTmp["unit_name"]=$product->getUnit()->getName();
+                            $arrTmp["box_unit"]=$product->getBoxUnit();
+                            $arrTmp["inventory"]=$product->getInventory();
+                            $arrTmp["weight"]=$product->getWeight();
+//                            $arrTmp["price"]=$product->getActivePrice()->getPrice();
+                            if(is_null($product->getImg()))
+                                $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                            else
+                                $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                            $json = json_encode($arrTmp);
+
+                            if($product->getInventory()==0)
+                                $class='class="special"';
+                            else
+                                $class='';
+                            echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getCode().' | '.$product->getName(). " - ".$product->getWeight().'</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div id="productInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" id="btnAddProductToSheet" class="btn btn-success">Thêm sản phẩm</button>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<style>
+    .special {
+        color: #fff !important;
+        background: #bc0000 !important;
+    }
+    .warning-color{color: red}
+    .success-color{color: #0C7FCC}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+
+</style>
+<script>
+    $( document ).ready(function() {
+        $('#tblWerehouse').DataTable({
+            paging: true,
+            pageLength:50,
+            ordering: true,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            language: {
+                searchPlaceholder: "Tìm kiếm sản phẩm"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    })
+
+    $('#btnUpdateAllCheck').click(function() {
+        let text = "Bạn có chắc cập nhật tồn kho cho toàn bộ sản phẩm?";
+        if (confirm(text) == false) {
+            return;
+        }
+        run_waitMe();
+
+        var url = "<?=$this->url('werehouse-admin',['action'=>'update-all-check','id'=>$this->werehouseSheet->getId()])?>";
+        $.ajax({
+            method: "POST",
+            url: url
+        }).done(function (res) {
+            if(res.status){
+                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
+                location.reload();
+            }
+            else{
+                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe();
+        })
+    });
+
+    $('#btnAddProductToSheet').click(function(){
+        run_waitMe();
+
+        var proId = $('#proId').val();
+        var qty = $('#txtQty').val();
+
+        var url = "<?=$this->url('werehouse-admin',['action'=>'inventory-check','id'=>$this->werehouseSheet->getId()])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {pid:proId,qty:qty}
+        }).done(function (res) {
+            if(res.status){
+                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
+                var difference = 0;
+                difference=res.data.actual_inventory-res.data.book_inventory;
+                var cls='';
+                if(difference != 0) cls='warning-color';
+                else cls='success-color'
+
+                var html='<tr id="tr_'+res.data.id+'">';
+                html+='<td></td>';
+                html+='<td>'+res.data.img+'</td>';
+                html+='<td>'+res.data.code+'</td>';
+                html+='<td>'+res.data.pack_code+'</td>';
+                html+='<td>'+res.data.name+'</td>';
+                html+='<td>'+res.data.book_inventory+'</td>';
+                html+='<td>'+res.data.actual_inventory+'</td>';
+                html+='<td class="'+cls+'">'+difference+'</td>';
+                html+='<td>'+res.data.created_date+'</td>';
+                html+='<td><span class="fa fa-trash-o" style="font-size: 16px" onclick="removeCheck('+res.data.id+')"></span></td>';
+                html+='</tr>';
+                $('#tblWerehouse tr:first').after(html);
+                $('#modalSelectProduct').modal('hide');
+            }
+            else{
+                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe();
+        })
+    });
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            var data = $(this).find(':selected').attr('data');
+            var obj = jQuery.parseJSON(data);
+            var defaultQuantity=obj.inventory;
+
+            var html='<div style="margin-top: 15px; border: 1px solid #e0dcdc; padding: 5px 10px">';
+            html+='<table style="width: 100%">';
+            html+='<tr>';
+            html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+            html+='<td>';
+            html+='<span>Tồn kho: <b>'+obj.inventory+' '+obj.unit_name+' </b></span>| '+ obj.box_unit+' '+obj.unit_name+'/Thùng';
+            html+='<table>';
+            html+='<tr>';
+            html+='<td style="padding-right: 10px" nowrap="">Tồn thực tế:</td>';
+            html+='<td style="width: 70px">';
+            html+='<input id="proId" name="proId" type="hidden" value="'+obj.id+'">';
+            html+='<input id="txtQty" name="quantity" type="number" value="'+defaultQuantity+'" min="0" class="form-control">';
+            html+='</td>';
+            html+='<td style="padding-left: 5px">'+obj.unit_name+'</td>';
+            html+='</tr>';
+            html+='</table>';
+            html+='<small id="msgInventory" class="warning-color"></small>';
+            html+='</td></tr></table>';
+            html+='</div>';
+
+            $('#productInfo').html(html);
+            $('#btnAddProductToSheet').prop('disabled', false);
+
+            $('#txtQty').blur(function(){
+                if(parseInt($(this).val()) != parseInt(obj.inventory)){
+                    $('#msgInventory').html('Lệch '+ (parseInt($(this).val())-parseInt(obj.inventory))+ ' sản phẩm');
+                    // $('#btnAddProductToSheet').prop('disabled', true);
+                }else{
+                    $('#msgInventory').html('');
+                    // $('#btnAddProductToSheet').prop('disabled', false);
+                }
+            } );
+        });
+
+    function showModalSelectProduct(){
+        $('#productInfo').html('');
+        $('#btnAddProductToSheet').prop('disabled', true);
+        $('#modalSelectProduct').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+    function removeCheck(id){
+        let text = "Bạn có chắc xoá sản phẩm khỏi phiếu kiểm kho?";
+        if (confirm(text) == false) {
+            return;
+        }
+        run_waitMe();
+        var url = "<?=$this->url('werehouse-admin',['action'=>'delete-check'])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (res) {
+            //alert(data.msg);
+            if(res.status){
+                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
+                $('#tr_'+id).remove();
+            }else{
+                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe();
+        })
+    }
+
+    function updateCheck(id){
+        let text = "Bạn có chắc cập nhật số liệu tồn kho thực tế cho sản phẩm?";
+        if (confirm(text) == false) {
+            return;
+        }
+        run_waitMe();
+        var url = "<?=$this->url('werehouse-admin',['action'=>'update-check'])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (res) {
+            if(res.status){
+                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
+            }else{
+                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe();
+        })
+    }
+</script>

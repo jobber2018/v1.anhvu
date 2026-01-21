@@ -1,0 +1,168 @@
+<?php
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Xác nhận giao hàng";
+$this->headTitle($title);
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('sell-staff')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-staff')?>">Danh sách đơn đang giao</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Xác nhận giao hàng</h3>
+    <?php
+    $zaloApp=$this->sellOrder->getGrocery()->getZaloAppItem();
+    $zaloAppNotify='Khách chưa cài ứng dụng đặt hàng, hãy gửi mã truy cập ứng dụng cho khách!';
+    if($zaloApp) $zaloAppNotify='';
+    ?>
+    <div style="color: red; font-weight: bold; padding-left: 15px;"><?=$zaloAppNotify?></div>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form id="delivery-form" action="<?=$this->url('sell-staff',['action'=>'delivery-confirm','id'=>$this->sellOrder->getId()])?>" method="post" name="delivery-form" enctype="multipart/form-data" class="form-horizontal">
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <table style="width: 100%">
+                                    <tr>
+                                        <td>
+                                            <h4 class="title"><?=$this->sellOrder->getGrocery()->getGroceryName()?></h4>
+                                            <div><?=$this->sellOrder->getGrocery()->getAddress()?></div>
+                                        </td>
+                                        <td style="font-size: 14pt; color: red" class="title" nowrap="">
+                                            <?=Common::formatMoney($this->sellOrder->getTotalAmountToPaid())?> đ
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div style="margin-top: 10px;">
+                                    <label class="check"><input type='radio' name="pay" value="2" checked="checked" class="icheckbox" /> Tiền mặt</label>
+                                    <label class="check"><input type='radio' name="pay" value="1" class="icheckbox" /> Chuyển khoản</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+
+                    <p style="padding-top: 10px">Click, Hoă kéo thả hình ảnh hoá đơn để upload</p>
+                    <form action="<?=$this->url('sell-staff',['action'=>'upload-invoice','id'=>$this->sellOrder->getId()])?>" class="dropzone dropzone-mini" id="dropzoneFrom"></form>
+
+                    <div class="col-md-12" style="padding-top: 10px">
+                        <button type="button" id="btnSubmit" class="btn btn-info pull-right">
+                            <span class="fa fa-gavel"></span>
+                            Xác nhận
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .list-group{font-size: 14px}
+    .list-group-item .title{font-weight: bold; font-size: 14px}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<script type="text/javascript" src="/joli/js/plugins/dropzone/dropzone.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+
+
+<script>
+    $(document).ready(function() {
+
+        $( "#btnSubmit" ).on( "click", function() {
+            $( "#delivery-form" ).trigger( "submit" );
+        } );
+
+        let fileList = new Array;
+        let i=0;
+        Dropzone.options.dropzoneFrom = {
+            autoProcessQueue: true,
+            acceptedFiles:".png,.jpg,.gif,.bmp,.jpeg",
+            parallelUploads: 5,
+            maxFilesize: 10, // MB
+            addRemoveLinks: true,
+            dictRemoveFileConfirmation: "Do you want to remove this?",
+            init: function(){
+                let myDropzone = this;
+
+                this.on("success", function(file,response){
+                    fileList[i] = {
+                        "fileName": file.name,
+                        "fileId": response.id
+                    };
+                    i += 1;
+                    noty({text: 'Upload successful', layout: 'topRight', type: 'success',timeout: 4000});
+                });
+
+                this.on("removedfile", function(file){
+                    let fileId = "";
+                    //find file in list uploaded
+                    for (let f = 0; f < fileList.length; f++) {
+                        if (fileList[f].fileName === file.name) {
+                            fileId = fileList[f].fileId;
+                        }
+                    }
+                    //do delete file
+                    let url='<?=$this->url('sell-staff',['action'=>'delete-invoice'])?>';
+                    if(fileId){
+                        $.ajax({
+                            headers: {Accept: "application/json; charset=utf-8"},
+                            method: "POST",
+                            url: url,
+                            data: {id:fileId}
+                        }).done(function (response) {
+                            noty({text: 'Delete successful', layout: 'topRight', type: 'success',timeout: 4000});
+                        })
+                    }
+                    // console.log("do remove File: "+ fileId);
+                });
+
+                /*this.on("thumbnail", function(file) {
+                    console.log(file); // will send to console all available props
+                    file.previewElement.addEventListener("click", function() {
+                        alert(file.name);
+                    });
+                });*/
+            },
+        };
+    });
+</script>

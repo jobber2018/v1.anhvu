@@ -1,0 +1,164 @@
+<?php
+$title = 'User Login';
+$this->headTitle($title);
+
+$form = $this->form;
+$form->setName('login');
+$form->setAttributes([
+    'class'=>'form-horizontal form-signin',
+    'id'=>'form-signin',
+    'action'=>'#'
+]);
+
+$form->prepare();
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger; ?>
+
+<link rel="stylesheet" type="text/css" href="/css/application/user.css"/>
+
+<div class="welcome">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 col-xs-12" style="text-align: center">
+                <img src="/img/logo.png" height="50px">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-4 col-xs-12 first-xs">
+            <div id="logreg-forms" class="account">
+                <?php echo $this->form()->openTag($form);?>
+                    <div><h3><?=$this->translate('Sign in')?></h3></div>
+
+                    <div class="sign-in">
+                        <?php
+                        echo $this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR);
+                        echo $this->formElement($form->get('mobile'));
+                        echo $this->formElementErrors($form->get('mobile'));
+                        echo $this->formElement($form->get('password'));
+                        echo $this->formElementErrors($form->get('password'));
+                        ?>
+                        <button class="btn btn-success btn-block" type="submit"><i class="fas fa-sign-in-alt"></i> <?=$this->translate('Sign in')?></button>
+                        <br>
+                        <input type="hidden" name="remember" value="0">
+                        <input type="checkbox" name="remember" id="remember" value="1" checked="checked">
+                        <label for="remember" class="btn-link remember"><?=$this->translate('Remember me')?></label>
+                    </div>
+                    <hr>
+
+<!--                    <a href="#" id="btn-signup">--><?php //=$this->translate('Sign up New Account')?><!--</a><br>-->
+                    <a href="<?=$this->url("user-reset-password")?>"><?=$this->translate('Forgot password?')?></a>
+                <?php
+                echo $this->form()->closeTag(); //</form>
+                ?>
+                <form action="#" id="frmSignup" method="post" class="form-signup">
+                    <div><h3><?=$this->translate('Sign up')?></h3></div>
+                    <div class="social-login">
+                        <button class="btn facebook-btn social-btn" type="button">
+                            <span>
+                                <i class="fab fa-facebook-f" style="padding-right: 10px"></i>
+                                <a href="<?=$this->url('login-with-facebook')?>"><?=$this->translate('Sign up with Facebook')?></a>
+                            </span>
+                        </button>
+                        <button class="btn google-btn social-btn" type="button">
+                            <span>
+                                <i class="fab fa-google-plus-g" style="padding-right: 5px"></i>
+                                <a href="<?=$this->url('login-with-google')?>"><?=$this->translate('Sign up with Google+')?></a>
+                            </span>
+                        </button>
+                    </div>
+
+                    <p style="text-align:center">____________ OR ____________</p>
+
+                    <input type="text" name="fullname" id="user-name" class="form-control" placeholder="Họ và tên" required="" autofocus="">
+                   <!-- <input type="number" name="cmnd" id="user-cmnd" class="form-control" placeholder="Số CMND"> -->
+                    <input type="number" name="mobile" id="user-mobile" class="form-control" placeholder="Điện thoại di động" required autofocus="">
+                    <input type="email" name="email" id="user-email" class="form-control" placeholder="Địa chỉ email" required autofocus="">
+                    <input type="password" name="pass" id="user-pass" class="form-control" placeholder="Mật khẩu đăng nhập" required autofocus="">
+                    <input type="password" name="repeatpass" id="user-repeatpass" class="form-control" placeholder="Nhập lại mật khẩu đăng nhập" required autofocus="">
+                    <div id="errSignupMessage"></div>
+                    <button id="btnSignup" class="btn btn-primary btn-block" type="submit"><i class="fas fa-user-plus"></i> <?=$this->translate('Sign up')?></button>
+                    <a href="#" id="cancel_signup"><i class="fas fa-angle-left"></i> Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/vendor/jquery/jquery.validate.min.js"></script>
+
+<script>
+
+    $('#frmSignup').validate({
+        rules : {
+            mobile : {
+                required : true,
+                minlength : 10
+            },
+            fullname : {
+                required : true
+            }
+        },
+        messages : {
+            mobile : {
+                required : "<?=$this->translate('Please provide your phone number')?>",
+                minlength : "<?=$this->translate('Mobile numbers must be numbers (Example: 09xx xxx xxx)')?>",
+            },
+            fullname : {
+                required : "<?=$this->translate('Please enter name')?>"
+            }
+        },
+        submitHandler : function (form) {
+            $('#errSignupMessage').html('');
+
+            var r= $('<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>');
+            $( "#btnSignup" ).append(r);
+            $( "#btnSignup" ).attr("disabled", "disabled");
+
+            $.ajax({
+                method: "POST",
+                url: '<?=$this->url("user-signup")?>',
+                data: $('#frmSignup').serializeArray()
+            }).done(function(response) {
+                if(response.status==0){
+                    $('#errSignupMessage').html('<div class="alert alert-danger" role="alert">\n' +response.message+'</div>');
+                }else{
+                    window.location.href = '<?=$this->url('user-dashboard')?>';
+                }
+                $(".spinner-grow").remove();
+                $( "#btnSignup" ).removeAttr("disabled", "disabled");
+            });
+        }
+
+    });
+    $('#btnSignup').click(function () {
+
+    });
+
+
+
+    function toggleResetPswd(e){
+        e.preventDefault();
+        $('#logreg-forms .form-signin').toggle() // display:block or none
+    }
+
+    function toggleSignUp(e){
+        e.preventDefault();
+        $('#logreg-forms .form-signin').toggle(); // display:block or none
+        $('#logreg-forms .form-signup').toggle(); // display:block or none
+    }
+
+    $(()=>{
+        // Login Register Form
+        $('#logreg-forms #forgot_pswd').click(toggleResetPswd);
+        $('#logreg-forms #cancel_reset').click(toggleResetPswd);
+        $('#logreg-forms #btn-signup').click(toggleSignUp);
+        $('#logreg-forms #cancel_signup').click(toggleSignUp);
+    });
+</script>
+
+
+

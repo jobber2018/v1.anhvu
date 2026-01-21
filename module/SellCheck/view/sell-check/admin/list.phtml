@@ -1,0 +1,249 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\Define;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn hàng";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="content-frame">
+        <div class="content-frame-top">
+            <div class="page-title">
+                <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$title?></h2>
+            </div>
+            <div class="pull-right">
+                <button id="btnRefresh" class="btn btn-default"><span class="fa fa-cogs"></span> Refresh</button>
+                <button class="btn btn-default content-frame-left-toggle"><span class="fa fa-bars"></span></button>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <?php
+                    if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                        ?>
+                        <div class="alert alert-success" role="alert">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                            <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                        </div>
+                        <?php
+                    }
+                    if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                        ?>
+                        <div class="alert alert-danger" role="alert">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                            <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+        <!-- START CONTENT FRAME LEFT -->
+        <div class="content-frame-left">
+            <div class="block">
+                <div class="list-group border-bottom">
+                    <a id="<?=Define::_ORDER_PACKING_STATUS?>" href="#" class="packing list-group-item active"><span class="fa fa-star"></span> Đang đóng gói <span class="badge badge-warning">0</span></a>
+                    <a id="<?=Define::_ORDER_WAITING_PACKING_STATUS?>" href="#" class="waiting-packing list-group-item"><span class="fa fa-inbox"></span> Chờ đóng gói <span class="badge badge-success">0</span></a>
+                    <a id="<?=Define::_ORDER_PACKED_STATUS?>" href="#" class="packed list-group-item"><span class="fa fa-rocket"></span> Đã đóng gói <span class="badge badge-success">0</span></a>
+                </div>
+            </div>
+        </div>
+        <!-- END CONTENT FRAME LEFT -->
+        <!-- START CONTENT FRAME BODY -->
+        <div class="content-frame-body">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblOrder">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>STT</th>
+                            <th>Mã</th>
+                            <th>Khách hàng</th>
+                            <th>Trạng thái</th>
+                            <th>Đóng bởi</th>
+                            <th>Ngày đóng</th>
+                            <th>Số thùng</th>
+                            <th>Người duyệt</th>
+                            <th>Ngày duyệt</th>
+                            <th>Tổng đơn</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- END CONTENT FRAME BODY -->
+    </div>
+</div>
+<style>
+    .content-frame-body{padding-top: 0px!important;}
+</style>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
+<script>
+    let orders=<?=json_encode($this->orders)?>;
+    let tblOrder;
+    $(document).ready(function () {
+        tblOrder=$('#tblOrder').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            searching: true,
+            fixedColumns: true,
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name:'no', targets: 1, width:'10px'},
+                { name:'code', targets: 2, width:'50px',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(subBarcode(cellData));
+                    }
+                },
+                {
+                    name: 'name',
+                    targets: 3,
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name='<a href="<?=$this->url('sell-check-admin',['action'=>'check'])?>/'+rowData[0].order_id+'">'+cellData+'</a>';
+                        $(td).html(name);
+                    }
+                },{
+                    name: 'status',
+                    className: 'title',
+                    targets: 4,
+                    width:'100px',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(cellData);
+                    }
+                }, {
+                    name: 'check_by',
+                    targets: 5,
+                    width:'50px',
+                    visible:0
+                }, {
+                    name: 'check_date',
+                    targets: 6,
+                    width:'200px',
+                    visible:0
+                },{
+                    name: 'pack_number',
+                    targets: 7,
+                    width:'50px',
+                    className: "number",
+                    visible:0
+                },{
+                    name: 'total_paid_order',
+                    width:'100px',
+                    targets: 10,
+                    className: 'dt-body-nowrap price number',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        $(td).html(formatMoney(cellData));
+                    }
+                }
+            ]
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblOrder.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+
+        loadDataToTable(<?=Define::_ORDER_PACKING_STATUS?>);//load data to table theo status
+
+        $('.content-frame-left')
+            .on('click', '.waiting-packing', function () {
+                $('a').removeClass('active');
+                $(this).addClass('active');
+                loadDataToTable(<?=Define::_ORDER_WAITING_PACKING_STATUS?>);
+            })
+            .on('click', '.packing', function () {
+                $('a').removeClass('active');
+                $(this).addClass('active');
+                loadDataToTable(<?=Define::_ORDER_PACKING_STATUS?>);
+            })
+            .on('click', '.packed', function () {
+                $('a').removeClass('active');
+                $(this).addClass('active');
+                loadDataToTable(<?=Define::_ORDER_PACKED_STATUS?>);
+            });
+
+        $('#btnRefresh').click(function() {
+            $('#btnRefresh').button('loading');
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: '<?=$this->url('sell-check-admin',['action'=>'list'])?>',
+            }).done(function(res) {
+                orders=res;
+                let activeId = $('.list-group .active').attr('id');
+                loadDataToTable(activeId);
+                $('#btnRefresh').button('reset');
+            });
+        });
+    });
+
+    function loadDataToTable(p_status){
+        let i=1,badge=0,badgeElement;
+        tblOrder.clear().draw();
+        let dataItem=[];
+        $('.badge').html(0);
+        $.each( orders, function( key, value ) {
+            if(value.status_id==p_status){
+                dataItem=[];
+                dataItem.push(value);
+                dataItem.push(i++);
+                dataItem.push(value.order_code);
+                dataItem.push(value.customer_name);
+                dataItem.push(value.status_name);
+                dataItem.push(value.check_by);
+                dataItem.push(value.check_date);
+                dataItem.push(value.pack_number);
+                dataItem.push(value.approval_check_by);
+                dataItem.push(value.approval_check_date);
+                dataItem.push(value.total_paid_order);
+                tblOrder.row.add(dataItem).draw(false); // Add new data
+            }
+            badgeElement=$('#'+value.status_id+' .badge');
+            badge=parseInt(badgeElement.html())+1;
+            badgeElement.html(badge);
+        });
+        if(p_status==111){
+            tblOrder.column(5).visible(1);
+            tblOrder.column(6).visible(1);
+            tblOrder.column(7).visible(1);
+            tblOrder.column(8).visible(1);
+            tblOrder.column(9).visible(1);
+        }else {
+            tblOrder.column(5).visible(0);
+            tblOrder.column(6).visible(0);
+            tblOrder.column(8).visible(0);
+            tblOrder.column(9).visible(0);
+        }
+    }
+</script>

@@ -1,0 +1,100 @@
+<?php
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách nhà cung cấp";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách nhà cung cấp</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('supplier-admin',['action'=>'add'])?>" class="btn btn-info"><span class="fa fa-plus"></span>Thêm mới</a>
+                </div>
+                <div class="panel-body">
+                    <table id="supplier" class="table table-hover datatable">
+                        <thead>
+                        <tr>
+                            <th>Tên NCC</th>
+                            <th>Địa chỉ</th>
+                            <th>Điện thoại</th>
+                            <th style="width: 200px"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->supplier as $supplier){
+                            ?>
+                            <tr style="cursor: pointer" onclick="window.location.href='<?=$this->url('supplier-admin',['action'=>'edit','id'=>$supplier->getId()])?>'">
+                                <td><?=$supplier->getName()?></td>
+                                <td><?=$supplier->getAddress()?></td>
+                                <td><?=$supplier->getMobile()?></td>
+                                <td>
+                                    <a href="<?=$this->url('supplier-admin',['action'=>'edit','id'=>$supplier->getId()])?>"><span class="fa fa-edit"> Sửa NCC</span></a> |
+                                    <a href="<?=$this->url('werehouse-admin',['action'=>'add','id'=>$this->escapeHtml($supplier->getId())])?>"><span class="fa fa-plus"> Nhập hàng</span></a>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $( document ).ready(function() {
+        if ( $.fn.dataTable.isDataTable( '#supplier' ) ) {
+            table = $('#supplier').dataTable();
+        }
+    })
+</script>

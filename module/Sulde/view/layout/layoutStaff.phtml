@@ -1,0 +1,282 @@
+<?= $this->doctype() ?>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <?= $this->headTitle('NPP ANH VŨ')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()
+        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+    ?>
+
+    <!-- Le styles -->
+    <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/favicon.png'])?>
+
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+    <link rel="stylesheet" type="text/css" id="theme" href="/css/admin.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+    <!-- START NOTY -->
+    <script type='text/javascript' src='/joli/js/plugins/noty/jquery.noty.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/layouts/topRight.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/themes/default.js'></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script src="/js/mustache.min.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<!--<header style="background: #0f6674">Header Admin Sulde ------------- <span></span></header>
+<hr>-->
+<!-- START PAGE CONTAINER -->
+<div class="page-container page-navigation">
+
+    <!-- START PAGE SIDEBAR -->
+    <div class="page-sidebar">
+        <!-- START X-NAVIGATION -->
+        <ul class="x-navigation">
+            <li class="xn-logo">
+                <a href="<?=$this->url('staff-dashboard')?>">NPP ANH VŨ</a>
+                <a href="#" class="x-navigation-control"></a>
+            </li>
+            <?php
+            $avatar = "/img/users/avatar.png";
+            if($this->authIdentity->getAvatar()){
+                $avatar = $this->authIdentity->getAvatar();
+            }
+            ?>
+            <li class="xn-profile">
+                <a href="#" class="profile-mini">
+                    <img src="<?=$avatar?>" alt="<?=$this->authIdentity->getFullname();?>"/>
+                </a>
+                <div class="profile">
+                    <div class="profile-image">
+                        <img src="<?=$avatar?>" alt="<?=$this->authIdentity->getFullname();?>"/>
+                    </div>
+                    <div class="profile-data">
+                        <div class="profile-data-name"><?=$this->authIdentity->getFullname();?></div>
+                        <div class="profile-data-title"><?=ucfirst($this->authIdentity->getRole());?></div>
+                    </div>
+                    <div class="profile-controls">
+                        <a href="<?=$this->url('user-admin',['action'=>'profile'])?>" class="profile-control-left"><span class="fa fa-info"></span></a>
+                        <a href="#" class="profile-control-right"><span class="fa fa-envelope"></span></a>
+                    </div>
+                </div>
+            </li>
+            <li class="xn-title">Navigation</li>
+
+            <li class="active">
+                <a href="/admin/staff-dashboard.html"><span class="glyphicon glyphicon-home"></span> <span class="xn-text">Dashboard</span></a>
+            </li>
+
+            <!--Sell-->
+            <li class="xn-openable">
+                <a href="#"><span class="fa fa-shopping-cart"></span> <span class="xn-text">Đơn hàng</span></a>
+                <ul>
+                    <li><a href="<?=$this->url('sell-staff')?>"><span class="fa fa-truck"></span>Đơn đang giao</a></li>
+                </ul>
+            </li>
+
+            <!--Warehouse-->
+            <li class="xn-openable">
+                <a href="#"><span class="fa fa-book"></span> <span class="xn-text">Quản lý kho</span></a>
+                <ul>
+                    <li><a href="<?=$this->url('werehouse-admin',['action'=>'inventory-sheet'])?>"><span class="fa fa-barcode"></span>Phiếu kiểm kho</a></li>
+                </ul>
+            </li>
+
+        </ul>
+        <!-- END X-NAVIGATION -->
+    </div>
+    <!-- END PAGE SIDEBAR -->
+
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+        <!-- START X-NAVIGATION VERTICAL -->
+        <ul class="x-navigation x-navigation-horizontal x-navigation-panel">
+            <!-- TOGGLE NAVIGATION -->
+            <li class="xn-icon-button">
+                <a href="#" class="x-navigation-minimize"><span class="fa fa-dedent"></span></a>
+            </li>
+            <!-- END TOGGLE NAVIGATION -->
+            <!-- SEARCH -->
+            <li class="xn-search">
+                <form role="form">
+                    <input type="text" name="search" placeholder="Search..."/>
+                </form>
+            </li>
+            <!-- END SEARCH -->
+            <!-- SIGN OUT -->
+            <li class="xn-icon-button pull-right">
+                <a href="#" class="mb-control" data-box="#mb-signout"><span class="fa fa-sign-out"></span></a>
+            </li>
+            <!-- END SIGN OUT -->
+            <!-- MESSAGES -->
+            <!-- END MESSAGES -->
+            <!-- TASKS -->
+            <li class="xn-icon-button pull-right">
+                <a href="#"><span class="fa fa-tasks"></span></a>
+                <div id="activityInformer" class="informer informer-warning"></div>
+                <div class="panel panel-primary animated zoomIn xn-drop-left xn-panel-dragging">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><span class="fa fa-tasks"></span> Activity</h3>
+                        <div class="pull-right">
+                            <span id="activityActive" class="label label-warning"></span>
+                        </div>
+                    </div>
+                    <div id="activityTask" class="panel-body list-group scroll" style="height: 200px;"></div>
+                    <div class="panel-footer text-center">
+                        <a href="#">Show all tasks</a>
+                    </div>
+                </div>
+            </li>
+            <!-- END TASKS -->
+        </ul>
+        <!-- END X-NAVIGATION VERTICAL -->
+
+        <?= $this->content ?>
+
+    </div>
+    <!-- END PAGE CONTENT -->
+
+</div>
+<!-- END PAGE CONTAINER -->
+
+
+<!-- MESSAGE BOX-->
+<div class="message-box animated fadeIn" data-sound="alert" id="mb-signout">
+    <div class="mb-container">
+        <div class="mb-middle">
+            <div class="mb-title"><span class="fa fa-sign-out"></span> Log <strong>Out</strong> ?</div>
+            <div class="mb-content">
+                <p>Are you sure you want to log out?</p>
+                <p>Press No if you want to continue work. Press Yes to logout current user.</p>
+            </div>
+            <div class="mb-footer">
+                <div class="pull-right">
+                    <a href="/logout" class="btn btn-success btn-lg">Yes</a>
+                    <button class="btn btn-default btn-lg mb-control-close">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MESSAGE BOX-->
+
+<!-- MESSAGE BOX CONFIRM DELETE DATA-->
+<div class="message-box message-box-warning animated fadeIn" data-sound="alert" id="mb-remove-row">
+    <div class="mb-container">
+        <div class="mb-middle">
+            <div class="mb-title"><span class="fa fa-times"></span> <?=$this->translate('Remove')?> <strong><?=$this->translate('Data')?></strong> ?</div>
+            <div class="mb-content">
+                <p><?=$this->translate('Are you sure you want to remove this row?')?></p>
+                <p><?=$this->translate('Press Yes if you sure.')?></p>
+            </div>
+            <div class="mb-footer">
+                <div class="pull-right">
+                    <button class="btn btn-danger btn-lg mb-control-yes">Yes</button>
+                    <button class="btn btn-success btn-lg mb-control-close">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MESSAGE BOX-->
+
+<!-- START PRELOADS -->
+<audio id="audio-alert" src="/joli/audio/alert.mp3" preload="auto"></audio>
+<audio id="audio-fail" src="/joli/audio/fail.mp3" preload="auto"></audio>
+<audio id="audio-warning" src="/joli/audio/warning.mp3" preload="auto"></audio>
+<audio id="audio-success" src="/joli/audio/success.mp3" preload="auto"></audio>
+<style>
+    .actTitle{font-weight: bold};
+</style>
+<!-- END PRELOADS -->
+<script>
+    $( document ).ready(function() {
+        $.ajax({
+            method: "POST",
+            url: "<?=$this->url('user-activity')?>",
+        }).done(function(response) {
+            if(response.success==1){
+                var data=response.data;
+                var item='';
+                var actNew=0;
+                $.each(data, function( index, value ) {
+                    var cls='';
+                    if(value.seen==0){
+                        cls='actTitle';
+                        actNew++;
+                    }
+                    // if(value.)
+                    item='<a class="list-group-item" href="#" onclick="activityRead('+value.id+')">';
+                    item+='<div id="act_'+value.id+'" class="'+cls+'">'+value.username +': '+value.title+'</div>';
+                    item+='<small class="text-muted">'+value.created_date+'</small>';
+                    item+='</a>';
+                    $('#mCSB_2_container').append(item);
+                });
+
+                $('#activityInformer').html(actNew);
+                $('#activityActive').html(data.length + ' new');
+            }
+            // noty({text: 'Successful', layout: 'topRight', type: 'success'});
+        });
+    })
+
+    function showNotifyOrderCustomerAndNew(){
+        var url = "<?=$this->url('sell-user',['action'=>'count-order-customer-new'])?>";
+        $.ajax({
+            method: "POST",
+            url: url
+        }).done(function (data) {
+            if(data.status){
+                $('#cus_order_number').html(data.cus_order_number);
+                $('#new_order_number').html(data.new_order_number);
+                $('#draft_order_number').html(data.draft_order_number);
+                window.setTimeout(function(){
+                    showNotifyOrderCustomerAndNew();
+                }, 20000);//20s
+            }
+        })
+    }
+
+    function activityRead(activityId){
+        if($('#act_'+activityId).attr('class')=='actTitle'){
+            $.ajax({
+                method: "POST",
+                url: "<?=$this->url('user-activity-read')?>",
+                data: {id:activityId}
+            }).done(function(response) {
+                $('#act_'+activityId).removeClass('actTitle');
+                if($('#activityInformer').html()>0)
+                    $('#activityInformer').html($('#activityInformer').html()-1);
+            });
+        }
+    }
+
+</script>
+
+</body>
+</html>

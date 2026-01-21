@@ -1,0 +1,69 @@
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách tuyến</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Các tuyến của bạn.</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <?php
+                if($this->groceryCatData){
+                    $dateNow=strtotime(date("Y-m-d"));
+                    foreach ($this->groceryCatData as $groceryCatId=>$groceryCatItem) {
+                        $dateActive =strtotime(\DateTime::createFromFormat("d/m/Y", $groceryCatItem["date"])->format('Y-m-d'));
+
+                        $panelStyle="";
+                        if($dateNow-$dateActive<=0) $panelStyle="panel-success";
+                ?>
+                        <div class="panel <?=$panelStyle?> panel-hidden-controls">
+                            <div class="panel-body cat">
+                                <?php
+                                if($groceryCatItem["day"]==8){
+                                    $dayName= 'Chủ nhật ';
+                                }else $dayName = 'Thứ ';
+                                ?>
+                                <h4><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->escapeHtml($groceryCatId)])?>"><b><?=$dayName.$groceryCatItem["day"]." Ngày ".$groceryCatItem["date"]?></b></a></h4>
+                                <p><b>Tuyến đi:</b> <?php echo $groceryCatItem["name"]?></p>
+                                <b><?php echo $groceryCatItem["grocery"]?></b> cửa hàng
+                            </div>
+                            <div class="panel-footer"></div>
+                        </div>
+                <?php
+                    }
+                }else{
+                    ?>
+                    <h4 style="color: red">Bạn chưa được thiết lập tuyến đi. Vui lòng liên hệ admin để được hỗ trợ.</h4>
+                <?php
+                }
+                ?>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="application/javascript">
+    /*var lat=0,lng=0;
+    $(document).ready(function() {
+        run_waitMe();
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position){
+                    stop_waitMe();
+                    lat=position.coords.latitude;
+                    lng=position.coords.longitude;
+                },
+                function(error) {
+                    alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                    stop_waitMe();
+                }
+            );
+        }
+    });
+
+    function catClick(url){
+        location.href=url+'?lat='+lat+'&lng='+lng;
+    }*/
+</script>

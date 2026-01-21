@@ -1,0 +1,68 @@
+/* ---------------------------------------------------
+    NAVBAR STYLE
+----------------------------------------------------- */
+#navbar .input-group-text{
+    background-color:unset;
+    border: 0;
+}
+#navbar .nav-link{padding: 0 2rem 0 2rem}
+#navbar li{border-right: 1px solid #cccccc}
+#navbar li:last-child{border-right: 0px}
+#navbar .logo{padding-right: 2rem}
+#navbar .input-group-prepend{display: none}
+.navbar .icons-list{width: 24px; height: 24px}
+.navbar .l-line{
+    padding-left:2rem;
+    border-left:1px solid #cccccc;
+}
+.navbar-toggler{border: 0}
+/*#navbar {background-color: #f8f9fa}*/
+
+/*#navbar .avarar img {width: inherit}*/
+#navbar .avarar{
+    width: 30px;
+    height: 30px;
+    border: 3px solid #FFF;
+    -moz-border-radius: 20%;
+    -webkit-border-radius: 20%;
+    border-radius: 50%;
+}
+
+@media (max-width:991.98px){
+    #logoNavBar{display: none}
+}
+@media (min-width:992px){
+    #logoNavBar{display: unset}
+}
+/* ----------- iPhone 5 and 5S ----------- */
+@media only screen
+and (min-device-width: 320px)
+and (max-device-width: 568px)
+and (-webkit-min-device-pixel-ratio: 2) {
+    #logoNavBar{display: none}
+    #navbar .input-group-prepend{display: flex}
+}
+
+/* ----------- iPad mini ----------- */
+
+/* Portrait and Landscape */
+@media only screen
+and (min-device-width: 768px)
+and (max-device-width: 1024px)
+and (-webkit-min-device-pixel-ratio: 1) {
+    /*#logoNavBar{display: none}*/
+    #navbar .input-group-prepend{display: none}
+
+}
+
+/* ----------- iPad pro ----------- */
+
+/* Portrait and Landscape */
+@media only screen
+and (min-device-width: 1024px)
+and (max-device-width: 1366px)
+and (-webkit-min-device-pixel-ratio: 1) {
+    /*#logoNavBar{display: unset}*/
+    #navbar .nav-link{padding: 0 1rem 0 1rem}
+    #navbar .input-group-prepend{display: none}
+}

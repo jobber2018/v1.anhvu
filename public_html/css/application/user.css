@@ -1,0 +1,95 @@
+
+.welcome {
+    background: linear-gradient(90deg,#e27000 0,#fb9600 51%,#e16f01);
+    padding: 3rem 0 8rem;
+    color: #fff;
+}
+.welcome__title {
+    font-size: 1.5rem;
+    line-height: 2.25rem;
+    margin-bottom: .625rem;
+}
+.welcome__desc {
+    font-size: 1.125rem;
+}
+.first-xs {
+    order: 1;
+}
+.first-md {
+    order: 1;
+}
+
+.facebook-btn{  background-color:#3C589C; }
+.google-btn{ background-color: #DF4B3B; }
+.facebook-btn{  width: 100%}
+.google-btn{ width: 100% }
+
+
+.account {
+    padding: 1.5rem;
+    background: #fff;
+    box-shadow: 0 9px 46px 8px rgba(0,0,0,.02), 0 24px 38px 3px rgba(0,0,0,.04), 0 11px 15px -7px rgba(0,0,0,.05);
+    border-radius: .625rem;
+    margin-top: -6.875rem;
+}
+.social-login a {
+    color:white;
+}
+.social-login {padding-top: 20px}
+.social-login button{margin-bottom: 10px}
+.sign-in input[type=text], input[type="password"]{margin-bottom: 10px}
+.form-signup input{margin-bottom: 10px}
+
+#logreg-forms .form-reset, #logreg-forms .form-signup{ display: none; }
+
+.media_title{font-size: 1.5rem}
+.media_content{color: #6c757d}
+.login-media{padding-top: 20px;}
+.content{margin-top:30px; margin-bottom: 90px}
+
+/*reset password*/
+.user-reset-password{
+}
+.user-reset-password-bag{
+    background-image: url('/img/bag/feeling.jpg');
+    background-repeat: no-repeat;
+    background-position: center left;
+    background-size:cover;
+}
+
+.user-set-password-bag{
+    background-image: url('/img/bag/travel-confidence.jpeg');
+    background-repeat: no-repeat;
+    background-position: center left;
+    background-size:cover;
+}
+.user-reset-password,.user-set-password .title{padding-top: 40px;}
+/*end reset password*/
+
+/* Mobile */
+
+@media (max-width: 420px){
+    .welcome {
+        padding: 3rem 0 5rem;
+    }
+
+    .welcome__desc {
+        font-size: .95rem;
+        margin: 0;
+    }
+    .last-xs {
+        -ms-order: 2;
+        order: 2;
+    }
+    .account{
+        margin-top: -3.375rem;
+        padding: 2rem;
+    }
+    /*reset pass*/
+    .user-reset-password-bag{
+        background-position: center center;
+    }
+    .user-set-password-bag{
+        background-position: center center;
+    }
+}

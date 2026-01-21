@@ -1,0 +1,205 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn hàng";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <?php
+    $url=$this->url('sell-admin');
+
+    $orderStatus=$this->status;
+    if($orderStatus==-2)
+        $url=$this->url('sell-admin',['action'=>'customer']);
+    else if($orderStatus==111)
+        $url=$this->url('sell-admin',['action'=>'packed']);
+    else if($orderStatus==-1)
+        $url=$this->url('sell-admin',['action'=>'draft']);
+    ?>
+    <li><a href="<?=$url?>">Danh sách đơn hàng</a></li>
+    <li class="active">Gộp đơn</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3>
+        <span class="fa fa-arrow-circle-o-left"></span>
+        <a href="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$this->grocery->getId()])?>">
+            <?=$this->grocery->getGroceryName()?>
+        </a>
+        <p style="padding-left: 20px"><small><?=$this->grocery->getAddress()?></small></p>
+    </h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <span class="label label-primary">Số đơn trước khi gộp<br> <?=count($this->sellOrders)?></span>
+                        <span class="label label-success">Số đơn sau khi gộp<br> 1</span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+
+                    <?php
+                    if(count($this->productDuplicate)>0){
+                        ?>
+                        <div class="alert alert-danger" role="alert">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                            Vui lòng kiểm tra:
+                            <strong><?=implode(", ",$this->productDuplicate)?></strong> có trong nhiều đơn bên dưới, hãy kiểm tra và chắc chắn bạn không thêm nhầm trước khi gộp đơn!
+                        </div>
+                    <?php
+                    }
+                    ?>
+
+                    <table class="display" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th class="text-right">SL Sản phẩm</th>
+                            <th class="text-right">Tổng đơn</th>
+                            <th class="text-right">Chiết khấu</th>
+                            <th class="text-right">Thành tiền</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $total_product_after_merge=0;
+                        $total_price_after_merge=0;
+                        $total_amount_paid_after_merge=0;
+                        foreach ($this->sellOrders as $orderItem){
+                            //tong don
+                            $total_price=$orderItem->getTotalPrice();
+                            //so tien phai thanh toan
+                            $total_amount_paid=$orderItem->getTotalAmountToPaid();
+                            //discount
+                            $discount=$total_price-$total_amount_paid;
+
+                            $total_product_after_merge+=count($orderItem->getSell());
+                            $total_price_after_merge+=$total_price;
+                            $total_amount_paid_after_merge+=$total_amount_paid;
+
+                            $url=$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]);
+                            if($orderStatus==-2)
+                                $url=$this->url('sell-admin',['action'=>'detail-o-customer','id'=>$orderItem->getId()]);
+                            elseif ($orderStatus==-1)
+                                $url=$this->url('sell-admin',['action'=>'detail-o-draft','id'=>$orderItem->getId()]);
+
+                            echo '<tr>';
+                            echo '<td><a href="'.$url.'">'.$orderItem->getOrderCode().'</a> <small class="label label-success">'.ConfigManager::getOrderStatus()[$orderStatus].'</small></td>';
+                            echo '<td class="text-right">'.count($orderItem->getSell()).'</td>';
+                            echo '<td class="text-right">'.Common::formatMoney($total_price).'</td>';
+                            echo '<td class="text-right">'.Common::formatMoney($discount).'</td>';
+                            echo '<td class="text-right">'.Common::formatMoney($total_amount_paid).'</td>';
+                            echo '</tr>';
+                        }
+                        ?>
+                        <tr>
+                            <td>Đơn sau gộp</td>
+                            <td class="text-right"><?=$total_product_after_merge?></td>
+                            <td class="text-right"><?=Common::formatMoney($total_price_after_merge)?></td>
+                            <td class="text-right"><?=Common::formatMoney(($total_price_after_merge-$total_amount_paid_after_merge))?></td>
+                            <td class="text-right"><?=Common::formatMoney(Common::round($total_amount_paid_after_merge))?></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer">
+                    <?php
+                    //chi hien thi khi co toi thieu 2 don
+                    if(count($this->sellOrders)>1){
+                        ?>
+                        <button id="merge-order" class="btn btn-danger pull-right">
+                            <i class="fa fa-wrench"></i>Thực hiện gộp đơn
+                        </button>
+                    <?php }else{?>
+                    <div class="alert alert-danger" role="alert">
+                        <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                        <strong>Chú ý:</strong> Phải có ít nhất 2 đơn hàng ở trạng thái đã đóng gói mới có thể thực hiện gộp đơn!
+                    </div>
+                    <?php }?>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .panel-body table th{
+        vertical-align: middle;
+        border-bottom: 1px solid #C5C5C5;
+        padding: 5px;
+        background-color: #C5C5C5;
+    }
+    .panel-body table tr td{
+        vertical-align: middle;
+        padding: 5px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    }
+    .panel-body table tr:last-child{
+        background-color: #eae9e9;
+        font-weight: bold;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $('#merge-order').click(function (){
+            let text = 'Click OK để xác nhận gộp đơn, Cancel để huỷ!';
+            if (confirm(text) == true) {
+                let url='<?=$this->url('sell-admin',['action'=>'merge-sell-order'])?>';
+                run_waitMe();
+                $.ajax({
+                    headers: {Accept: "application/json; charset=utf-8"},
+                    method: "POST",
+                    data:{id:<?=$this->grocery->getId()?>,s:<?=$orderStatus?>},
+                    url: url
+                }).done(function(res) {
+                    if(res.status==1){
+                        alert('Đơn đã được gộp thành công! Nhấn close để xem chi tiết đơn.')
+                        url='<?=$this->url('sell-admin',['action'=>'detail-order'])?>/'+res.oid;
+
+                        window.location.href=url
+                    }else{
+                        alert(res.msg);
+                    }
+                    stop_waitMe();
+                });
+            }
+        });
+    });
+</script>

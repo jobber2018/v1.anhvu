@@ -1,0 +1,266 @@
+<div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Chọn sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <select class="form-control selectpicker with-ajax" id="cboProductToOrder" data-live-search="true"></select>
+                </div>
+                <div id="productInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" id="btnAddProductToOrder" class="btn btn-success">
+                    <span class="fa fa-plus-circle"></span>
+                    Thêm sản phẩm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="product-preview-template">
+    <div style="margin-top: 15px; border: 1px solid #e0dcdc; padding: 5px 10px">
+        <table style="width: 100%">
+            <tbody>
+            <tr>
+                <td style="padding-right: 5px; width: 40px">
+                    <img src="{{image}}" style="max-width:40; max-height:30px"></td>
+                <td>
+                    <table style="width: 100%">
+                        <tbody>
+                        <tr>
+                            <td nowrap="" style="border-bottom: 1px solid #ede9e9; padding: 5px 0">Tên sản phẩm:</td>
+                            <td style="border-bottom: 1px solid #ede9e9; padding: 5px 0; padding-left: 10px; font-weight: bold; width: 100%" nowrap="">{{name}}</td>
+                        </tr>
+                        <tr>
+                            <td nowrap="" style="border-bottom: 1px solid #ede9e9; padding: 5px 0">Mã sản phẩm:</td>
+                            <td style="border-bottom: 1px solid #ede9e9; padding: 5px 0; padding-left: 10px; font-weight: bold; width: 100%" nowrap="">{{subCode}}</td>
+                        </tr>
+                        <tr>
+                            <td nowrap="" style="border-bottom: 1px solid #ede9e9; padding: 5px 0">Giá lẻ:</td>
+                            <td style="border-bottom: 1px solid #ede9e9; padding: 5px 0; padding-left: 10px; font-weight: bold; width: 100%" nowrap="">
+                                <span style="color: #0C7FCC">{{price}}</span>
+
+                                {{#priceUnitDiscount}}
+                                <label style="color: #ee1e2d">
+                                    <span class="fa fa-arrow-down"></span>{{priceUnitDiscount}}/{{unit}}
+                                </label>
+                                {{/priceUnitDiscount}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td nowrap="" style="border-bottom: 1px solid #ede9e9; padding: 5px 0">Giá thùng:</td>
+                            <td style="border-bottom: 1px solid #ede9e9; padding: 5px 0; padding-left: 10px;color: #0C7FCC; font-weight: bold;" nowrap="">
+                                {{packPrice}}
+                                {{#pricePackDiscount}}
+                                <label style="color: #ee1e2d">
+                                    <span class="fa fa-arrow-down"></span>{{pricePackDiscount}}/Thùng
+                                </label>
+                                {{/pricePackDiscount}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td nowrap="" style="border-bottom: 1px solid #ede9e9; padding: 5px 0">Mua theo:</td>
+                            <td style="border-bottom: 1px solid #ede9e9; padding: 5px 0; padding-left: 10px">
+                                <label class="check">
+                                    <input type="radio" value="unit" class="iradio" name="opt" checked="checked"/> {{unit}}
+                                </label>
+                                <label class="check">
+                                    <input type="radio" value="pack" class="iradio" name="opt"/> Thùng ({{packUnit}} {{unit}})
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td nowrap="" style="padding: 5px 0">Số lượng:</td>
+                            <td style="padding: 5px 0; padding-left: 10px">
+                                <input id="proId" name="proId" type="hidden" value="{{productId}}" />
+                                <input style="width: 100px" id="txtQtyProductToOrder" type="number" value="" min="0" max="{{inventory}}" class="form-control" />
+                                <small id="msgInventory" class="warning-color">Tồn kho {{inventory}} {{unit}} </small>
+                                <small style="color: #0d5bdd"> {{note}}</small>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</script>
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+<script>
+    $(document).ready(function () {
+        let options = {
+            // values: "a, b, c",
+            ajax: {
+                url: "<?=$this->url('product-front',['action'=>'autocomplete'])?>",
+                type: "POST",
+                dataType: "json",
+                // Use "{{{q}}}" as a placeholder and Ajax Bootstrap Select will
+                // automatically replace it with the value of the search query.
+                data: {
+                    q: "{{{q}}}"
+                }
+            },
+            locale: {
+                emptyTitle: "Tìm kiến theo tên, mã sản phẩm",
+                statusSearching:'Đang tìm sản phẩm phù hợp...',
+                currentlySelected:'Sản phẩm đang chọn',
+                statusInitialized:'Nhập tên hoặc mã sản phẩm để bắt đầu tìm kiếm.',
+                statusNoResults:'Không tìm thấy sản phẩm phù hợp.'
+            },
+            log: 3,
+            preprocessData: function(data) {
+                var i,
+                    l = data.length,
+                    array = [];
+                if (l) {
+                    for (i = 0; i < l; i++) {
+                        array.push(
+                            $.extend(true, data[i], {
+                                text: data[i].subCode+' | '+data[i].name+' | '+data[i].weight,
+                                value: data[i].id,
+                                data: {
+                                    inventory: data[i].inventory,
+                                    price:data[i].price,
+                                    priceUnitDiscount:data[i].priceUnitDiscount,
+                                    packPrice:data[i].packPrice,
+                                    pricePackDiscount:data[i].pricePackDiscount,
+                                    image:data[i].image,
+                                    subCode:data[i].subCode,
+                                    note:data[i].note,
+                                    packUnit:data[i].packUnit,
+                                    unit:data[i].unit,
+                                    weight:data[i].weight,
+                                    // exchangeUnit:data[i].exchangeUnit
+                                }
+                            })
+                        );
+                    }
+                }
+                // You must always return a valid array when processing data. The
+                // data argument passed is a clone and cannot be modified directly.
+                return array;
+            }
+        };
+        $("#cboProductToOrder")
+            .selectpicker()
+            .ajaxSelectPicker(options)
+            .on('changed.bs.select', function(){
+                let selected=$('option:selected', this);
+                // console.log(selected.val());
+                let productId = selected.val();
+                let name = selected.text();
+                let inventory = selected.attr("data-inventory");
+                let price = selected.attr("data-price");
+                let priceUnitDiscount = parseFloat(selected.attr("data-priceUnitDiscount"));
+                let packPrice = selected.attr("data-packprice");
+                let pricePackDiscount = parseFloat(selected.attr("data-pricePackDiscount"));
+                let packUnit = selected.attr("data-packunit");
+                let image = selected.attr("data-image");
+                let subCode = selected.attr("data-subcode");
+                let unit = selected.attr("data-unit");
+                let note = selected.attr("data-note");
+                let weight = selected.attr("data-weight");
+
+                priceUnitDiscount=(priceUnitDiscount)?formatMoney(priceUnitDiscount):0;
+                pricePackDiscount=(pricePackDiscount)?formatMoney(pricePackDiscount):0;
+
+                let productPreviewTemplate = $('#product-preview-template').html();
+                let data={
+                    productId:productId,
+                    name:name,
+                    price:formatMoney(price),
+                    priceUnitDiscount:priceUnitDiscount,
+                    packPrice:formatMoney(packPrice),
+                    pricePackDiscount:pricePackDiscount,
+                    packUnit:packUnit,
+                    inventory:inventory,
+                    image:image,
+                    subCode:subCode,
+                    note:note,
+                    unit:unit,
+                    weight:weight
+                }
+                let productPreview = Mustache.render(productPreviewTemplate, data);
+                $('#productInfo').html(productPreview);
+                $('#btnAddProductToOrder').prop('disabled', false);
+
+                $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'}).on('ifChecked', function(e) {
+                    $('#txtQtyProductToOrder').val('').focus();
+                });
+
+                $('#txtQtyProductToOrder').blur(function(){
+                    var radio = document.querySelector('input[name="opt"]:checked').value;
+
+                    if(radio=='pack'){
+                        if(parseInt($(this).val())*packUnit > parseInt($(this).attr('max'))){
+                            $('#msgInventory').html('Tối đa có thể bán '+$(this).attr('max')+ ' sản phẩm!');
+                            $('#btnAddProductToOrder').prop('disabled', true);
+                        }else{
+                            $('#msgInventory').html('');
+                        }
+                    }else if(parseInt($(this).val()) > parseInt($(this).attr('max'))){
+                        $('#msgInventory').html('Tối đa có thể bán '+$(this).attr('max')+ ' sản phẩm!');
+                        $('#btnAddProductToOrder').prop('disabled', true);
+                    }else if(parseInt($(this).val())<0){
+                        $('#msgInventory').html('Không thể nhập số âm!');
+                        $('#btnAddProductToOrder').prop('disabled', true);
+                    } else{
+                        $('#msgInventory').html('');
+                        $('#btnAddProductToOrder').prop('disabled', false);
+                    }
+                });
+            });
+        // $('#cboProductToOrder').trigger('change');
+
+        $('#btnAddProductToOrder').click(function(){
+            let orderId = <?=$this->sellOrder->getId()?>;
+            let proId = $('#proId').val();
+            let qty = $('#txtQtyProductToOrder').val();
+            let opt=$('input[name="opt"]:checked').val();
+
+            if(!qty || qty==0){
+                noty({text: 'Vui lòng nhập số lượng sản phẩm!', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }
+
+            run_waitMe();
+            var url = "<?=$this->url('sell-admin',['action'=>'add-product-order'])?>";
+            $.ajax({
+                method: "POST",
+                headers: {
+                    Accept: "application/json; charset=utf-8"
+                },
+                url: url,
+                data: {oid:orderId,pid:proId,qty:qty,opt:opt}
+            }).done(function (data) {
+                if(data.status){
+                    table.ajax.reload();
+                    noty({text: data.message, layout: 'topRight', type: 'success',timeout: 4000});
+                    $('#modalSelectProduct').modal('hide');
+                }else{
+                    noty({text: data.message, layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe();
+            })
+
+        });
+    });
+    function showModalSelectProduct(){
+        $('#productInfo').html('');
+        $('#btnAddProductToOrder').prop('disabled', true);
+        $('#modalSelectProduct').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+</script>

@@ -1,0 +1,305 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+$title = 'User profile';
+$this->headTitle($title);
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li class="active">Dashboard</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Dashboard</h3>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <a href="<?=$this->url('grocery-user')?>" class="btn btn-default">
+                        <i class="fa fa-random" style="font-size: 20pt; padding-top: 10px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Tuyến đi</p>
+                    </a>
+
+                    <!--<a href="<?=$this->url('grocery-user',['action'=>'list-all'])?>" class="btn btn-default">-->
+                    <a href="<?=$this->url('grocery-user',['action'=>'list-draft-order'])?>" class="btn btn-default">
+                        <span class="fa fa-shopping-cart" style="font-size: 20pt; padding-top: 10px"></span>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Tạo đơn</p>
+                    </a>
+                    <!--
+                    <a href="<?=$this->url('grocery-user',['action'=>'list-draft-order'])?>" class="btn btn-default">
+                        <span class="fa fa-suitcase" style="font-size: 20pt; padding-top: 10px"></span>
+                        <p>Tạo đơn nháp</p>
+                    </a>
+                    -->
+
+                    <a href="<?=$this->url('product-front',['action'=>'price'])?>" class="btn btn-default">
+                        <span class="fa fa-money" style="font-size: 20pt; padding-top: 10px"></span>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Bảng giá</p>
+                    </a>
+
+                    <a href="<?=$this->url('staff-dashboard')?>" class="btn btn-default">
+                        <span class="fa fa-share-square-o" style="font-size: 20pt; padding-top: 10px"></span>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sang kho</p>
+                    </a>
+
+                    <a href="<?=$this->url('report-user')?>" class="btn btn-default">
+                        <i class="fa fa-bar-chart-o" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Report</p>
+                    </a>
+
+                    <?php
+                    if($this->uId==12){
+                        ?>
+                        <a href="<?=$this->url('grocery-user',['action'=>'map-all'])?>" class="btn btn-default">
+                            <i class="fa fa-map-marker" style="font-size: 25pt; padding-top: 5px"></i>
+                            <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Bản đồ khách hàng <?=$this->uId?></p>
+                        </a>
+                    <?php
+                    }
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="clearfix">
+                        <h3 class="panel-title">DOANH THU NGÀY</h3>
+                        <a href="<?=$this->url('user-dashboard',['action'=>'report'])?>" class="pull-right" style="padding-top: 10px">Xem chi tiết</a>
+                    </div>
+                    <div style="margin-bottom: 10px">
+                        <span style="color: #5195ef; font-size: 18pt; font-weight: bold; text-align: center;"><?=Common::formatMoney($this->totalRevenue)?> đ</span>
+                    </div>
+                    <div style="padding-top: 10px; border-top: 1px solid #e5e5e5">
+                        <table style="width: 100%">
+                            <tr>
+                                <td>Chờ xác nhận</td>
+                                <td style="text-align: center;">Đang thực hiện</td>
+                                <td style="text-align: right;">Đơn huỷ</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 20px; padding-top: 5px; font-weight: bold"><?=count($this->orderDraft)?></td>
+                                <td style="text-align: center; font-weight: bold"><?=$this->orderNumberNew?></td>
+                                <td style="text-align: right; padding-right: 30px; font-weight: bold"><?=count($this->orderCancel)?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#tab-analytic-first" role="tab" data-toggle="tab">Chú ý hôm nay</a></li>
+                    <li><a href="#tab-analytic-second" role="tab" data-toggle="tab">Khách hàng cần chú ý</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <?php
+                    $datetime = new DateTime();
+                    $w = (int)$datetime->format('w')+1;
+                    $uId=$this->uId;
+                    ?>
+                    <div class="tab-pane active" id="tab-analytic-first">
+                        <div style="padding-bottom: 10px; color: red">Khách hàng ít nhất đã <?=$w?> ngày chưa lên đơn. Bạn cần quan tâm, CRM cụ thể khi đi tuyến hôm nay!.</div>
+                        <table class="table nowrap table-hover display datatable_simple" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Khách hàng</th>
+                            <th>Đơn gần nhất</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <?php
+                        foreach ($this->orderAnalytic as $k=>$v) {
+                            $day = $v->getGrocery()->getGroceryCat()->getDay();
+                            $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
+                            if($day ==$w && $userIdTuyen ==$uId && $v->getDiff()>=5) {
+                                echo '<tr>';
+                                echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
+                                echo '</tr>';
+                            }
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="tab-pane" id="tab-analytic-second">
+                        <div style="padding-bottom: 10px; color: red">Khách hàng bạn quản lý nhưng lâu không thấy lên đơn, bạn cần chú ý chăm sóc và CRM cụ thể những khách hàng này khi đi tuyến.</div>
+                        <table class="table nowrap table-hover display datatable_simple" style="width:100%">
+                            <thead>
+                            <tr>
+                                <th>Khách hàng</th>
+                                <th>Đơn gần nhất</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            foreach ($this->orderAnalytic as $k=>$v) {
+                                $day = $v->getGrocery()->getGroceryCat()->getDay();
+                                $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
+                                if($day !=$w && $userIdTuyen==$uId && $v->getDiff()>12) {
+                                    echo '<tr>';
+                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
+                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
+                                    echo '</tr>';
+                                }
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">CHỜ XÁC NHẬN</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderDraft)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach (@$this->orderDraft as $order){
+                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail-draft','id'=>$order->getId()]) .'">'.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success clearfix">'.Common::formatMoney($order->getTotalPrice()). ' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">ĐANG THỰC HIỆN</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderNew)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach ($this->orderNew as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+//                            if($order->getStatus()==-1)
+//                                echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail-draft','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success clearfix">'.Common::formatMoney($order->getTotalPrice()). ' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().' | <span style="color: #f19329"> '.ConfigManager::getOrderStatus()[$order->getStatus()].' </span> </small></li>';
+//                           else
+                                echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success clearfix">'.Common::formatMoney($order->getTotalPrice()). ' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().' | <span style="color: #f19329"> '.ConfigManager::getOrderStatus()[$order->getStatus()].' </span> </small></li>';
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">ĐANG GIAO</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderDelivery)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach ($this->orderDelivery as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">CHƯA QUYẾT TOÁN</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderUnpaid)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach ($this->orderUnpaid as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">HOÀN THÀNH TRONG NGÀY</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderCompleted)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach ($this->orderCompleted as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+        <div class="col-md-4">
+            <!-- LIST GROUP WITH BADGES -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">10 ĐƠN HUỶ GẦN NHẤT</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderCancel)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        $i=1;
+                        foreach ($this->orderCancel as $order){
+                            if($i<=10){
+                                $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                                echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
+                            }
+                            $i++;
+                        }
+                        ?>
+                    </ul>
+                </div>
+            </div>
+            <!-- END LIST GROUP WITH BADGES -->
+        </div>
+
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $( document ).ready(function() {
+
+    });
+</script>

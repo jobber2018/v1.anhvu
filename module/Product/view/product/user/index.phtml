@@ -1,0 +1,76 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('grocery-user')?>">Home</a></li>
+    <li class="active">Danh sách sản phẩm</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Danh sách sản phẩm.</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table id="tblProduct" class="display" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    foreach ($this->product as $productItem) {
+                        $cls='title';
+                        if($productItem->getInventory()==0) $cls='title-warning';
+                        echo '<tr>';
+                        if(is_null($productItem->getImg()))
+                            echo '<td><img src="/img/icons/no-image-icon.png" class="pull-left" width="40px"></td>';
+                        else
+                            echo '<td><img src="'.$productItem->getImg().'" style ="max-width:40px; max-height:30px"></td>';
+                        echo '<td>';
+                        echo '<p class="'.$cls.'">'.$this->escapeHtml($productItem->getName()).' | '.$productItem->getWeight().'</p>';
+                        echo '<p> Mã: '.$productItem->getCode().' | '.$productItem->getBoxUnit() ." ".$productItem->getUnit()->getName().'/Thùng</p>';
+                        echo '<p> Giá bán: <strong>'.Common::formatMoney($productItem->getActivePrice()->getPrice()).'đ </strong>| Có thể bán: <strong>'.$productItem->getInventory().' '.$productItem->getUnit()->getName().'</strong></p>';
+                        echo '</td>';
+                        echo '</tr>';
+                    }
+                    ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    #tblProduct a{color: #0d0d0d}
+    #tblProduct .title{font-weight: bold; color: #067fad}
+    #tblProduct p{margin-bottom: 5px}
+    #tblProduct td{padding-bottom: 5px; padding-top: 5px}
+    #tblProduct td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
+    #tblProduct tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+    .dataTables_filter label {float: unset; width: 100%}
+    .dataTables_filter label input {width: 80%}
+    .title-warning{color: red;font-weight: bold; text-decoration-line: line-through}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm sản phẩn"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

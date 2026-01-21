@@ -1,0 +1,181 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: ZendSkeletonApplication\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-26 16:54+0700\n"
+"PO-Revision-Date: 2019-09-25 11:39+0700\n"
+"Language-Team: ZF Contibutors <zf-devteam@zend.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-KeywordsList: translate\n"
+"X-Poedit-Basepath: .\n"
+"X-Generator: Poedit 2.2.3\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Last-Translator: \n"
+"Language: vi_VN\n"
+"X-Poedit-SearchPath-0: ..\n"
+
+msgid "Night"
+msgstr "Đêm"
+
+#: applicatoin/view/index/hotel-info.phtml
+msgid "Call"
+msgstr "Gọi"
+
+msgid "Direction"
+msgstr "Chỉ đường"
+
+msgid "Bookmark"
+msgstr "Lưu"
+
+msgid "Overview"
+msgstr "Tổng quan"
+
+msgid "Amenities"
+msgstr "Tiện nghi"
+
+msgid "Places Of Interest"
+msgstr "Tiện ích"
+
+msgid "The nearest famous landmarks"
+msgstr "Các địa danh gần đấy"
+
+msgid "Do not miss the famous landmarks when you come here."
+msgstr "Không nên bỏ qua những địa danh nổi tiếng khi bạn đến nơi đây."
+
+msgid "Request a booking"
+msgstr "Gửi yêu cầu đặt phòng"
+
+msgid "Check in"
+msgstr "Ngày đến"
+
+msgid "Check out"
+msgstr "Ngày về"
+
+msgid "Guest number"
+msgstr "Số người"
+
+msgid "Write a comment"
+msgstr "Viết bình luận"
+
+msgid "Request a price"
+msgstr "Yêu cầu báo giá"
+
+msgid "Your phone"
+msgstr "Điện thoại"
+
+msgid "Please input your phone number."
+msgstr "Vui lòng nhập số điện thoại của bạn."
+
+msgid "Successfully sent, we will contact you in a few minutes."
+msgstr "Bạn đã gửi yêu cầu đặt phòng thành công, chủ nhà sẽ liên lạc với bạn ngay sau vài phút."
+
+#. applicatoin/view/partial/rating.phtml
+msgid "Please input your name."
+msgstr "Vui lòng nhập tên của bạn."
+
+msgid "Please input content."
+msgstr "Vui lòng nhập nội dung."
+
+msgid "Write a comment..."
+msgstr "Nội dung bình luận..."
+
+msgid "Please choose to star."
+msgstr "Vui lòng chọn điểm đánh giá."
+
+msgid "Accommodation facilities"
+msgstr "Tiện nghi chỗ ở"
+
+msgid "About Us"
+msgstr "Về chúng tôi"
+
+msgid "Terms & conditions"
+msgstr "Chính sách và điều khoản"
+
+msgid "Privacy policy"
+msgstr "Bảo mật"
+
+msgid "Hello"
+msgstr "Chào"
+
+msgid "Address"
+msgstr "Địa chỉ"
+
+msgid "Province"
+msgstr "Tỉnh thành"
+
+msgid "Mobile"
+msgstr "Di động"
+
+msgid "Website"
+msgstr "Địa chỉ web"
+
+msgid "Facebook"
+msgstr "Facebook"
+
+msgid "Type"
+msgstr "Loại hình"
+
+msgid "Price"
+msgstr "Giá"
+
+msgid "Promotion"
+msgstr "Khuyến mãi"
+
+msgid "Default image"
+msgstr "Hình đại diện"
+
+msgid "Summary"
+msgstr "Mô tả"
+
+msgid "Tel"
+msgstr "Số cố định"
+
+msgid "Plan a trip"
+msgstr "Lập kế hoạch cho chuyến đi"
+
+msgid "There are <span id='accommodations_number'>{{accommodations_number}}</span> accommodations in {{place}}"
+msgstr "Có <span id='accommodations_number'>{{accommodations_number}}</span> chỗ ở tại {{place}}"
+
+msgid "Where to go? What to eat when traveling in {{place}}"
+msgstr "Đi đâu? Ăn gì khi du lịch tại {{place}}"
+
+msgid "Famous places not to be missed when traveling in %s"
+msgstr "Những địa điểm nổi tiếng không thể bỏ qua khi đến %s"
+
+msgid "Enjoying the food that only in %s is great"
+msgstr "Cùng thưởng thức những món ăn mà chỉ có ở %s mới là tuyệt vời"
+
+msgid "The major shopping - entertainment spots in %s"
+msgstr "Những điểm mua sắm - giải trí lớn tại %s"
+
+msgid "Guide the tour {{place}}"
+msgstr "Hướng dẫn du lịch {{place}}"
+
+msgid "Amenities and services at"
+msgstr "Tiện nghi và dịch vụ tại"
+
+msgid "About {{name}}"
+msgstr "Về {{name}}"
+
+msgid "Number of adults"
+msgstr "Số người lớn"
+
+msgid "Children"
+msgstr "Trẻ em"
+
+msgid "Please provide the information below to help us better assist you."
+msgstr "Vui lòng cung cấp thông tin theo mẫu bên dưới để chúng tôi hỗ trợ bạn tốt hơn."
+
+msgid "Submit a booking request"
+msgstr "Gửi yêu cầu đặt phòng"
+
+msgid "Book now"
+msgstr "Đặt ngay"
+
+msgid "Price room"
+msgstr "Giá phòng"
+
+msgid "Accommodation near %s"
+msgstr "Chỗ ở gần %s"

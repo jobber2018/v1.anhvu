@@ -1,0 +1,174 @@
+<?php
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Zalo App</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Report Zalo App</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Danh sách cài app nhưng chưa lên đơn</h3>
+                    <span style="margin-top: 5px" class="pull-right label label-success label-form"><?=count($this->installNotOrder)?> khách</span>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-body">
+                        <table class="table nowrap table-hover display" style="width:100%" id="tblInstallNotOrder">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Install date</th>
+                                <th>Access date</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $i=1;
+                            foreach ($this->installNotOrder as $installNotOrderItem){
+                                echo '<tr>';
+                                echo '<td><a class="title" href="'.$this->url('grocery-admin',['action'=>'detail','id'=>$installNotOrderItem["id"]]).'">'.$installNotOrderItem["name"].'</a><br><span class="help-block">'.$installNotOrderItem['address'].'</span></td>';
+                                echo '<td>'.$installNotOrderItem["install_date"].'</td>';
+                                echo '<td>'.$installNotOrderItem["access_date"].'</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <figure class="highcharts-figure">
+                        <div id="chart-install-number-month"></div>
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<style>
+    .title{font-weight: bold}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    $( document ).ready(function() {
+        $('#tblInstallNotOrder').DataTable({
+            paging: true,
+            ordering: true,
+            order: [[ 2, "desc" ]],
+            info: false,
+            searching:true
+        });
+        <?php
+        $date=array();
+        $data=array();
+        foreach ($this->installAppByMonth as $key=>$value){
+            $date[]=$key;
+            $data[]=$value;
+        }
+        ?>
+        Highcharts.chart('chart-install-number-month', {
+            chart: {
+                zoomType: 'xy'
+            },
+            title: {
+                text: '<?=$this->totalGroceryInstall?> khách đã cài zalo app (Tính cả khách cài nhưng chưa lên đơn)',
+                align: 'left'
+            },
+            xAxis: {
+                categories: <?=json_encode($date)?>
+            },
+            yAxis: [{ // Primary yAxis
+                labels: {
+                    format: '{value}',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                },
+                title: {
+                    text: 'Giá trị',
+                    style: {
+                        color: Highcharts.getOptions().colors[1]
+                    }
+                }
+            }, { // Secondary yAxis
+                title: {
+                    text: 'Số đơn',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                labels: {
+                    format: '{value}',
+                    style: {
+                        color: Highcharts.getOptions().colors[0]
+                    }
+                },
+                opposite: true
+            }],
+            legend: {
+                align: 'center',
+                x: 10,
+                verticalAlign: 'top',
+                y: 20,
+                floating: true,
+                backgroundColor:
+                    Highcharts.defaultOptions.legend.backgroundColor || 'white',
+                borderColor: '#CCC',
+                borderWidth: 1,
+                shadow: false
+            },
+            tooltip: {
+                headerFormat: '<b>{point.x}</b><br/>',
+                // pointFormat: '{series.name}: {point.y}<br/>Tổng đơn: {point.stackTotal}',
+                crosshairs: true,
+                shared: true
+            },
+            plotOptions: {
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true
+                    }
+                }
+            },
+            series: [
+                {
+                    name:"Installed",
+                    type: 'column',
+                    yAxis: 1,
+                    data:<?=json_encode($data)?>
+                }
+            ],
+
+        });
+    })
+</script>

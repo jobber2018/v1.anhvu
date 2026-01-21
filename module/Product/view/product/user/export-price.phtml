@@ -1,0 +1,157 @@
+<html lang="en">
+<head>
+    <title>product price</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/vendor/bootstrap/css/bootstrap.min.css"/>
+</head>
+<body>
+<?php
+use Sulde\Service\Common\Common;
+?>
+
+<div style="margin-right: 20px; margin-left: 20px">
+    <div class="row">
+        <table style="width: 100%">
+            <tr>
+                <td style="width: 50%" nowrap="">
+                    <h4 style="padding-bottom: 0px; margin-bottom: 5px">
+                        <a style="color: #000000; text-decoration:unset" href="<?=$this->url('product-user',['action'=>'export-price-sort'])?>">NHÀ PHÂN PHỐI ANH VŨ - BẢNG BÁO GIÁ SẢN PHẦM</a>
+                    </h4>
+                    <div style="padding-bottom: 3px"><b>Địa chỉ:</b> KĐT Thanh Hà, Hà Đông, TP. Hà Nội</div>
+
+                </td>
+                <td style="width: 50%; text-align: right">
+                    <div style="padding-bottom: 3px">Điện thoại: <b>0946 021 021</b> Zalo: <b>0877 427 569</b></div>
+                    <div style="padding-bottom: 5px;"><b id="btnSubmit" style="cursor: pointer">Áp dụng từ: </b><i>Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+        <?php
+        $arrProduct=array();
+        foreach ($this->product as $product){
+            $productItem['name']=$product->getName();
+            $productItem['img']=$product->getImg();
+            $productItem['weight']=$product->getWeight();
+            $productItem['unit_name']=$product->getUnit()->getName();
+            $productItem['pack_unit']=$product->getBoxUnit();
+            $productItem['sort']=$product->getSortPriceTable();
+            $productItem['unit_price']=$product->getActivePriceValue();
+            $productItem['pack_price']=$product->getPackPriceAfterSale();
+            $arrProduct[$product->getProductCat()->getId()]['name']=$product->getProductCat()->getName();
+            $arrProduct[$product->getProductCat()->getId()]['img']=$product->getProductCat()->getIcon();
+            $arrProduct[$product->getProductCat()->getId()]['products'][]=$productItem;
+        }
+
+        //                    print_r($arrProduct);
+        foreach ($arrProduct as $item){
+            ?>
+            <div class="row" style="padding: 10px 20px; border-bottom: 1px solid #e5e5e5">
+                <h2 style="margin-bottom: 0px; font-weight: bold"><?=$item['name']?></h2>
+            </div>
+            <div class="row">
+                <table style="width: 100%" class="table-product">
+            <?php
+            $i=1;
+            foreach ($item['products'] as $product) {
+                if($i%2>0) echo '<tr>';
+                ?>
+                <td style="width: 40px; padding: 2px; text-align: center;border-bottom: 1px solid #e5e5e5">
+                    <div style="width: 40px; height: 40px; background-image: url(<?=$product['img']?>); background-repeat: no-repeat; background-position: center center; background-size: cover;"></div>
+                </td>
+                <td style="border-bottom: 1px solid #e5e5e5; padding: 10px; width: 50%">
+                    <div style="clear: right">
+                        <h4 class="pull-left"><?=$product['name'].'|'.$product['weight']?></h4>
+                        <div class="pull-right" style="padding-left: 10px">Giá lẻ: <b><?=Common::formatMoney($product['unit_price'])?></b></div>
+                    </div>
+                    <div class="product-info">
+                        <div class="pull-left">Quy cách: <?='<b>'.$product['pack_unit'].'</b> '.$product['unit_name']?>/Thùng</div>
+                        <div class="pull-right">Giá thùng: <b><?=Common::formatMoney($product['pack_price'])?></b></div>
+                    </div>
+                </td>
+            <?php
+                if($i%2==0) echo '</tr>';
+                $i++;
+            }
+            ?>
+                </table>
+            </div>
+        <?php
+        }
+        ?>
+    <style>
+        .table-product tr td:nth-child(2){padding-right: 15px!important;}
+        h4{margin-bottom: 0px; font-size: 13pt; font-weight: bold}
+        .pull-left{float: left;}
+        .pull-right{float: right;}
+        .product-item{margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e5e5e5}
+        .product-info{ clear: left}
+        .product-img{width: 100%}
+        .product-item-img{width: 50px; height: 50px; margin-right: 10px}
+    </style>
+
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    table{
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+    .selected
+    {
+        background-color: #1d79f1;
+        color: #fff;
+        font-weight: bold;
+    }
+</style>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
+<script type="text/javascript">
+    $( document ).ready(function() {
+
+    });
+</script>
+</body>
+</html>

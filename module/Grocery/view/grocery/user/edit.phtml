@@ -1,0 +1,181 @@
+<?php
+$this->headTitle($this->translate('Sửa thông tin cửa hàng'));
+$form = $this->form;
+$form->setAttributes([
+    'enctype'=>'multipart/form-data'
+]);
+$form->prepare();
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->grocery->getId()])?>">Chức năng</a></li>
+    <li class="active">Sửa thông tin cửa hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Sửa thông tin cửa hàng</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="panel panel-default">
+            <?php
+//            print_r($form->getMessages());
+            ?>
+            <?=$this->form()->openTag($form)?>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Tên cửa hàng (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('grocery_name'));
+                        echo $this->formElementErrors($form->get('grocery_name'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+                <!--Address-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Địa chỉ cửa hàng (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('address'));
+                        echo $this->formElementErrors($form->get('address'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="owner_name" class="col-md-3 control-label">Tên chủ cửa hàng (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('owner_name'));
+                        echo $this->formElementErrors($form->get('owner_name'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--Mobile-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Điện thoại chủ (*):</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('mobile'));
+                        echo $this->formElementErrors($form->get('mobile'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--Delivery note-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Ghi chú giao hàng:</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('delivery_note'));
+                        echo $this->formElementErrors($form->get('delivery_note'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--Zalo connect-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Zalo connect:</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('zalo_connect'));
+                        echo $this->formElementErrors($form->get('zalo_connect'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--Cach cham soc-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Cách chăm sóc:</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('approach'));
+                        echo $this->formElementErrors($form->get('approach'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <?php if($this->grocery->getImg()){ ?>
+                    <!-- Image view -->
+                    <div class="form-group">
+                        <label class="col-md-3 control-label"></label>
+                        <div class="col-md-9">
+                            <img id="img" src="<?=$this->grocery->getImg()?>" height="100px">
+                        </div>
+                    </div>
+                <?php }?>
+
+                <!-- Image -->
+                <div class="form-group">
+                    <label class="col-md-3 control-label">Hình ảnh cửa hàng</label>
+                    <div class="col-md-4">
+                        <?php
+                        echo $this->formElement($form->get('imageFile'));
+                        echo $this->formElementErrors($form->get('imageFile'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-9 col-md-offset-3">
+                        <input type="submit" name="btnSubmit"  id="btnSubmit" class="btn btn-success" value="Cập nhật">
+                        <span class="error" id="errorMessage"></span>
+<!--                        --><?php //if($this->grocery->getCountOrderPay()==0){?>
+                        <a href="<?=$this->url('grocery-user',['action'=>'map-position','id'=>$this->grocery->getId()])?>" class="btn btn-danger">Cập nhật vị trí</a>
+<!--                        --><?php //}?>
+                    </div>
+                </div>
+            </div>
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+</div>
+<div class="modal" id="modal_no_head" tabindex="-1" role="dialog" aria-labelledby="defModalHead" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <img id="imgPreview" src="" style="width: 100%">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+<script>
+    $( document ).ready(function() {
+
+        $('#img').click(function () {
+            $("#imgPreview").attr({ "src": $(this).attr("src") });
+            $('#modal_no_head').modal('show');
+        });
+        $("#imageFile").fileinput({
+            showUpload: false,
+            showCaption: false,
+            browseClass: "btn btn-danger",
+            fileType: "any"
+        });
+    })
+
+</script>

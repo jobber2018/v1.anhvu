@@ -1,0 +1,252 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Gửi ý sản phẩm trên app";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách sản phẩm gợi ý trên zalo app</li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                    <?php
+                    foreach ($this->productList as $product){
+                        $arrTmp["id"]=$product->getId();
+                        $arrTmp["name"]=$product->getName();
+                        if(is_null($product->getImg()))
+                            $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                        else
+                            $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                        $json = json_encode($arrTmp);
+
+                        if($product->getInventory()==0)
+                            $class='class="special"';
+                        else
+                            $class='';
+                        echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getCode().' | '.$product->getName(). " - ".$product->getWeight().' | Tồn: '.$product->getInventory().'</option>';
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="panel-body">
+                <div class="text-right text-danger">Note: Không nên để quá 15 sản phẩm trong danh sách!</div>
+                <div class="info-order">
+                    <table id="productList">
+                        <tr>
+                            <th style="text-align: center; width: 30px">STT</th>
+                            <th style="text-align: center;" nowrap="">Hình ảnh</th>
+                            <th style="text-align: left; width: 100%">Tên sản phẩm</th>
+                            <th></th>
+                        </tr>
+                        <?php
+                        $i=1;
+                        foreach ($this->products as $productItem){
+                            $product=$productItem->getProduct();
+                            ?>
+                            <tr id="<?=$product->getId()?>">
+                                <td style="text-align: center;"><?=$i++?></td>
+                                <td style="text-align: center">
+                                    <?php
+                                    if(is_null($product->getImg()))
+                                        echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                    else
+                                        echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                    ?>
+                                </td>
+                                <td><?=$product->getName()." | ". $product->getWeight()?></td>
+                                <td><i class="fa fa-trash-o" style="cursor: pointer" onclick="deleteRecommend(<?=$product->getId()?>)"></i></td>
+                            </tr>
+                            <?php
+                        }
+                        ?>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    table{
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+    .selected
+    {
+        background-color: #1d79f1;
+        color: #000000;
+        font-weight: bold;
+    }
+
+    .info-order tr:hover { background-color: #e8e8e8; }
+
+    .special {
+        color: #fff !important;
+        background: #bc0000 !important;
+    }
+    .warning-color{color: red}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+</style>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
+
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+
+<script type="text/javascript">
+    $( document ).ready(function() {
+
+        $("#productList").sortable({
+            items: 'tr:not(tr:first-child)',
+            cursor: 'pointer',
+            axis: 'y',
+            dropOnEmpty: false,
+            start: function (e, ui) {
+                ui.item.addClass("selected");
+            },
+            stop: function (e, ui) {
+                ui.item.removeClass("selected");
+                $(this).find("tr").each(function (index) {
+                    if (index > 0) {
+                        $(this).find("td").eq(0).html(index);
+                    }
+                });
+                updateRecommend();
+            }
+        });
+
+        $("#selectPro").on("changed.bs.select",
+            function(e, clickedIndex, newValue, oldValue) {
+                let data = $(this).find(':selected').attr('data');
+                let obj = jQuery.parseJSON(data);
+
+                let isDuplicate = duplicateCheck(obj.id);
+                if(isDuplicate){
+                    alert(obj.name+ " đã có trong danh sách!")
+                    return;
+                }
+
+                addRowToTable(obj);
+                reorder();
+                addRecommendToList(obj.id);
+            }
+        );
+    });
+
+    function duplicateCheck(id){
+        let result=false;
+        $('#productList tr').each(function(index, tr) {
+            if(parseInt(tr.id)===id){
+                result=true;
+                return true;
+            }
+        });
+        return result;
+    }
+
+    function reorder(){
+        let i=1;
+        $('#productList td:first-child').each(function() {
+            $(this).html(i++);
+        });
+    }
+
+    function addRowToTable(obj){
+        let html='<tr id="'+obj.id+'">';
+        html+='<td style="text-align: center;">0</td>';
+        html+='<td style="text-align: center;">'+obj.img+'</td>';
+        html+='<td>'+obj.name+'</td>';
+        html+='<td><i class="fa fa-trash-o" style="cursor: pointer" onclick="deleteRecommend('+obj.id+')"></i></td>';
+        html+='</tr>';
+        $('#productList tr:first').after(html);
+    }
+
+    function addRecommendToList(productId){
+        let url = "<?=$this->url('product-admin',['action'=>'add-recommend'])?>";
+        $.post( url, {id: productId }).done(function( res ) {
+            if(res.success===0)
+                alert(res.msg);
+        });
+    }
+
+    function updateRecommend(){
+        let recommendList=[];
+        $('#productList tr').each(function(index, tr) {
+            if(index>0){
+                recommendList.push({
+                    id:tr.id,
+                    index: index
+                });
+            }
+        });
+
+        let url = "<?=$this->url('product-admin',['action'=>'update-recommend'])?>";
+        $.post( url, {d: recommendList }).done(function( data ) {
+            console.log(data);
+        });
+    }
+
+    function deleteRecommend(productId){
+        let msg="Bạn có chắc muốn xoá sản phẩm khỏi danh sách gợi ý trên Zalo App?";
+        if (confirm(msg)) {
+            let url = "<?=$this->url('product-admin',['action'=>'delete-recommend'])?>";
+            $.post( url, {id: productId }).done(function( res ) {
+                if(res.success===1){
+                    $('#'+productId).remove();
+                    reorder();
+                }
+                else
+                    alert(res.msg)
+            });
+        }
+    }
+</script>
+</body>
+</html>

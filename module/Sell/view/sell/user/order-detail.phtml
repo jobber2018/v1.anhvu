@@ -1,0 +1,179 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->grocery->getId()])?>">Chức năng</a></li>
+    <li class="active">Chi tiết đơn hàng</li>
+</ul>
+<div class="page-title">
+    <h3>
+        <span class="fa fa-arrow-circle-o-left"></span> <?=$this->sellOrder->getOrderCode()?> | <?=$this->grocery->getGroceryName()?>
+        <small class="label label-info"><?=ConfigManager::getOrderStatus()[$this->sellOrder->getStatus()]?></small>
+    </h3>
+    <small style="color: #8c8a8a; padding-left: 20px"><?=$this->grocery->getAddress()?></small>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form action="<?=$this->url('sell-user',['action'=>'note'])?>" method="post">
+                            <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                            <div class="input-group" style="padding-bottom: 10px">
+                                <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="submit">Ghi chú</button>
+                                </span>
+                            </div>
+                        </form>
+
+                    <?php
+                        $noteArr =explode("\n",$this->sellOrder->getNote());
+                        if($this->sellOrder->getNote()){
+                            if(count($noteArr)){
+                                foreach ($noteArr as $value){
+                                    $arrNote = explode("|",$value);
+                                    ?>
+                                    <div class="list-group-item">
+                                        <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                        <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                        <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                        <p><i><?=@$arrNote[2]?></i></p>
+                                    </div>
+                                    <?php
+                                }
+                            }
+                        }
+                        ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <ul id="productList" class="list-group">
+                        <?php
+                        $total_order_price=0;
+                        $total_order_product_discount=0;
+                        foreach ($this->sellOrder->getSell() as $sell){
+                            $inventory=$sell->getProduct()->getInventory();
+                            $priceValue = $sell->getPriceValue();
+                            $qty=$sell->getQuantity();
+                            $packUnit=$sell->getPackUnit();
+                            $discount=$sell->getDiscount();
+                            //mua theo thung
+                            if($sell->isPack()){
+                                $qtySale=$sell->isPack();
+                                $unitSale='Thùng';
+                                $price=$packUnit*$priceValue;//gia ban theo thung
+                            }else{
+                                $qtySale=$qty;
+                                $unitSale=$sell->getProduct()->getUnit()->getName();
+                                $price=$priceValue;//gia ban le
+                            }
+
+                            $return='';
+                            $returnNumber = $sell->getReturn();
+                            if($returnNumber >0){
+                                if($returnNumber%$packUnit==0)
+                                    $return = 'Đã trả lại: '.$returnNumber/$packUnit . ' thùng';
+                                else
+                                    $return = 'Đã trả lại : '.$returnNumber.' '.$sell->getProduct()->getUnit()->getName();
+                            }
+                            ?>
+                            <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1 title"><?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></h5>
+                                </div>
+                                <table style="width: 100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="padding-right: 5px; width: 40px">
+                                            <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                        </td>
+                                        <td>
+                                            <table style=" width: 100%;" >
+                                                <tbody>
+                                                <tr>
+                                                    <th style="width: 30%"></th>
+                                                    <th nowrap="">Đơn vị</th>
+                                                    <th nowrap="" class="text-right">Số lượng</th>
+                                                    <th nowrap="" class="text-right">Giá bán</th>
+                                                    <th nowrap="" class="text-right">Chiết khấu</th>
+                                                    <th style="padding-left: 5px" class="text-right">Thành tiền</th>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td><?=$unitSale?></td>
+                                                    <td class="text-right"><?=$qtySale?><br><small style="color: red"><?=$return?></small></td>
+                                                    <td style="color: #2691ec; font-weight: bold" class="text-right" nowrap="">
+                                                        <?=Common::formatMoney($price)?>
+                                                    </td>
+
+                                                    <td class="text-right"><?=Common::formatMoney($discount)?></td>
+                                                    <?php
+                                                    $totalPrice = $price*$qtySale;
+                                                    $total_order_price+=$totalPrice;
+                                                    $total_order_product_discount+=$discount*$qtySale;
+                                                    ?>
+                                                    <td class="text-right"><?=Common::formatMoney($totalPrice)?></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="warning-color"></small>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                        <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="form-group" style="padding-top: 10px; padding-right: 10px;">
+                                <table>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 5px; border-bottom: 1px solid #cccccc" nowrap="">Tổng cộng:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 5px; border-bottom: 1px solid #cccccc"><?=Common::formatMoney($total_order_price)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="text-align: right; border-bottom: 1px solid #cccccc; padding: 3px 10px;" nowrap="">Chiết khấu theo sản phẩm:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($total_order_product_discount)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">Chiết khấu theo đơn (<?=@round(($this->sellOrder->getDiscount()/$total_order_price)*100,2).'%'?>):</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($this->sellOrder->getDiscount())?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-top: 3px;" nowrap=""><?=Common::formatMoney(round(($total_order_price-$total_order_product_discount-$this->sellOrder->getDiscount())/1000)*1000)?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<style>
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+</style>

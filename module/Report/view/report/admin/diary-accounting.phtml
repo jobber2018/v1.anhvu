@@ -1,0 +1,205 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Accounting</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-5">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form class="form-horizontal" id="frmAccounting" method="post" action="<?=$this->url('report-admin',['action'=>'diary-accounting'])?>" enctype="multipart/form-data">
+                        <input type="hidden" name="id" value="<?=$this->accountingDiaryEdit->getId()?>">
+                        <div class="form-group">
+                            <label class="col-md-4 control-label text-right">Ngày chứng từ</label>
+                            <div class="col-md-8">
+                                <div class="input-group">
+                                    <input type="text" name="date" class="form-control" value="<?=($this->accountingDiaryEdit->getDate()?$this->accountingDiaryEdit->getDate()->format('Y-m-d'):date("Y-m-d"))?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-4 text-right">Chứng từ gốc</label>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" name="code" value="<?=$this->accountingDiaryEdit->getCode()?>">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-4 text-right">Số hiệu TK</label>
+                            <div class="col-md-8">
+                                <select name="tk" class="form-control select">
+                                    <option value="154" <?=($this->accountingDiaryEdit->getTk()==154?'selected':'')?>>154:Chi phí nhân công trực tiếp (Tiền lương)</option>
+                                    <option value="211" <?=($this->accountingDiaryEdit->getTk()==211?'selected':'')?>>211:TSCĐ (Chi phí khấu hao tài sản)</option>
+                                    <option value="642" <?=($this->accountingDiaryEdit->getTk()==642?'selected':'')?>>642:Chi phí quản lý (Giấy in, mực in, điện...)</option>
+                                    <option value="641" <?=($this->accountingDiaryEdit->getTk()==641?'selected':'')?>>641:Chi phí bán hàng (Thuê nhà)</option>
+                                    <option value="3339" <?=($this->accountingDiaryEdit->getTk()==3339?'selected':'')?>>3339:Xăng xe</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-4 text-right">Phát sinh</label>
+                            <div class="col-md-8">
+                                <label class="check">
+                                    <input type="radio" class="iradio" value="1" name="op" checked="checked" /> Có
+                                </label>
+                                <label class="check">
+                                    <input type="radio" class="iradio" value="0" name="op" /> Nợ
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-4 text-right">Số tiền</label>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" name="money" value="<?=$this->accountingDiaryEdit->getMoney()?>">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-md-4 text-right">Diễn giải</label>
+                            <div class="col-md-8">
+                                <textarea class="form-control" name="summary" id="summary"><?=$this->accountingDiaryEdit->getSummary()?></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-8 col-lg-offset-4">
+                                <?php
+                                $btnLable='Thêm mới';
+                                if($this->accountingDiaryEdit->getId()){
+                                    $btnLable='Cập nhật';
+                                }
+                                ?>
+                                <button id="btnSubmit" class="btn btn-success"><?=$btnLable?></button>
+                                <a href="<?=$this->url('report-admin',['action'=>'diary-accounting'])?>" class="btn btn-info">Làm lại</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table nowrap table-hover display" style="width:100%" id="tblAccountingDiary">
+                    <thead>
+                    <tr>
+                        <th class="text-center">STT</th>
+                        <th>Ngày chứng từ</th>
+                        <th>Diễn giải</th>
+                        <th class="text-center">Tài khoản</th>
+                        <th class="text-right">Tổng tiền</th>
+                        <th class="text-center">Phát sinh</th>
+                        <th>Người tạo</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    $i=1;
+                    foreach ($this->accountingDiaryList as $accountingDiaryItem){
+                        $arr["id"]=$accountingDiaryItem->getId();
+                        $arr["date"]=Common::formatDate($accountingDiaryItem->getDate());
+                        echo '<tr>';
+                        echo '<td class="text-center">'.$i++.'</td>';
+                        echo '<td><a href="'.$this->url('report-admin',['action'=>'diary-accounting','id'=>$accountingDiaryItem->getId()]).'" style="color: #3c7fef">' .Common::formatDate($accountingDiaryItem->getDate()).'</a></td>';
+                        echo '<td>'.$accountingDiaryItem->getSummary().'</td>';
+                        echo '<td class="text-center">'.$accountingDiaryItem->getTk().'</td>';
+                        echo '<td class="text-right" nowrap="">'.Common::formatMoney($accountingDiaryItem->getMoney()).' đ</td>';
+                        echo '<td class="text-center">'.($accountingDiaryItem->getOp()==0?'Nợ':'Có').'</td>';
+                        echo '<td>'.$accountingDiaryItem->getUser()->getFullname().'</td>';
+                        echo '</tr>';
+                    }
+                    ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+<script type='text/javascript' src='/joli/js/plugins/jquery-validation/jquery.validate.js'></script>
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<style>
+    #tblAccountingDiary a{color: #0d0d0d}
+    #tblAccountingDiary .title{font-weight: bold; font-size: 14px; color: #067fad}
+    #tblAccountingDiary td{padding-bottom: 5px; padding-top: 5px}
+    #tblAccountingDiary td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
+    #tblAccountingDiary tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{border-bottom: unset}
+    .dataTables_filter {float: left; width: 70%; border-bottom: 1px solid rgb(229, 229, 229)}
+    .dataTables_filter label{float: left;}
+    .dataTables_length {float: right; width: 30%}
+
+</style>
+<script>
+    $( document ).ready(function() {
+        $("#fdate").datepicker();
+
+        var frmAccounting = $("#frmAccounting").validate({
+            ignore: [],
+            rules: {
+                date: {
+                    required: true
+                },
+                tk: {
+                    required: true
+                },
+                summary: {
+                    required: true
+                }
+            }
+        });
+
+        $('#tblAccountingDiary').DataTable({
+            paging: true,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm chứng từ"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    })
+</script>

@@ -1,0 +1,218 @@
+<html lang="en">
+<head>
+    <title>product price</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+
+</head>
+<body>
+<?php
+use Sulde\Service\Common\Common;
+?>
+<div class="modal"></div>
+<div>
+    <div class="row">
+        <div class="panel panel-default" style="padding-bottom: 10px">
+            <div class="panel-body">
+                <table style="width: 100%">
+                    <tr>
+                        <td style="width: 50%" nowrap="">
+                            <h4 style="padding-bottom: 0px; margin-bottom: 5px">
+                                <a style="color: #000000; text-decoration:unset" href="<?=$this->url('product-user',['action'=>'export-price'])?>">NHÀ PHÂN PHỐI ANH VŨ - BẢNG BÁO GIÁ SẢN PHẦM</a>
+                            </h4>
+                            <div style="padding-bottom: 3px"><b>Địa chỉ:</b> KĐT Thanh Hà, Hà Đông, TP. Hà Nội</div>
+
+                        </td>
+                        <td style="width: 50%; text-align: right">
+                            <div style="padding-bottom: 3px">Điện thoại: <b>0946 021 021</b> Zalo: <b>0877 427 569</b></div>
+                            <div style="padding-bottom: 5px;"><b id="btnSubmit" style="cursor: pointer">Áp dụng từ: </b><i>Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="info-order">
+                <table id="tblPrice">
+                    <tr>
+                        <th style="text-align: center; width: 30px">STT<br><small style="font-weight: normal"><i>(No.)</i></small></th>
+                        <th style="text-align: center; width: 40px">Hình ảnh<br><small style="font-weight: normal"><i>(Picture)</i></small></th>
+                        <th style="text-align: left; width: 100%">Tên sản phẩm<br><small style="font-weight: normal"><i>(Product name)</i></small></th>
+                        <th style="text-align: center;" nowrap="">Giá bán<br><small style="font-weight: normal"><i>(Price)</i></small></th>
+                    </tr>
+                    <?php
+                    $i=1;
+                    foreach ($this->product as $product){
+                        if($product->getActive()==1){
+                    ?>
+                        <tr id="<?=$product->getId()?>">
+                            <td style="text-align: center;"><?=$i++?></td>
+                            <td style="text-align: center">
+                                <?php
+                                if(is_null($product->getImg()))
+                                    echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                else
+                                    echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                ?>
+                            </td>
+                            <td><?=$product->getName()." | ". $product->getWeight()?></td>
+                            <td style="text-align: right" nowrap=""><?=Common::formatMoney($product->getActivePrice()->getPrice())?> đ</td>
+                        </tr>
+                    <?php
+                        }
+                    }
+                    ?>
+                </table>
+            </div>
+            <div class="info-sender" style="text-align: right; padding-top: 15px">
+                <i>RẤT HÂN HẠNH ĐƯỢC PHỤC VỤ QUÝ KHÁCH!</i>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    body {
+        font-family: "Times New Roman";
+        font-size: 14px;
+    }
+    table{
+        font-size: 14px;
+    }
+    .page-content-wrap{
+        margin: auto;
+        width: 90%;
+        padding-top: 40px;
+        /*border: 1px solid;*/
+    }
+    .info-order table{
+        width: 100%;
+        border: 1px solid #cccccc;
+        border-spacing: 0px;
+    }
+    .info-order table th{
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+        background-color: #F5F5F5;
+    }
+    .info-order table td,th{
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        padding: 5px;
+    }
+    .info-order table td:first-child,th:first-child{
+        border-left: 0px;
+    }
+    .info-sender table th{
+        padding-top: 20px;
+        width: 25%;
+        font-weight: bold;
+        border: 0px;
+    }
+    .info-sender table tr:last-child{
+        text-align: center;
+        font-style: italic;
+    }
+    .selected
+    {
+        background-color: #1d79f1;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    /*loading*/
+    .modal {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .8 )
+        url('/img/logo.png')
+        50% 50%
+        no-repeat;
+    }
+
+    /* When the body has the loading class, we turn
+       the scrollbar off with overflow:hidden */
+    body.loading {
+        overflow: hidden;
+    }
+
+    /* Anytime the body has the loading class, our
+       modal element will be visible */
+    body.loading .modal {
+        display: block;
+    }
+</style>
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/themes/smoothness/jquery-ui.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.24/jquery-ui.min.js"></script>
+<script type="text/javascript">
+    $( document ).ready(function() {
+
+        $body = $("body");
+
+        let oldIndex,newIndex,sortListChange=[];
+
+        $("#tblPrice").sortable({
+            items: 'tr:not(tr:first-child)',
+            cursor: 'pointer',
+            axis: 'y',
+            dropOnEmpty: false,
+            start: function (e, ui) {
+                ui.item.addClass("selected");
+                // oldIndex = ui.item.index();
+                // console.log('oldIndex',newIndex);
+            },
+            stop: function (e, ui) {
+                // ui.item.removeClass("selected");
+
+                $(this).find("tr").each(function (index) {
+                    if (index > 0) {
+                        $(this).find("td").eq(0).html(index);
+                    }
+                });
+                let id=ui.item.attr('id');
+                newIndex = ui.item.index();
+                sortListChange.push({
+                    id:id,
+                    index: newIndex
+                });
+
+                // console.log('newIndex',newIndex);
+                // console.log(ui.item.attr('id'));
+            }
+        });
+
+        $('#btnSubmit').click(function(){
+
+            $body.addClass("loading");
+            /*var x = document.getElementsByTagName("tr");
+            var sortList=[];
+            for (i = 0; i < x.length;i++) {
+                if(x[i].rowIndex>0){
+                    sortList.push({
+                        id:x[i].getAttribute('id'),
+                        index: x[i].rowIndex
+                    });
+                }
+            }*/
+            var url = "<?=$this->url('product-user',['action'=>'sort'])?>";
+            $.post( url, {d: sortListChange }).done(function( data ) {
+                $body.removeClass("loading");
+                sortListChange=[];
+            });
+        })
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,669 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\Define;
+
+$title = "Kiểm tra và đóng gói";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-check-admin',['action'=>'list'])?>">Danh sách đơn</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$title.": ".$this->sellOrder->getGrocery()->getGroceryName()?></h2>
+    <ul class="panel-controls">
+        <li><button id="" onclick="findProductByBarcode('code-pack');" class="btn btn-info btn-block"><i class="fa fa-dropbox"></i> Kiểm theo thùng</button></li>
+        <li><button id="btnRecheckOrder" onclick="recheckOrder()" class="btn btn-danger btn-block"><i class="fa fa-refresh"></i> Kiểm lại</button></li>
+        <li><button id="btnShowModalConfirmCheck" onclick="showModalConfirmCheck()" class="btn btn-info active"><i class="fa fa-save"></i>Kết thúc kiểm</button></li>
+        <?php
+        if($this->sellOrder->getStatus()==Define::_ORDER_PACKED_STATUS && $this->sellOrder->getApprovalCheckBy()==null){
+        ?>
+            <li><button onclick="showModalConfirmCheck()" class="btn btn-info active"><i class="fa fa-save"></i>Duyệt đơn</button></li>
+        <?php
+        }else if($this->sellOrder->getStatus()==Define::_ORDER_PACKED_STATUS && $this->sellOrder->getApprovalCheckBy()!=null){
+            ?>
+            <li><button class="btn btn-info">
+                    <span class="fa fa-print">
+                    <a style="color: white" href="<?=$this->url('sell-admin',['action'=>'do-packed','id'=>$this->sellOrder->getId()])?>" target="_blank">
+                        </span>Chi tiết đơn
+                    </a>
+                </button>
+            </li>
+        <?php
+        }
+        ?>
+    </ul>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm cần kiểm</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblMissingList">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>STT</th>
+                            <th>Mã</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Đơn vị</th>
+                            <th>Số lượng</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm đã kiểm đủ</h3>
+                    <ul class="panel-controls">
+                        <li>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="">
+                                    40% Hoàn thành
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblCheckedList">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>STT</th>
+                            <th>Mã</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Đơn vị</th>
+                            <th>Số lượng</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade bottom" id="modalConfirmCheck" tabindex="-1" role="dialog" aria-labelledby="modalConfirmCheck" aria-hidden="true">
+    <div class="modal-dialog modal-bottom" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h3 class="modal-title" id="modalConfirmCheckLabel">Sản phẩm thiếu hoặc không có trong đơn</h3>
+            </div>
+            <div class="modal-body">
+                <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblConfirmMissingList">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>STT</th>
+                        <th>Mã</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Đơn vị</th>
+                        <th>SL thiếu</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="txtPackNumber" id="txtPackNumber" placeholder="Số thùng">
+                    </div>
+                    <div class="col-md-9">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="btnConfirmCheck" onclick="confirmCheck()" type="button" class="btn btn-success">
+                            <span class="fa fa-save"></span>
+                            Xác nhận
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/js/jquery.scannerdetection.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<style>
+    .progress{width: 200px!important;margin-bottom:0 !important;}
+    .modal-dialog {
+        min-width: 600px !important;
+        width: auto !important; /* allows the dialog to shrink-wrap its content */
+    }
+    .noty_bar{
+        min-height: 80px;
+        align-items:center;
+        display:flex;
+        /*font-size: 14pt;*/
+    }
+    .noty_message{font-size: larger!important; line-height: unset!important;font-weight: bold}
+    #noty_topRight_layout_container li{margin-bottom: 2px}
+
+</style>
+<script>
+    let products=<?=json_encode($this->products)?>;
+    let isOrderStatus=<?=$this->sellOrder->getStatus()?>;
+
+    let tblMissingList,tblCheckedList,tblConfirmMissingList;
+    let findCodePack=0;
+    $(document).ready(function () {
+
+        //danh sach san pham can kiem
+        tblMissingList=$('#tblMissingList').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            searching: true,
+            fixedColumns: true,
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name:'no', targets: 1, width:'5%'},
+                { name:'code', targets: 2, width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(subBarcode(cellData));
+                    }
+                },
+                {
+                    name: 'name',
+                    targets: 3,
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name=rowData[0].name+' | '+rowData[0].weight;
+                            name+='<small class="help-block font-small text-info">'+rowData[0].description+'</small>'
+                        $(td).html(name);
+                    }
+                }, {
+                    name: 'unit',
+                    targets: 4,
+                    width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(cellData);
+                    }
+                }, {
+                    name: 'qty',
+                    width:'10%',
+                    targets: 5,
+                    className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let value=rowData[0].check_qty+'/'+cellData
+                        if(rowData[0].is_pack){
+                            value=rowData[0].check_qty/rowData[0].pack_unit+'/'+cellData/rowData[0].pack_unit;
+                        }
+
+                        $(td).css('color', 'red');
+                        $(td).css('font-size', '12pt');
+                        $(td).html(value);
+                    }
+                },{
+                    name: 'button',
+                    width:'10%',
+                    targets: 6,
+                    className: 'dt-body-nowrap',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let button='<button style="margin-right: 5px" data-toggle="tooltip" data-placement="bottom" title="Kiểm lại" onclick="recheckProduct('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                        button+='<span class="fa fa-refresh"></span>';
+                        button+='</button>';
+
+                        let product_code=rowData[0].code;
+
+                        button+='<button style="margin-right: 5px" data-toggle="tooltip" data-placement="bottom" title="Kiểm" onclick="findProductByBarcode(\''+product_code+'\')" type="button" class="btn btn-warning btn-rounded">';
+                        button+='<span class="fa fa-check"></span>';
+                        button+='</button>';
+
+                        $(td).html(button);
+                    }
+                }
+            ]
+        });
+
+        //ds san pham da kiem
+        tblCheckedList=$('#tblCheckedList').DataTable({
+            paging: false,
+            info:false,
+            ordering: false,
+            searching: true,
+            processing: true,
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name:'no', targets: 1, width:'5%'},
+                { name:'code', targets: 2, width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(subBarcode(cellData));
+                    }
+
+                },
+                {
+                    name: 'name',
+                    targets: 3,
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name=rowData[0].name+' | '+rowData[0].weight;
+                        let approvedQty=rowData[0].approved_qty;
+                        let checkQty=rowData[0].check_qty;
+                        if(checkQty<approvedQty)
+                            $(td).css('color', 'red');
+                        $(td).html(name);
+                    }
+                }, {
+                    name: 'unit',
+                    targets: 4,
+                    width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(cellData);
+                    }
+                },{
+                    name: 'qty',
+                    width:'10%',
+                    targets: 5,
+                    className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let approvedQty=rowData[0].approved_qty;
+                        let checkQty=rowData[0].check_qty;
+
+                        if(rowData[0].is_pack){
+                            approvedQty=rowData[0].approved_qty/rowData[0].pack_unit;
+                            checkQty=rowData[0].check_qty/rowData[0].pack_unit;
+                        }
+
+                        if(checkQty<approvedQty)
+                            $(td).css('color', 'red');
+
+                        let value=checkQty+'/'+approvedQty
+                        $(td).css('font-size', '12pt');
+                        $(td).html(value);
+                    }
+                },{
+                    name: 'button',
+                    width:'10%',
+                    targets: 6,
+                    className: 'dt-body-nowrap',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let button='<button style="margin-right: 5px" data-toggle="tooltip" data-placement="bottom" title="Kiểm lại" onclick="recheckProduct('+cellData+')" type="button" class="btn btn-warning btn-rounded">';
+                        button+='<span class="fa fa-refresh"></span>';
+                        button+='</button>';
+
+                        $(td).html(button);
+                    }
+                }
+            ],
+        });
+
+        //ds san pham thieu tren form xac nhan
+        tblConfirmMissingList=$('#tblConfirmMissingList').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            searching: false,
+            fixedColumns: true,
+            columnDefs: [
+                { name:'rowData', targets: 0, visible: false},
+                { name:'no', targets: 1, width:'5%'},
+                { name:'code', targets: 2, width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(subBarcode(cellData));
+                    }
+                },
+                {
+                    name: 'name',
+                    targets: 3,
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name=rowData[0].name+' | '+rowData[0].weight;
+                        $(td).html(name);
+                    }
+                }, {
+                    name: 'unit',
+                    targets: 4,
+                    width:'10%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(cellData);
+                    }
+                }, {
+                    name: 'qty',
+                    width:'10%',
+                    targets: 5,
+                    className: 'number price',
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        let value=cellData-rowData[0].check_qty
+                        if(rowData[0].is_pack){
+                            value=cellData/rowData[0].pack_unit - rowData[0].check_qty/rowData[0].pack_unit;
+                        }
+                        $(td).css('color', 'red');
+                        $(td).css('font-size', '12pt');
+                        $(td).html(value);
+                    }
+                }
+            ]
+        });
+
+        loadDataToTable();//load data lan dau vao 2 table;
+        // findProductByBarcode('127947zk');
+        // findProductByBarcode('8934868161448');
+        // findProductByBarcode('69716623');
+    });
+
+    $(document).scannerDetection({
+        timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+        startChar: [120], // Prefix character for the cabled scanner (OPL6845R)
+        endChar: [13], // be sure the scan is complete if key 13 (enter) is detected
+        avgTimeByChar: 40, // it's not a barcode if a character takes longer than 40ms
+        onComplete: function(barcode, qty){
+            // console.log('scannerDetection:'+barcode +'/'+qty);
+            // $('.prompt').val('');
+            // $('.prompt').focus();
+            findProductByBarcode(barcode);
+        } // main callback function
+    });
+
+    function findProductByBarcode(barcode){
+
+        if(isOrderStatus==<?=\Sulde\Service\Common\Define::_ORDER_PACKED_STATUS?>){
+            let msg="Đơn hàng đã được đóng gói: <b>";
+            let packNumber=<?=($this->sellOrder->getPackNumber())?$this->sellOrder->getPackNumber():0?>;
+            if(packNumber) msg+=packNumber + " thùng </b>";
+            noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+            return;
+        }
+
+        //
+        if(!barcode){
+            noty({text: 'Sản phẩm không có mã vạch. Hãy thêm mã trước khi kiểm!', layout: 'topRight', type: 'error',timeout: 5000});
+            return;
+        }
+
+        //quet ma de kiem san pham theo thung
+        if(barcode=='code-pack'){
+            noty({text: 'Quét mã sản phẩm để kiểm theo thùng!', layout: 'topRight', type: 'information',timeout: 3000});
+            findCodePack=1;
+            return;
+        }
+
+        let productItem,productItemPack,productItemUnit;
+        let msg="",checkQty=1;
+
+        //quet ma san pham sau khi quet kiem tra theo thung
+        if(findCodePack==1 && barcode){
+            productItemUnit = $.grep(products, function(e){
+                return e.code === barcode;
+            });
+            barcode=productItemUnit[0].pack_code;
+            findCodePack=0;
+        }
+
+        //Tim kiem ma san pham
+        productItemUnit = $.grep(products, function(e){
+            return e.code === barcode || e.code_1 === barcode || e.code_2 === barcode || e.code_3 === barcode;
+        });
+
+        //tim kiem theo ma thung
+        productItemPack = $.grep(products, function(e){
+            return e.pack_code === barcode;
+        });
+
+        //tim thay ma san pham trong danh sach
+        if(productItemUnit.length>0){
+            productItem=productItemUnit[0];
+            checkQty=productItem.exchange_unit;//so luong kiem can update
+        }
+        if(productItemPack.length>0){
+            productItem=productItemPack[0];
+            checkQty=productItem.pack_unit;//so luong kiem can update
+        }
+
+
+        //tim thay san pham trong don hang
+        if(productItem){
+            let sellId=productItem.sell_id;
+
+            if(productItem.check_qty==productItem.order_qty){
+                // msg="["+productItem.code+"]: "+productItem.name+" <b>đã kiểm đủ "+productItem.check_qty+"/"+productItem.order_qty+"</b>";
+                msg=productItem.name+" <b>đã kiểm đủ "+productItem.check_qty+"/"+productItem.order_qty+"</b>";
+                noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+                playAudio('warning');
+                return;
+            }else if(productItem.check_qty+checkQty>productItem.order_qty){
+                // msg="["+productItem.code+"]: "+productItem.name+" <b>Thừa "+parseInt(productItem.check_qty+checkQty)+"/"+productItem.order_qty+"</b>";
+                msg=productItem.name+" <b>Thừa "+parseInt(productItem.check_qty+checkQty)+"/"+productItem.order_qty+"</b>";
+                noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+                playAudio('warning');
+                return;
+            }
+
+            run_waitMe();
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: '<?=$this->url('sell-check-admin',['action'=>'check'])?>',
+                data: {sellId:sellId,qty:checkQty},
+            }).done(function(res) {
+                if(res.status===1){
+                    $.each(products, function( index, value ) {
+                        if(value.sell_id==sellId)
+                            products[index].check_qty+=checkQty;
+                    });
+                    let msg;
+
+                    if (productItem.check_qty == productItem.order_qty){
+                        msg = productItem.name + " <b style='font-size: x-large'> đã đủ " + productItem.order_qty + " " + productItem.unit + "</b>";
+                        playAudio('success');
+                    }
+                    else{
+                        msg = productItem.name + " <b style='font-size: x-large'>" + (productItem.check_qty) + "/" + productItem.order_qty + " " + productItem.unit + "</b>";
+                        playAudio('fail');
+                    }
+                    // $('#lastScan').removeClass('alert-danger').addClass('alert alert-success').html(msg);
+                    noty({text: msg, layout: 'topRight', type: 'information',timeout: 3000});
+                    loadDataToTable();
+                }else{
+                    playAudio('warning');
+                    noty({text: res.message, layout: 'topRight', type: 'error',timeout: 5000});
+                }
+                stop_waitMe()
+            });
+
+        }else{
+            // playAudio('alert');
+            playAudio('warning');
+            msg="["+barcode+"]: KHÔNG CÓ TRONG ĐƠN HÀNG!"
+            // $('#lastScan').addClass('alert alert-danger').html(msg);
+            noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+        }
+    }
+    function loadDataToTable(){
+        let i=1,j=1,totalCheckQty=0,totalOrderQty=0;
+        tblMissingList.clear().draw();
+        tblCheckedList.clear().draw();
+        $.each( products, function( key, value ) {
+            let dataItem=[];
+            if(value.check_qty-value.order_qty<0){
+                //load data to tblMissingList
+                // console.log(value.pack_code);
+                dataItem.push(value);
+                dataItem.push(i++);
+                dataItem.push(value.code);
+                dataItem.push(value.name);
+                dataItem.push(value.unit);
+                dataItem.push(value.order_qty);
+                dataItem.push(value.sell_id);
+                tblMissingList.row.add(dataItem).draw(false); // Add new data
+            }else{
+                //load data to tblCheckedList
+                dataItem.push(value);
+                dataItem.push(j++);
+                dataItem.push(value.code);
+                dataItem.push(value.name);
+                dataItem.push(value.unit);
+                dataItem.push(value.order_qty);
+                dataItem.push(value.sell_id);
+                tblCheckedList.row.add(dataItem).draw(false); // Add new data
+            }
+            totalCheckQty+=value.check_qty;
+            totalOrderQty+=value.order_qty;
+        });
+
+        //progress bar
+        let progress=(totalCheckQty/totalOrderQty)*100;
+        progress=progress.toFixed()+"%";
+        $('.progress-bar').css("width",progress).html(progress+" hoàn thành");
+
+        //kiem tra don hang da duoc dong goi chua?
+        if(isOrderStatus==<?=Define::_ORDER_PACKED_STATUS?>){
+            let msg="Đơn hàng đã được đóng gói: <b>";
+            let packNumber=<?=($this->sellOrder->getPackNumber())?$this->sellOrder->getPackNumber():0?>;
+            if(packNumber) msg+=packNumber + " thùng </b>";
+            // $('#lastScan').addClass('alert alert-danger').html(msg);
+            noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+            $('#btnShowModalConfirmCheck').prop('disabled', true);
+        }else{
+            $('#btnShowModalConfirmCheck').prop('disabled', false);
+        }
+    }
+    function recheckProduct(sellId){
+        let productItem = $.grep(products, function(e){
+            return e.sell_id === sellId;
+        });
+
+        let userConfirmed = confirm("Kiểm lại "+productItem[0].name+"?");
+
+        if (userConfirmed) {
+            run_waitMe();
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: '<?=$this->url('sell-check-admin',['action'=>'recheck-product'])?>',
+                data: {sellId:sellId},
+            }).done(function(res) {
+                if(res.status===1){
+                    $.each(products, function( index, value ) {
+                        if(value.sell_id==sellId) {
+                            products[index].check_qty = 0;
+                            products[index].order_qty = products[index].approved_qty;
+                            // console.log(products[index]);
+                        }
+                    });
+                    let msg="Đã huỷ dữ liệu kiểm của sản phầm <b>"+productItem[0].name+"</b><b>";
+                    // $('#lastScan').removeClass('alert-danger').addClass('alert alert-success').html(msg);
+                    noty({text: msg, layout: 'topRight', type: 'information',timeout: 3000});
+                    isOrderStatus=<?=Define::_ORDER_PACKING_STATUS?>;
+                    loadDataToTable();
+                }else{
+                    // $('#lastScan').addClass('alert alert-danger').html(res.message);
+                    noty({text: res.message, layout: 'topRight', type: 'error',timeout: 5000});
+                }
+                stop_waitMe();
+            });
+        }
+    }
+    function recheckOrder(){
+        let userConfirmed = confirm("Huỷ toàn bộ dữ liệu đã kiểm của đơn hàng?");
+        if (userConfirmed) {
+            run_waitMe();
+            $('#btnRecheckOrder').button('loading');
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: '<?=$this->url('sell-check-admin',['action'=>'recheck-order'])?>',
+                data: {orderId:<?=$this->sellOrder->getId()?>},
+            }).done(function(res) {
+                if(res.status===1){
+                    $.each(products, function( index, value ) {
+                            products[index].check_qty=0;
+                            products[index].order_qty=value.approved_qty;
+                    });
+                    let msg="Đã huỷ dữ liệu kiểm của đơn hàng";
+                    noty({text: msg, layout: 'topRight', type: 'information',timeout: 3000});
+                    isOrderStatus=<?=Define::_ORDER_PACKING_STATUS?>;
+                    loadDataToTable();
+                }else{
+                    noty({text: res.message, layout: 'topRight', type: 'error',timeout: 5000});
+                }
+                $('#btnRecheckOrder').button('reset');
+                stop_waitMe();
+            });
+        }
+    }
+    function showModalConfirmCheck(){
+        tblConfirmMissingList.clear().draw();
+        let i=1;
+        $.each( products, function( key, value ) {
+            let dataItem=[];
+            if(value.check_qty-value.order_qty<0){
+                //load data to tblConfirmMissingList
+                dataItem.push(value);
+                dataItem.push(i++);
+                dataItem.push(value.code);
+                dataItem.push(value.name);
+                dataItem.push(value.unit);
+                dataItem.push(value.order_qty);
+                dataItem.push(value.sell_id);
+                tblConfirmMissingList.row.add(dataItem).draw(false); // Add new data
+            }
+        });
+        $('#modalConfirmCheck').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        }).on('shown.bs.modal', function (e) {
+            let packNumber=<?=($this->sellOrder->getPackNumber())?$this->sellOrder->getPackNumber():0?>;
+            $('#txtPackNumber').val(packNumber).focus();
+        });
+    }
+    function confirmCheck(){
+        let packNumber=$('#txtPackNumber').val();
+        if(!packNumber) {
+            noty({text: 'Nhập số lượng thùng đã đóng gói!', layout: 'topRight', type: 'error',timeout: 4000});
+            $('#txtPackNumber').val('').focus();
+            return;
+        }
+        let url='<?=$this->url('sell-check-admin',['action'=>'confirm-check'])?>';
+        if(isOrderStatus==<?=Define::_ORDER_PACKED_STATUS?>)
+            url = '<?=$this->url('sell-check-admin',['action'=>'approval-check'])?>';
+
+        run_waitMe('.modal-dialog');
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {orderId:<?=$this->sellOrder->getId()?>,packNumber:packNumber},
+        }).done(function(response) {
+            if(response.status===1){
+                noty({text: response.message, layout: 'topRight', type: 'success',timeout: 4000});
+                $('#modalConfirmCheck').modal('hide');
+                //isOrderStatus=<?php //=Define::_ORDER_PACKED_STATUS?>//;
+                // loadDataToTable();
+                window.location.href = '<?=$this->url('sell-check-admin',['action'=>'list'])?>';
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe('.modal-dialog');
+        });
+    }
+</script>

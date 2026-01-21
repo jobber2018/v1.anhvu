@@ -1,0 +1,104 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-admin',['action'=>'delivering'])?>">Danh sách đơn hàng</a></li>
+    <li class="active">Chi tiết đơn hàng đã giao</li>
+</ul>
+<div class="page-title">
+    <h2>
+        <span class="fa fa-arrow-circle-o-left"></span>
+        Chi tiết đơn hàng đang giao
+    </h2>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a class="btn btn-info" href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" >
+                        <span class="fa fa-print"></span>In đơn
+                    </a>
+
+                </div>
+                <div class="panel-body">
+                    <?=$this->partial('sell/partial/order-edit-product', ['order'=>$this->sellOrder,'action'=>[],'url'=>'do-delivering']);?>
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-note', ['order'=>$this->sellOrder,'userInfo'=>$this->userInfo]);?>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/customer-info', ['order'=>$this->sellOrder]);?>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <table style="width: 100%">
+                        <tr>
+                            <td>
+                                <select class="form-control select" name="cboCar" id="cboCar">
+                                    <option value="0">...</option>
+                                    <option value="30M71302" <?=$this->sellOrder->getDeliveryCar()=='30M71302'?'selected':''?>>30M-71302</option>
+                                    <option value="30M61300" <?=$this->sellOrder->getDeliveryCar()=='30M61300'?'selected':''?>>30M-61300</option>
+                                    <option value="29H23118" <?=$this->sellOrder->getDeliveryCar()=='29H23118'?'selected':''?>>29H-23118</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-control select" name="cboTime" id="cboTime">
+                                    <option value="0">...</option>
+                                    <option value="AM" <?=$this->sellOrder->getDeliveryCarTime()=='AM'?'selected':''?>>Sáng</option>
+                                    <option value="PM" <?=$this->sellOrder->getDeliveryCarTime()=='PM'?'selected':''?>>Chiều</option>
+                                    <option value="ALL" <?=$this->sellOrder->getDeliveryCarTime()=='ALL'?'selected':''?>>Cả ngày</option>
+                                </select>
+                            </td>
+                            <td>
+                                <button id="btnUpdateCarToOrder" class="btn btn-info"><span class="fa fa-save"></span>Cập nhật</button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <?=$this->partial('sell/partial/order-info', ['order'=>$this->sellOrder]);?>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#btnUpdateCarToOrder').click(function() {
+            let car = $("#cboCar").val();
+            let time = $("#cboTime").val();
+
+            let option=(car==0?0:1);
+            run_waitMe();
+            let url='<?=$this->url('sell-admin',['action'=>'delivery-car'])?>';
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                data: {orderId:<?=$this->sellOrder->getId()?>,option:option,car:car,time:time},
+                url: url
+            }).done(function(response) {
+                if(response.status==1){
+                    noty({text: 'Đã cập nhật xe giao đơn!', layout: 'topRight', type: 'success',timeout: 4000});
+                }else{
+                    noty({text: 'Lỗi cập nhật xe giao đơn!', layout: 'topRight', type: 'error',timeout: 4000});
+                }
+                stop_waitMe();
+            });
+        });
+    });
+</script>

@@ -1,0 +1,109 @@
+<?php
+/**
+ * Copyright (c) 2019.  Sulde JSC
+ * Created by   : TruongHM
+ * Created date: 7/15/19 5:58 PM
+ *
+ */
+
+$title = "Edit user";
+$this->headTitle($title);
+
+$form->get('mobile')->setAttributes(['readonly'=>true]);
+
+$form->prepare();
+
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger; ?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('user-admin')?>">User List</a></li>
+    <li class="active">Edit user</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$this->escapeHtml($title)?></h2>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-success">
+            <div class="panel-body">
+                <div class="col-md-7 col-md-offset-2">
+                    <?=$this->form()->openTag($form)?>
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('mobile'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('mobile'));
+                            echo $this->formElementErrors($form->get('mobile'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('email'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('email'));
+                            echo $this->formElementErrors($form->get('email'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('fullname'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('fullname'));
+                            echo $this->formElementErrors($form->get('fullname'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <?=$this->formLabel($form->get('birthdate'));?>
+                        <div class="col-md-9">
+                            <?php
+                            echo $this->formElement($form->get('birthdate'));
+                            echo $this->formElementErrors($form->get('birthdate'));
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-md-7 col-md-offset-3">
+                            <?=$this->formElement($form->get('btnSubmit'));?>
+                        </div>
+                    </div>
+                    <?=$this->form()->closeTag()?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>

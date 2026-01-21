@@ -1,0 +1,57 @@
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách tuyến</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Cảm nhận của bạn sau khi chào hàng?.</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <form id="frmFeeling" method="post" action="<?=$this->url('grocery-user',['action'=>'feeling','id'=>$this->escapeHtml($this->grocery->getId())])?>">
+                <input type="hidden" name="feeling" id="txtFeeling" />
+                <table>
+                    <tr>
+                        <td>
+                            <img style="width: 60%" src="/img/icons/feeling-good.png" onclick="feelingClick(3)" />
+                        </td>
+                        <td><img style="width: 60%" src="/img/icons/feeling-nomal.png" onclick="feelingClick(2)"  /></td>
+                        <td><img style="width: 60%" src="/img/icons/feeling-sad.png" onclick="feelingClick(1)"  /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tốt</strong></td>
+                        <td><strong>Cần chăm sóc tiếp</strong></td>
+                        <td><strong>Không thế bán hàng</strong></td>
+                    </tr>
+                </table>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    table td {text-align: center;}
+    table tr:last-child td {padding-top: 10px}
+</style>
+<script>
+    function feelingClick(v){
+        $('#txtFeeling').val(v);
+        $( "#frmFeeling" ).submit();
+    }
+</script>

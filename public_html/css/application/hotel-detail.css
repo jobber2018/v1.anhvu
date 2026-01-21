@@ -1,0 +1,21 @@
+/*Extra small devices (portrait phones, less than 576px)*/
+@media (max-width: 575.98px) {
+    .image-size{height:230px!important;}
+}
+
+.card-img-top{width: unset; height: 150px}
+.room-small{
+    font-size: 14px;
+}
+.room-sidebar{
+    border-radius:3px;
+    position:sticky;
+    top: 70px;
+}
+.slick-next{right: 10px}
+
+.slick-prev{
+    left: 10px;
+    z-index: 10;}
+
+.image-size{height:320px}

@@ -1,0 +1,107 @@
+<?php
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('sell-front')?>">Home</a></li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->sellOrder->getOrderCode()?> | <?=$this->sellOrder->getGrocery()->getGroceryName()?></h3>
+    <small style="padding-left: 15px"><?=$this->sellOrder->getGrocery()->getAddress()?></small>
+</div>
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <form id="delivery-form" action="<?=$this->url('sell-staff',['action'=>'delivery-confirm','id'=>$this->sellOrder->getId()])?>" method="post" name="delivery-form" enctype="multipart/form-data" class="form-horizontal">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <h4 class="modal-title" id="deliveryModalLabel">Hình thức thanh toán?</h4>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <input type='radio' name="pay" value="2" checked="checked" /> Tiền mặt
+                                <input type='radio' name="pay" value="1" /> Chuyển khoản
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label">Hoá đơn mặt trước:</label>
+                            <div class="col-md-9">
+                                <input name="imageFile" type="file" id="imageFile">
+                            </div>
+                            <label class="col-md-2 control-label">Hoá đơn mặt sau:</label>
+                            <div class="col-md-9">
+                                <input name="imageFile1" type="file" id="imageFile1">
+                            </div>
+                            <div class="col-md-12">
+                                <small>Chụp hình ảnh hoá đơn chưa thanh toán hoặc chuyển khoản của khách hàng</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-info pull-right">Xác nhận thanh toán</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .list-group{font-size: 14px}
+    .list-group-item .title{font-weight: bold; font-size: 14px}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-select.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/fileinput/fileinput.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $("#imageFile, #imageFile1").fileinput({
+            showUpload: false,
+            showCaption: false,
+            browseClass: "btn btn-danger",
+            fileType: "any"
+        });
+    });
+</script>

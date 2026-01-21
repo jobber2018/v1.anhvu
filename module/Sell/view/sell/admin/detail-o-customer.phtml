@@ -1,0 +1,540 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <?php
+    $orderStatus = $this->sellOrder->getStatus();
+    $url=$this->url('sell-admin',['action'=>'customer']);
+    if($orderStatus==1)
+        $url=$this->url('sell-admin');
+    else if($orderStatus==11)
+        $url=$this->url('sell-admin',['action'=>'packing']);
+    else if($orderStatus==111)
+        $url=$this->url('sell-admin',['action'=>'packed']);
+    else if($orderStatus==2)
+        $url=$this->url('sell-admin',['action'=>'delivering']);
+    else if($orderStatus==21)
+        $url=$this->url('sell-admin',['action'=>'delivered']);
+    else if($orderStatus==3)
+        $url=$this->url('sell-admin',['action'=>'paid-order']);
+    else if($orderStatus==31)
+        $url=$this->url('sell-admin',['action'=>'wait-for-pay']);
+    else if($orderStatus==-1)
+        $url=$this->url('sell-admin',['action'=>'draft']);
+    ?>
+    <li><a href="<?=$url?>">Danh sách đơn hàng</a></li>
+    <li class="active">Chi tiết đơn hàng</li>
+</ul>
+<div class="page-title">
+    <h3 style="margin-bottom: 0px"><span class="fa fa-arrow-circle-o-left"></span>
+        <a href="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$this->sellOrder->getGrocery()->getId()])?>">
+            Đơn <?=$this->sellOrder->getOrderCode()?>: <?=$this->sellOrder->getGrocery()->getGroceryName()?>
+        </a>
+        <small class="label label-info"><?=ConfigManager::getOrderStatus()[$this->sellOrder->getStatus()]?></small>
+    </h3>
+    <small style="padding-left: 20px"><?=$this->sellOrder->getGrocery()->getAddress()?></small>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="col-md-4">
+                    <form action="<?=$this->url('sell-admin',['action'=>'note'])?>" method="post">
+                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                        <div class="input-group" style="padding-bottom: 10px">
+                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">Send</button>
+                            </span>
+                        </div>
+                    </form>
+
+                    <?php
+                    if($this->zaloApp){
+                        $summary='';
+                        if($this->sellOrder->getSummary())
+                            $summary=': '.$this->sellOrder->getSummary();
+
+                        $addressWdp=$this->zaloApp->getFullAddress();
+                        ?>
+                        <div class="list-group-item">
+                            <img src="<?=$this->zaloApp->getAvatar()?>" style="padding-right: 10px; border-radius:20%" width="40px" class="pull-left" alt="Brad Pitt"/>
+                            <span class="contacts-title">Zalo: <b><?=$this->zaloApp->getName()?></b></span>
+                            <span class="pull-right" style="font-weight: bold"><?=$this->zaloApp->getPhone()?></span>
+                            <p style="margin-bottom: 0px"><i><?=$addressWdp?></i></p>
+                        </div>
+                        <?php
+                    }
+
+                    $summary='';
+                    if($this->sellOrder->getSummary()){
+                        $summary=$this->sellOrder->getSummary();
+                        ?>
+                        <div class="list-group-item">
+                            <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                            <span class="contacts-title"><b>Ghi chú</b></span>
+                            <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></span>
+                            <p><i><?=$summary?></i></p>
+                        </div>
+                        <?php
+                    }
+
+                    $noteArr =explode("\n",$this->sellOrder->getNote());
+                    if($this->sellOrder->getNote()){
+                        if(count($noteArr)){
+                            foreach ($noteArr as $value){
+                                $arrNote = explode("|",$value);
+                                ?>
+                                <div class="list-group-item">
+                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                    <p><i><?=@$arrNote[2]?></i></p>
+                                </div>
+                                <?php
+                            }
+                        }
+                    }
+                    ?>
+                </div>
+                <div class="col-md-8">
+                    <ul id="productList" class="list-group">
+                        <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <button onclick="showModalSelectProduct()" class="btn btn-success"><span class="fa fa-plus-square"></span> Thêm sản phẩm</button>
+
+                                <button onclick="showModalConfirmGrocery()" class="btn btn-info"> Đổi khách hàng</button>
+
+                                <?php
+                                if(ConfigManager::isStockChecking()==0 && $this->sellOrder->getGrocery()->getId()>1){
+                                    echo '<button onclick="submitOrder('.$this->sellOrder->getId().')" class="btn btn-warning"><span class="fa fa-shopping-cart"></span> Xác nhận đơn hàng</button>';
+                                }else{
+                                    echo '<button class="btn btn-dark"><span class="fa fa-shopping-cart"></span> Không thể xác nhận đơn hàng</button>';
+                                }
+                                ?>
+                                <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-default"><span class="fa fa-print"> In đơn</span></a>
+                                <button onclick="deleteOrderCustomer(<?=$this->sellOrder->getId()?>)" class="btn btn-danger pull-right"><span class="fa fa-trash-o"></span> Xoá đơn</button>
+                            </div>
+                        </li>
+                        <?php
+                        $total_order_price=0;
+                        $total_order_product_discount=0;
+                        foreach ($this->sellOrder->getSell() as $sell){
+                            $inventory=$sell->getProduct()->getInventory();
+                            $priceValue = $sell->getPriceValue();
+                            $qty=$sell->getQuantity();
+                            $packUnit=$sell->getPackUnit();
+                            $discount=$sell->getDiscount();
+                            //mua theo thung
+                            if($sell->isPack()){
+                                $qtySale=$sell->isPack();
+                                $unitSale='Thùng';
+                                $price=$packUnit*$priceValue;//gia ban theo thung
+                            }else{
+                                $qtySale=$qty;
+                                $unitSale=$sell->getProduct()->getUnit()->getName();
+                                $price=$priceValue;//gia ban le
+                            }
+                            ?>
+                            <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1 title">
+                                        <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$sell->getProduct()->getId()])?>">
+                                            <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?>
+                                        </a>
+                                        <small>Tồn kho: <?=$sell->getProduct()->getInventory()?></small>
+                                        <span class="fa fa-trash-o pull-right" style="cursor: pointer" title="Bỏ sản phẩm khỏi đơn hàng" alt="Bỏ sản phẩm khỏi đơn hàng" onclick="removeProduct('<?=$sell->getId()?>')"></span>
+                                    </h5>
+                                </div>
+                                <table style="width: 100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="padding-right: 5px; width: 40px">
+                                            <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                        </td>
+                                        <td>
+                                            <table style=" width: 100%;" >
+                                                <tbody>
+                                                <tr>
+                                                    <th style="width: 30%"></th>
+                                                    <th nowrap="">Đơn vị</th>
+                                                    <th nowrap="" class="text-right">Số lượng</th>
+                                                    <th nowrap="" class="text-right">Giá bán</th>
+                                                    <th nowrap="" class="text-right">Chiết khấu</th>
+                                                    <th style="padding-left: 5px" class="text-right">Thành tiền</th>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td><?=$unitSale?></td>
+                                                    <td class="text-right">
+                                                        <?php
+                                                        $msg='';
+                                                        if($qty > $inventory)
+                                                            $msg='Thiếu hàng! ';
+                                                        else if($inventory==0)
+                                                            $msg='Thiếu hàng! ';
+                                                        ?>
+                                                        <small class="warning-color"><?=$msg?></small><?=$qtySale?>
+                                                    </td>
+                                                    <td style="color: #2691ec; font-weight: bold" class="text-right" nowrap="">
+                                                        <?=Common::formatMoney($price)?>
+                                                    </td>
+
+                                                    <td class="text-right"><?=Common::formatMoney($discount)?></td>
+                                                    <?php
+                                                    //                                                    $total_product_discount=$discount*$qtySale;
+                                                    $totalPrice = $price*$qtySale;
+
+                                                    $total_order_price+=$totalPrice;
+                                                    $total_order_product_discount+=$discount*$qtySale;
+                                                    ?>
+                                                    <td class="text-right"><?=Common::formatMoney($totalPrice)?></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="warning-color"></small>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                        <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="form-group" style="padding-top: 10px; padding-right: 10px;">
+                                <table>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 5px; border-bottom: 1px solid #cccccc" nowrap="">Tổng cộng:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 5px; border-bottom: 1px solid #cccccc"><?=Common::formatMoney($total_order_price)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="text-align: right; border-bottom: 1px solid #cccccc; padding: 3px 10px;" nowrap="">Chiết khấu theo sản phẩm:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($total_order_product_discount)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">Chiết khấu theo đơn (<?=@round(($this->sellOrder->getDiscount()/$total_order_price)*100,2).'%'?>):</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($this->sellOrder->getDiscount())?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-top: 3px;" nowrap=""><?=Common::formatMoney(round(($total_order_price-$total_order_product_discount-$this->sellOrder->getDiscount())/1000)*1000)?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="d-flex w-100 justify-content-between">
+
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Chọn sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                        <?php
+                        foreach ($this->productList as $product){
+                            $arrTmp["id"]=$product->getId();
+                            $arrTmp["name"]=$product->getName();
+                            $arrTmp["code"]=$product->getCode();
+                            $arrTmp["unit_name"]=$product->getUnit()->getName();
+                            $arrTmp["box_unit"]=$product->getBoxUnit();
+                            $arrTmp["inventory"]=$product->getInventory();
+                            $arrTmp["weight"]=$product->getWeight();
+                            $arrTmp["price"]=$product->getUnitPriceAfterSale();
+                            $arrTmp["unit_sale_value"]=$product->getUnitPriceSale();
+                            $arrTmp["price_pack"]=$product->getPackPriceAfterSale();
+                            $arrTmp["pack_sale_value"]=$product->getPackPriceSale();
+                            $arrTmp["option"]='unit';
+                            $arrTmp["qty"]=0;
+                            $arrTmp["exchange_unit"]=$product->getExchangeUnit();
+
+                            if(is_null($product->getImg()))
+                                $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                            else
+                                $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                            $json = json_encode($arrTmp);
+
+                            if($product->getInventory()==0)
+                                $class='class="special"';
+                            else
+                                $class='';
+                            echo '<option '.$class.' value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getCode().'|'.$product->getName(). " (".$product->getWeight().')</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div id="productInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" id="btnAddProductToOrder" class="btn btn-success">Thêm sản phẩm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfirm" tabindex="-1" role="dialog" aria-labelledby="modalConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <input type="hidden" id="cancelUrl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalConfirmLabel">Xác nhận thay đổi khách hàng cho đơn hàng</h4>
+            </div>
+            <div class="modal-body">
+                <select class="form-control selectpicker" id="selectGrocery" data-live-search="true">
+                    <?php
+                    foreach ($this->groceryList as $k => $groceryItem) {
+                        echo '<option value="'.$groceryItem->getId().'" data=\''.$this->escapeHtml($groceryItem->getGroceryName()).'\'>'.$this->escapeHtml($groceryItem->getMobile()).'|'.$this->escapeHtml($groceryItem->getGroceryName()).'|'.$this->escapeHtml($groceryItem->getAddress()).'</option>';
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button onclick="doChangeGrocery()" class="btn btn-success">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+
+<style>
+    .special {
+        color: #fff !important;
+        background: #bc0000 !important;
+    }
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+</style>
+<script>
+    function submitOrder(oId){
+        let text = "Nếu nhấn OK đơn hàng sẽ được chuyển đến Admin để thực hiện theo quy trình giao hàng. Nếu chưa chắc bạn có thể nhấn Cancel.";
+        if (confirm(text) == true) {
+            run_waitMe();
+            var url = "<?=$this->url('sell-user',['action'=>'submit-order-draft'])?>";
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: {id:oId}
+            }).done(function (data) {
+                alert(data.msg);
+                if(data.status){
+                    window.location.href = '<?=$this->url('sell-admin',['action'=>'customer'])?>';
+                }
+                else{
+                    if(data.data){
+                        $.each(data.data, function(key,value) {
+                            $('#msg'+key).html('Tồn kho '+ value+' không đủ đển bán!');
+                        });
+                    }
+                    stop_waitMe();
+                }
+            })
+        }
+    }
+
+    $('#btnAddProductToOrder').click(function(){
+        let orderId = <?=$this->sellOrder->getId()?>;
+        let proId = $('#proId').val();
+        let qty = $('#txtQty').val();
+        let opt=$('input[name="opt"]:checked').val();
+        run_waitMe();
+        var url = "<?=$this->url('sell-user',['action'=>'order-detail-draft'])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {oid:orderId,pid:proId,qty:qty,opt:opt}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    });
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            let data = $(this).find(':selected').attr('data');
+            let obj = jQuery.parseJSON(data);
+            let msg='',cls='',defaultQuantity=1;
+
+            let unit_price_old='';
+            let unit_price_old_lable='';
+            let pack_price_old='';
+            let pack_price_old_lable='';
+
+            if(obj.unit_sale_value){
+                unit_price_old=obj.price + obj.unit_sale_value
+                unit_price_old_lable='<span style="color: red; text-decoration: line-through;">('+formatCurrency(unit_price_old.toString())+')</span>';
+            }
+
+            if(obj.pack_sale_value){
+                pack_price_old=obj.price_pack + obj.pack_sale_value
+                pack_price_old_lable='<span style="color: red; text-decoration: line-through">('+formatCurrency(pack_price_old.toString())+')</span>';
+            }
+
+            var html='<div style="margin-top: 15px; border: 1px solid #e0dcdc; padding: 5px 10px">';
+            html+='<table style="width: 100%">';
+            html+='<tr>';
+            html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+            html+='<td>';
+            html+='<table style="width: 100%"><tr><td>Tồn kho:</td><td style="padding-left: 10px">'+obj.inventory+'</td></tr>';
+            html+=' <tr>';
+            html+='     <td nowrap="">Giá lẻ:</td>';
+            html+='     <td style="padding-left: 10px; font-weight: bold; width: 100%" nowrap="">'+formatCurrency(obj.price.toString())+' '+unit_price_old_lable+'</td>';
+            html+=' </tr><tr>';
+            html+='      <td nowrap="">Giá thùng:</td>';
+            html+='      <td style="padding-left: 10px;color: #0C7FCC; font-weight: bold;" nowrap="">'+formatCurrency(obj.price_pack.toString())+' '+pack_price_old_lable+'</td>';
+            html+=' </tr><tr>';
+            html+='     <td nowrap="">Mua theo</td>';
+            html+='     <td style="padding-left: 10px">';
+            html+='         <label class="check"><input type="radio" value="unit" class="iradio" name="opt" checked="checked"/> '+obj.unit_name+'</label>';
+            html+='         <label class="check"><input type="radio" value="pack" class="iradio" name="opt"/> Thùng ('+obj.box_unit+' '+obj.unit_name+')</label>';
+            html+='     </td>';
+            html+=' </tr><tr>';
+            html+='     <td nowrap="">Số lượng:</td>';
+            html+='     <td>';
+            html+='         <input id="proId" name="proId" type="hidden" value="'+obj.id+'">';
+            html+='         <input style="width: 100px" id="txtQty" name="quantity" type="number" value="'+defaultQuantity+'" min="1" class="form-control">';
+            html+='     </td>';
+            html+=' </tr>';
+            html+='</table>';
+            if(obj.exchange_unit > 1)
+                msg='Tối thiểu bán '+obj.exchange_unit+' '+obj.unit_name+' ';
+
+            html+='<small class="warning-color">'+msg+'</small> <small id="msgInventory" class="warning-color"></small>';
+            html+='</td></tr></table>';
+            html+='</div>';
+
+            $('#productInfo').html(html);
+            $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'});
+            $('#btnAddProductToOrder').prop('disabled', false);
+
+        });
+
+    function deleteOrderCustomer(oId){
+        let text = "Nếu nhấn OK đơn hàng sẽ bị xoá mà không thể khôi phục lại. Nếu chưa chắc bạn có thể nhấn Cancel.";
+        if (confirm(text) == true) {
+            run_waitMe();
+            var url = "<?=$this->url('sell-user',['action'=>'delete-order-draft'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: {id:oId}
+            }).done(function (data) {
+                if(data.status){
+                    alert('Đã xoá đơn hàng <?=$this->sellOrder->getOrderCode()?>: <?=$this->sellOrder->getGrocery()->getGroceryName()?>!');
+                    window.location.href = '<?=$this->url('sell-admin',['action'=>'customer'])?>';
+                }else{
+                    alert(data.msg);
+                    stop_waitMe();
+                }
+            })
+        }
+    }
+
+    function showModalSelectProduct(){
+        $('#productInfo').html('');
+        $('#btnAddProductToOrder').prop('disabled', true);
+        $('#modalSelectProduct').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+
+    function removeProduct(id){
+        // console.log("removed sell");
+        run_waitMe();
+        var url = "<?=$this->url('sell-user',['action'=>'delete-product-order-draft'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {id:id}
+        }).done(function (data) {
+            alert(data.msg);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    }
+
+    function showModalConfirmGrocery(){
+
+        $('#modalConfirm').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+
+    function doChangeGrocery(){
+        let groceryName=$('#selectGrocery option:selected').attr('data');
+        let groceryId=$('#selectGrocery').val();
+        let orderId=<?=$this->sellOrder->getId()?>;
+        let text = 'Nếu nhấn OK, hệ thống sẽ chuyển khách hàng <?=$this->sellOrder->getGrocery()->getGroceryName()?> sang '+groceryName;
+
+        if (confirm(text) == true) {
+            run_waitMe();
+            var url = "<?=$this->url('sell-admin',['action'=>'change-grocery-order'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: {oid:orderId,gid:groceryId}
+            }).done(function (data) {
+                if(data.status){
+                    location.reload();
+                }
+                else{
+                    alert(data.msg);
+                    stop_waitMe();
+                }
+            })
+        } else {
+            return;
+        }
+    }
+</script>

@@ -1,0 +1,208 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Report";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Product</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('product-admin',['action'=>'add'])?>" class="btn btn-info pull-left"><span class="fa fa-plus"></span>Thêm mới sản phẩm</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'deleted'])?>" class="btn btn-default pull-left"><span class="fa fa-info-circle"></span>Sản phẩm dừng giao dịch</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'inactive'])?>" class="btn btn-default pull-left"><span class="fa fa-info-circle"></span>Sản phẩm không hiển thị trên báo giá</a>
+                    <a href="<?=$this->url('product-admin',['action'=>'optimize'])?>" class="btn btn-danger pull-left"><span class="fa fa-info-circle"></span>Chuẩn hoá dữ liệu</a>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover display" id="tblProduct">
+                        <thead>
+                        <tr>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5"></th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Mã</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5;">Tên sản phẩm</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Group</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5">Giá vốn</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giá bán</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giảm giá</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giá sau giảm</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">+/- % Bán lẻ</th>
+                            <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">+/- % Bán thùng</th>
+
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5;">Tồn kho</th>
+                            <th rowspan="2" style="border-right: 1px solid #E5E5E5"></th>
+                        </tr>
+                        <tr>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                            <th>Lẻ</th>
+                            <th>Thùng</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        foreach ($this->product as $product){
+                            $priceUnit=$product->getActivePriceValue();
+                            $pricePack=$product->getPackPrice();
+                            $productCost=$product->getAveragePrice()
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php
+                                    if(is_null($product->getImg()))
+                                        echo '<img src="/img/icons/no-image-icon.png" class="pull-left" width="40px">';
+                                    else
+                                        echo '<img src="'.$product->getImg().'" style ="max-width:40px; max-height:30px">';
+                                    ?>
+                                </td>
+                                <td><?=$product->getCode()?></td>
+                                <td>
+                                    <a class="<?=($product->getInventory()>0?($product->getInventory()<=3?'warning-yeallow':''):'warning-red')?>" href="<?=$this->url('product-admin',['action'=>'price','id'=>$product->getId()])?>"><strong><?=$product->getName() .' | '.$product->getWeight()?></strong></a>
+                                    <br>Quy cách: <?=$product->getBoxUnit()?> | Đơn vị: <?=$product->getUnit()->getName()?>
+                                </td>
+                                <td><?=$product->getGroupId()?></td>
+                                <td><?=Common::formatMoney($productCost)?></td>
+                                <td class="text-right" style="border-left: 1px solid #e7e7e7">
+                                    <?=Common::formatMoney($priceUnit)?>
+                                </td>
+                                <td style="text-align: right;">
+                                    <?=Common::formatMoney($pricePack)?>
+                                </td>
+                                <td class="font-weight-bold text-danger text-right" style="border-left: 1px solid #e7e7e7">
+                                    <?=Common::formatMoney($product->getUnitPriceSale())?>
+                                </td>
+                                <td class="font-weight-bold text-danger text-right">
+                                    <?=Common::formatMoney($product->getPackPriceSale())?>
+                                </td>
+                                <td class="font-weight-bold text-right text-info" style="border-left: 1px solid #e7e7e7">
+                                    <?=Common::formatMoney($product->getUnitPriceAfterSale())?>
+                                </td>
+                                <td class="font-weight-bold text-right text-info">
+                                    <?=Common::formatMoney($product->getPackPriceAfterSale())?>
+                                </td>
+                                <?php
+                                if($productCost==0) {
+                                    $profitUnit = '0';
+                                    $percentProfitUnit='0';
+                                }else{
+                                    $profitUnit=$product->getUnitPriceAfterSale()-$productCost;
+                                    $percentProfitUnit=round(($profitUnit/$productCost)*100,2);
+                                    if($profitUnit<0)
+                                        $profitUnit='<span style="color:red">'.Common::formatMoney($profitUnit).'</span>';
+                                    else
+                                        $profitUnit='<span style="color:dodgerblue">'.Common::formatMoney($profitUnit).'</span>';
+                                }
+                                ?>
+                                <td style="border-left: 1px solid #e7e7e7"><?=$profitUnit?></td>
+                                <td><?=$percentProfitUnit?></td>
+
+                                <?php
+                                if($productCost==0) {
+                                    $profitPack = '0';
+                                    $percentProfitPack='0';
+                                }else{
+                                    $packCost = $productCost*$product->getBoxUnit();
+                                    $profitPack=$product->getPackPriceAfterSale()-$packCost;
+                                    $percentProfitPack=round(($profitPack/$packCost)*100,2);
+                                    if($profitPack<0)
+                                        $profitPack='<span style="color:red">'.Common::formatMoney($profitPack).'</span>';
+                                    else
+                                        $profitPack='<span style="color:dodgerblue">'.Common::formatMoney($profitPack).'</span>';
+                                }
+                                ?>
+                                <td style="border-left: 1px solid #e7e7e7"><?=$profitPack?></td>
+                                <td><?=$percentProfitPack?></td>
+
+                                <td style="text-align: right; background-color: #feb00ab5"><?=$product->getInventory()?></td>
+                                <td>
+                                    <a class="btn btn-info" href="<?=$this->url('product-admin',['action'=>'edit','id'=>$product->getId()])?>"><span class="fa fa-edit">Sửa</span></a>
+                                    <a class="btn btn-success" href="<?=$this->url('product-admin',['action'=>'add','id'=>$this->escapeHtml($product->getId())])?>"><span class="fa fa-copy">Copy</span></a>
+                                </td>
+                            </tr>
+                        <?php }?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+
+    .font-weight-bold{font-weight: bold}
+
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .warning-red{color: red}
+    .warning-yeallow{color: #ff9100
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblProduct').DataTable({
+            paging: true,
+            pageLength:50,
+            ordering: true,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            language: {
+                searchPlaceholder: "Tìm kiếm sản phẩm"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+    });
+</script>

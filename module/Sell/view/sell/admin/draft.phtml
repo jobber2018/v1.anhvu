@@ -1,0 +1,291 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn hàng";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active">Danh sách đơn hàng</li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Đơn hàng chờ xử lý</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default tabs">
+                <ul class="nav nav-tabs nav-justified">
+                    <li class="active">
+                        <a href="#">
+                            Chờ xử lý
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="draft_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin',['action'=>'customer'])?>">
+                            Khách tạo
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="cus_order_number"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?=$this->url('sell-admin')?>">
+                            Chờ đóng gói
+                            <div style="right: 5px; top: 10px; position: absolute; background-color: #e01e4b; padding: 0 4px; font-size: 14px; -webkit-border-radius:5px; color: white" id="new_order_number"></div>
+                        </a>
+                    </li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packing'])?>">Đang đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'packed'])?>">Đã đóng gói</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivering'])?>">Đang giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'delivered'])?>">Đã giao</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'wait-for-pay'])?>">Chưa thanh toán</a></li>
+                    <li><a href="<?=$this->url('sell-admin',['action'=>'paid-order'])?>">Hoàn thành</a></li>
+                </ul>
+                <div class="panel-body tab-content">
+                    <div class="tab-pane active" id="tab8">
+                        <?php
+                        if(count($this->listGroceryMerge)>0){
+                            ?>
+                            <div class="alert alert-info" role="alert">
+                                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                                <strong>Các đơn cần gộp:</strong>
+                                <?php
+                                foreach ($this->listGroceryMerge as $key=>$item)
+                                    echo '<a style="color:#ffffff" href="' .$this->url('sell-admin',['action'=>'merge-sell-order','id'=>$key]).'?s=-1">'.$item['name'].' ('.$item['order-number'].' đơn)</a>, ';
+                                ?>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                        <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
+                            <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày tạo</th>
+                                <th>Người tạo</th>
+                                <th>Tổng đơn</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $i=1;
+                            foreach ($this->sellOrder as $order){
+                                $odn=$order->getOrderCode();
+
+//                                $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span> Admin':$order->getUser()->getFullname());
+                                if($order->getMethod()>0)
+                                    $method='<span class="fa fa-phone-square"></span> Admin';
+                                else if($order->getMethod()==-1)
+                                    $method='<span class="glyphicon glyphicon-user"></span> Customer';
+                                else
+                                    $method=$order->getUser()->getFullname();
+
+                                echo '<tr>';
+                                echo '<td>'.$i++.'</td>';
+                                echo '<td>'.$odn.'</td>';
+                                echo '<td nowrap=""><a href="'.$this->url('sell-admin',['action'=>'detail-o-draft','id'=>$order->getId()]).'"><b>'.$order->getGrocery()->getGroceryName().'</b><br><i>('.Common::substrwords($order->getGrocery()->getAddress(),40).')</i></a></td>';
+                                echo '<td>'.Common::formatDateTime($order->getCreatedDate()).'</td>';
+                                echo '<td nowrap="">'.$method.'</td>';
+                                echo '<td>'.Common::formatMoney(round($order->getTotalPrice()/1000)*1000).'</td>';
+                                echo '<td class="text-right">';
+
+                                echo '<a href="'.$this->url('sell-admin',['action'=>'print','id'=>$order->getId()]).'" class="btn btn-info"><span class="fa fa-print"> In đơn</span></a>';
+//                                echo '<button id="btnPackedConfirm" onclick="showPackedConfirm('.$order->getId().',\''.$order->getGrocery()->getGroceryName().'\')" type="button" class="btn btn-primary"><span class="fa fa-dropbox"> Đã đóng gói</span></button>';
+//                                echo '<a href="'.$this->url('sell-admin',['action'=>'return','id'=>$order->getId()]).'" class="btn btn-warning"><span class="fa fa-warning"> Trả hàng</span></a>';
+//                                echo '<button id="btnPayConfirm" onclick="showModalPayConfirm('.$order->getId().')" type="button" class="btn btn-success"><span class="fa fa-credit-card"> Thanh toán</span></button>';
+                                ?>
+                                <?php
+                                echo '</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th colspan="5" style="text-align:right">Tổng cộng:</th>
+                                <th colspan="2"></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalPayConfirm" tabindex="-1" role="dialog" aria-labelledby="modalPayConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="pay-form" action="<?=$this->url('sell-admin',['action'=>'paid-order'])?>" method="post" name="delivery-form" class="form-horizontal">
+            <input type="hidden" name="oid" id="oid">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modalPayConfirmLabel">Xác nhận thanh toán</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <label class="check"><input type="radio" class="iradio" name="payMethod" value="1" checked="checked"/>Hoàn thành</label>
+                            <label class="check"><input type="radio" class="iradio" name="payMethod" value="2"/>Chưa thanh toán hoặc Thanh toán một phần</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success">Xác nhận</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDeliveryConfirm" tabindex="-1" role="dialog" aria-labelledby="modalDeliveryConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="delivery-form" action="<?=$this->url('sell-admin',['action'=>'delivery'])?>" method="post" name="delivery-form" class="form-horizontal">
+            <input type="hidden" name="oid" id="oidDelivery">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modalPayConfirmLabel">Ghi chú cho shipper</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success">Chuyển shipper</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCancelConfirm" tabindex="-1" role="dialog" aria-labelledby="modalCancelConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <input type="hidden" id="cancelUrl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalCancelConfirmLabel">Xác nhận huỷ đơn hàng</h4>
+            </div>
+            <div class="modal-body">
+                Sau khi xác nhận huỷ, toàn bộ sản phẩm trong đơn hàng được trả lại vào kho. Hành động này không thể khôi phục lại. Bạn chắc chắn muốn huỷ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button onclick="btnConfirmCancel()" class="btn btn-success">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .panel-body table td{vertical-align: center !important;}
+
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblOrder').DataTable({
+            paging: false,
+            pageLength:50,
+            ordering: false,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            // scrollX: true,
+            language: {
+                searchPlaceholder: ""
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+
+                // Total over all pages
+                // total = api
+                //     .column(5)
+                //     .data()
+                //     .reduce(function (a, b) {
+                //         return intVal(a) + intVal(b);
+                //     }, 0);
+
+                // Total over this page
+                pageTotal = api
+                    .column(5, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+
+                // Update footer
+                $(api.column(5).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+            }
+        });
+        showNotifyOrderCustomerAndNew();
+    });
+</script>

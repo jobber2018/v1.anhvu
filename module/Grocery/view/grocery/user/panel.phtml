@@ -1,0 +1,129 @@
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li>Chức năng</li>
+</ul>
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->escapeHtml($this->grocery->getGroceryName())?></h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <i class="fa fa-map-marker" style="padding-left: 10px"> <?=$this->escapeHtml($this->grocery->getAddress())?></i>
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table style="width: 100%">
+                    <tr>
+                        <td style="text-align: center; width: 25%; padding-bottom: 20px">
+                            <div id="checkIn" href="#">
+                                <p><span class="fa fa-map-marker" style="font-size: 40px"></span> </p>
+                                <b>Check in</b>
+                            </div>
+                        </td>
+                        <td style="text-align: center; width: 25%; padding-bottom: 20px">
+                            <a href="<?=$this->url('sell-user',['action'=>'add-draft-order','id'=>$this->grocery->getId()])?>">
+                                <p><span class="fa fa-shopping-cart" style="font-size: 40px"></span> </p>
+                                <b>Tạo đơn</b>
+                            </a>
+                        </td>
+                        <td style="text-align: center; width: 25%; padding-bottom: 20px">
+                            <div class="directions">
+                                <p><span class="fa fa-hand-o-right" style="font-size: 40px"></span> </p>
+                                <b>Chỉ đường</b>
+                            </div>
+                        </td>
+                        <td style="text-align: center; width: 25%; padding-bottom: 20px">
+                            <a href="tel://<?=$this->grocery->getMobile()?>">
+                                <p><span class="fa fa-phone" style="font-size: 40px"></span> </p>
+                                <b>Gọi điện</b>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; width: 25%; padding-bottom: 20px">
+                            <a href="<?=$this->url('grocery-user',['action'=>'order','id'=>$this->grocery->getId()])?>">
+                                <p><span class="fa fa-tags" style="font-size: 40px"></span> </p>
+                                <b>Đơn hàng</b>
+                            </a>
+                        </td>
+                        <td style="text-align: center; padding-bottom: 20px">
+                            <a href="<?=$this->url('grocery-user',['action'=>'edit','id'=>$this->grocery->getId()])?>">
+                                <p><span class="fa fa-pencil-square-o" style="font-size: 40px"></span> </p>
+                                <b>Sửa thông tin cửa hàng</b>
+                            </a>
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="<?=$this->url('grocery-user',['action'=>'detail','id'=>$this->grocery->getId()])?>">
+                                <p><span class="fa fa-info-circle" style="font-size: 40px"></span> </p>
+                                <b>Thông tin</b>
+                            </a>
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="<?=$this->url('grocery-user',['action'=>'reject','id'=>$this->grocery->getId()])?>">
+                                <p><span class="fa fa-external-link-square" style="font-size: 40px"></span> </p>
+                                <b>Bỏ khỏi tuyến</b>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+
+        $( "#checkIn" ).click(function() {
+            run_waitMe();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position){
+                        stop_waitMe();
+                        location.href="<?=$this->url('grocery-user',['action'=>'check-in','id'=>$this->grocery->getId()])?>?lat="+position.coords.latitude+"&lng="+position.coords.longitude;
+                    },
+                    function(error) {
+                        alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                        stop_waitMe();
+                    }
+                );
+            }
+        });
+
+        $( ".directions" ).click(function() {
+            run_waitMe();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position){
+                        var currentLocal = position.coords.latitude+','+ position.coords.longitude;
+                        var groceryLocal = '<?=$this->grocery->getLat().','.$this->grocery->getLng()?>';
+                        var url = 'https://www.google.com/maps/dir/?api=1&origin='+currentLocal+'&destination='+groceryLocal;
+                        // window.open(url, '_blank');
+                        window.location.href =url;
+                        stop_waitMe();
+                    },
+                    function(error) {
+                        alert('<?=$this->translate("Turn on location services to use this function.")?>');
+                        stop_waitMe();
+                    }
+                );
+            }
+        });
+    });
+</script>

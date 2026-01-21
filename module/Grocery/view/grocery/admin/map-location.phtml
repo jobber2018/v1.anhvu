@@ -1,0 +1,188 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NPP ANH VŨ</title>
+    <meta name="viewport" content="width&#x3D;device-width,&#x20;initial-scale&#x3D;1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE&#x3D;edge">
+    <!-- Le styles -->
+    <link href="&#x2F;favicon.png" rel="shortcut&#x20;icon" type="image&#x2F;x-icon">
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        Cửa hàng gần bạn (<1km)
+    </div>
+    <div id="map-canvas"></div>
+</div>
+<style>
+    html, body, #wrapper{
+        height: 100%;
+        width: 100%;
+    }
+    #header{
+        background-color:#ff6700;
+        padding:5px;
+        margin:10px;
+        position: absolute;
+        z-index: 1000;
+        color: #FFFFFF;
+    }
+    #map-canvas{
+        height: 100%;
+        width: 100%;
+    }
+</style>
+</body>
+</html>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>
+
+<script>
+    $(document).ready(function(){
+        // loadMarkets(20.979788, 105.802441);
+    });
+    var map;
+    var myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        }
+    ];
+    function initMap() {
+
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+            disableDefaultUI: true,
+            fullscreenControl: true,
+            zoom: 15,
+            styles: myStyles
+        });
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+                lat=position.coords.latitude;
+                lng=position.coords.longitude;
+                var center = new google.maps.LatLng(lat,lng);
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: center,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        strokeColor: 'white',
+                        strokeWeight: 2,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.6
+                    }
+                });
+                marker.setMap(map);
+                marker.setPosition(center);
+
+                var markerWaveCurrent = new google.maps.Marker({
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                        strokeColor: 'white',
+                        strokeWeight: 1,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.3
+                    },
+                });
+                markerWaveCurrent.setMap(map);
+                markerWaveCurrent.setPosition(center);
+
+                var count=0;
+                window.setInterval(function() {
+                    var icon = markerWaveCurrent.get('icon');
+                    if(icon.scale<30){
+                        icon.scale = icon.scale+1;
+                    }else{
+                        count = count+1;
+                        icon.scale = 8;
+                    }
+                    markerWaveCurrent.set('icon', icon);
+                }, 35);
+
+                map.setCenter(center);
+                loadMarkets(lat,lng);
+            }, function () {
+                handleLocationError(true, infoWindow, map.getCenter());
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            handleLocationError(false, infoWindow, map.getCenter());
+        }
+    }
+
+    function loadMarkets(p_lat,p_lng) {
+        var url = "<?=$this->url('grocery-admin',['action'=>'map-location'])?>";
+
+        $.post( url, { lat: p_lat, lng: p_lng })
+            .done(function( data ) {
+                // console.log(data);
+                // alert( "Data Loaded: " + data );
+                $.each(data, function(key, value) {
+                    var latLng = new google.maps.LatLng(value.lat, value.lng);
+                    var marker = new google.maps.Marker({
+                        id:value.id,
+                        position: latLng,
+                        icon:{
+                            url:"/img/icons/icon-grocery-yeallow.png",
+                            scaledSize: new google.maps.Size(35, 35)
+                        }
+                    });
+                    marker.setMap(map);
+
+                    var url='/admin/grocery/detail/'+value.id+'.html';
+                    var infowindow = new google.maps.InfoWindow({
+                        content: '<div id="content"><a target="_blank" href="'+url+'">'+value.name+'</a> <br>User: <b>' +value.user+'</b></div>'
+                    });
+                    marker.addListener("click", () => {
+                        infowindow.open(map, marker);
+                    });
+                })
+            });
+    }
+
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+            'Error: The Geolocation service failed.' :
+            'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+    }
+</script>

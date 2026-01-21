@@ -1,0 +1,115 @@
+<div class="modal fade" id="modalBackOrderStatus" tabindex="-1" role="dialog" aria-labelledby="modalBackOrderStatusLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <input type="hidden" id="orderId" name="orderId" value="0">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h3 class="modal-title" id="modalBackOrderStatusLabel">Thay đổi trạng thái đơn hàng</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Khách hàng:</label>
+                        <div class="col-md-9 title" id="customerName"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Địa chỉ:</label>
+                        <div class="col-md-9 title" id="customerAddress"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label">Trạng thái</label>
+                        <div class="col-md-9">
+                            <span class="highlight" id="orderStatus"></span>
+                            <span class="price"> -> </span>
+                            <span class="price" id="orderStatusBack">Đã đóng gói</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label class="col-md-3 control-label"></label>
+                        <div class='col-md-9'>
+                            <textarea type="text" class="form-control" id="txtBackOrderNote" name="txtBackOrderNote" placeholder="Ghi chú" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnBackOrderConfirm" type="button" class="btn btn-info">
+                    <span class="fa fa-mail-reply"></span>
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#btnBackOrderConfirm').click(function() {
+            let orderId = $("#orderId").val();
+            let note = $("#txtBackOrderNote").val();
+
+            if(!note){
+                noty({text: 'Vui lòng nhập ghi chú!', layout: 'topRight', type: 'error',timeout: 4000});
+                return;
+            }
+            let data ={
+                oid:orderId,
+                note:note
+            };
+            run_waitMe('.modal-dialog');
+            let url = "<?=$this->url('sell-admin',['action'=>'back-status'])?>";
+            $.ajax({
+                method: "POST",
+                url: url,
+                data: data
+            }).done(function (response) {
+                if(response.status){
+                    table.ajax.reload();
+                    noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                    $('#modalBackOrderStatus').modal('hide');
+                }else{
+                    noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    stop_waitMe('.modal-dialog');
+                }
+            });
+        });
+    });
+    function showModalConfirmBack(oid){
+
+        run_waitMe('.modal-dialog');
+        let url = "<?=$this->url('sell-admin',['action'=>'back-status'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "GET",
+            url: url,
+            data: {oid:oid}
+        }).done(function (response) {
+            if(response.status){
+                let orderInfo=response.data;
+                $('#orderId').val(orderInfo.order_id);
+                $('#customerName').html(orderInfo.customer_name);
+                $('#customerAddress').html(orderInfo.customer_address);
+                $('#orderStatus').html(orderInfo.order_status_name);
+                $('#orderStatusBack').html(orderInfo.order_status_back_name);
+
+                $('#modalBackOrderStatus').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                }).on('shown.bs.modal', function (e) {
+                    $('#txtBackOrderNote').focus().val('');
+                });
+
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe('.modal-dialog');
+        });
+    }
+</script>

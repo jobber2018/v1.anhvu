@@ -1,0 +1,48 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user')?>">Danh sách tuyến</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->grocery->getId()])?>">Chức năng</a></li>
+    <li class="active">Đơn hàng đã giao</li>
+</ul>
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Đơn hàng đã giao</h3>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table">
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Ngày thanh toán</th>
+                        <th>Tổng đơn</th>
+                    </tr>
+                <?php
+                foreach ($this->grocery->getSellOrder() as $sellOrder){
+                    $note='';
+                    if($sellOrder->getReturnNumber()>0)
+                        $note =' <small class="warning-color">(Trả lại: '.$sellOrder->getReturnNumber().' sản phẩm)</small>';
+                    if($sellOrder->getStatus()==3){
+                        echo '<tr>';
+                        echo '<td>'.$sellOrder->getOrderCode().$note.'</td>';
+                        echo '<td><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$sellOrder->getId()]) .'">'.Common::formatDateTime($sellOrder->getPayDate()).'</a></td>';
+                        echo '<td>'.Common::formatMoney($sellOrder->getTotalPrice()).' đ</td>';
+                        echo '</tr>';
+                    }
+                }
+                ?>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .warning-color{color: red}
+</style>

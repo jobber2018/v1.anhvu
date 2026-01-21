@@ -1,0 +1,149 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+$title = "Danh sách tuyến";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> Danh sách tuyến</h2>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getSuccessMessages())>0){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getSuccessMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table id="tblGroceryCatList" class="display" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>Tên tuyến</th>
+                        <th>Nhân viên</th>
+                        <th>Ngày trên tuyến</th>
+                        <th>Khách hàng</th>
+                        <th>Đã đặt hàng</th>
+                        <th>Tỷ lệ đặt</th>
+                        <th>Tổng tiền đặt</th>
+                        <th>Trung bình 1 khách</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php
+                    $i=1;
+                    foreach ($this->groceryCatList as $k => $groceryCatItem) {
+                        $totalGroceryOrderNumber = $groceryCatItem->getTotalGroceryOrderNumber();
+                        $totalGroceryOrderMoney=$groceryCatItem->getTotalGroceryOrderMoney();
+                        echo '<tr>';
+                        echo '<td><a href="'.$this->url('grocery-admin',['action'=>'cat-detail','id'=>$groceryCatItem->getId()]).'">'.$this->escapeHtml($groceryCatItem->getName()).'</a></td>';
+                        echo '<td>'.$groceryCatItem->getUser()->getFullname().'</td>';
+                        echo '<td>Thứ '.$groceryCatItem->getDay(). '</td>';
+                        echo '<td>'.count($groceryCatItem->getGrocery()). '</td>';
+                        echo '<td>'.$totalGroceryOrderNumber.'</td>';
+                        echo (count($groceryCatItem->getGrocery())>0)?'<td>'.round(($totalGroceryOrderNumber/count($groceryCatItem->getGrocery()))*100,1).'%</td>':'<td>0</td>';
+                        echo '<td>'.Common::formatMoney($totalGroceryOrderMoney) .'</td>';
+                        echo ($totalGroceryOrderNumber>0)?'<td>'.Common::formatMoney($totalGroceryOrderMoney/$totalGroceryOrderNumber).'</td>':'<td>0</td>';
+                        echo '</tr>';
+                    }
+                    ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .odd{background-color:rgb(247, 247, 247)}
+    .odd td:first-child{padding-left: 20px}
+    .even td:first-child{padding-left: 20px}
+    #tblGroceryCatList a{color: #067fad; font-weight: bold}
+    tr.group td{padding-left: 10px;}
+    tr th:first-child{padding-left: 10px}
+    tr th{background-color: rgb(4, 143, 210); color: white; padding-top: 10px; padding-bottom: 10px}
+
+    #tblGroceryCatList td{padding-bottom: 5px; padding-top: 5px}
+    #tblGroceryCatList tr{border-bottom: 1px solid #E5E5E5}
+    .dataTables_filter{width: 100%; border-bottom: unset}
+
+    tr.group,
+    tr.group:hover {
+        background-color: #dbdcdd !important;
+        font-weight: bold;
+    }
+    tr.group{padding-left: 10px}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#tblGroceryCatList1').DataTable({
+            paging: false,
+            ordering: false,
+            info: false,
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            }
+        });
+
+        var groupColumn = 2;
+        var table = $('#tblGroceryCatList').DataTable({
+            columnDefs: [{ visible: false, targets: groupColumn }],
+            order: [[groupColumn, 'asc']],
+            paging: false,
+            displayLength: 25,
+            searching:false,
+            drawCallback: function (settings) {
+                var api = this.api();
+                var rows = api.rows({ page: 'current' }).nodes();
+                var last = null;
+
+                api
+                    .column(groupColumn, { page: 'current' })
+                    .data()
+                    .each(function (group, i) {
+                        if (last !== group) {
+                            $(rows)
+                                .eq(i)
+                                .before('<tr class="group"><td colspan="7">' + group + '</td></tr>');
+
+                            last = group;
+                        }
+                    });
+            },
+        });
+
+        // Order by the grouping
+        $('#tblGroceryCatList tbody').on('click', 'tr.group', function () {
+            // return;
+            var currentOrder = table.order()[0];
+            if (currentOrder[0] === groupColumn && currentOrder[1] === 'asc') {
+                table.order([groupColumn, 'desc']).draw();
+            } else {
+                table.order([groupColumn, 'asc']).draw();
+            }
+        });
+    });
+</script>

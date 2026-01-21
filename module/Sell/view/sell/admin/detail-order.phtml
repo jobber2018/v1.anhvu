@@ -1,0 +1,366 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-admin',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <?php
+    $orderStatus = $this->sellOrder->getStatus();
+    $url=$this->url('sell-admin');
+    if($orderStatus==1)
+        $url=$this->url('sell-admin');
+    else if($orderStatus==11)
+        $url=$this->url('sell-admin',['action'=>'packing']);
+    else if($orderStatus==111)
+        $url=$this->url('sell-admin',['action'=>'packed']);
+    else if($orderStatus==2)
+        $url=$this->url('sell-admin',['action'=>'delivering']);
+    else if($orderStatus==21)
+        $url=$this->url('sell-admin',['action'=>'delivered']);
+    else if($orderStatus==3)
+        $url=$this->url('sell-admin',['action'=>'paid-order']);
+    else if($orderStatus==31)
+        $url=$this->url('sell-admin',['action'=>'wait-for-pay']);
+    else if($orderStatus==-1)
+        $url=$this->url('sell-admin',['action'=>'draft']);
+    ?>
+    <li><a href="<?=$url?>">Danh sách đơn hàng</a></li>
+    <li class="active">Chi tiết đơn hàng</li>
+</ul>
+<div class="page-title">
+    <h3 style="margin-bottom: 0px"><span class="fa fa-arrow-circle-o-left"></span>
+        <a href="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$this->sellOrder->getGrocery()->getId()])?>">
+            Đơn <?=$this->sellOrder->getOrderCode()?>: <?=$this->sellOrder->getGrocery()->getGroceryName()?>
+        </a>
+        <small class="label label-success"><?=ConfigManager::getOrderStatus()[$this->sellOrder->getStatus()]?></small>
+    </h3>
+    <small style="padding-left: 20px"><?=$this->sellOrder->getGrocery()->getAddress()?></small>
+</div>
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="col-md-4">
+                    <form action="<?=$this->url('sell-admin',['action'=>'note'])?>" method="post">
+                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                        <div class="input-group" style="padding-bottom: 10px">
+                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">Send</button>
+                            </span>
+                        </div>
+                    </form>
+                    <?php
+                    $summary='';
+                    if($this->sellOrder->getSummary()){
+                        $summary=$this->sellOrder->getSummary();
+                        ?>
+                        <div class="list-group-item">
+                            <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                            <span class="contacts-title"><b>Ghi chú</b></span>
+                            <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></span>
+                            <p><i><?=$summary?></i></p>
+                        </div>
+                        <?php
+                    }
+
+                    $noteArr =explode("\n",$this->sellOrder->getNote());
+                    if($this->sellOrder->getNote()){
+                        if(count($noteArr)){
+                            foreach ($noteArr as $value){
+                                $arrNote = explode("|",$value);
+                                    ?>
+                                <div class="list-group-item">
+                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                    <p><i><?=@$arrNote[2]?></i></p>
+                                </div>
+                            <?php
+                            }
+                        }
+                    }
+                    ?>
+                    <!-- START TIMELINE -->
+                    <div class="timeline timeline-right" style="padding-top: 10px; background: rgba(223, 226, 226, 0.74)">
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date">Activity</div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                        <?php
+                        foreach ($this->sellOrder->getActivity() as $activityItem){
+
+                            ?>
+                            <!-- START TIMELINE ITEM -->
+                            <div class="timeline-item timeline-item-right">
+                                <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
+                                <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
+                                <div class="timeline-item-content">
+                                    <div class="timeline-body">
+                                        <b><?=$activityItem->getActionBy()?></b><br>
+                                        <i><?=$activityItem->getAction()?></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END TIMELINE ITEM -->
+                            <?php
+                        }
+                        ?>
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+                    <!-- END TIMELINE -->
+                </div>
+                <div class="col-md-8">
+                    <ul id="productList" class="list-group">
+                        <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <table>
+                                    <tr>
+                                        <td style="width: 100%">Created date: <?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></td>
+                                        <td nowrap="">
+                                            <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-info"><span class="fa fa-print"> In đơn</span></a>
+                                            <?php
+                                            $status = $this->sellOrder->getStatus();
+                                            if($status==1 || $status==11)
+                                                echo '<button id="btnDeliveryConfirm" onclick="showModalDeliveryConfirm('.$this->sellOrder->getId().')" type="button" class="btn btn-primary"><span class="fa fa-truck"> Giao hàng</span></button>';
+
+//                                            if($status==2 || $status==1 || $status==11 || $status==21|| $status==3|| $status==31){
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'return','id'=>$this->sellOrder->getId()]).'" class="btn btn-warning"><span class="fa fa-warning"> Trả hàng</span></a> ';
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'edit-order','id'=>$this->sellOrder->getId()]).'" class="btn btn-default"><span class="fa fa-edit"> Sửa đơn</span></a> ';
+//                                            }
+
+                                            if($status!=3 && $status!=-1 && $status!=0)
+                                                echo '<button id="btnPayConfirm" onclick="showModalPayConfirm('.$this->sellOrder->getId().',\''.$this->sellOrder->getGrocery()->getGroceryName().'\')" type="button" class="btn btn-success"><span class="fa fa-credit-card"> Thanh toán</span></button>';
+                                            ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </li>
+                        <?php
+                        $total_order_price=0;
+                        $total_order_product_discount=0;
+                        foreach ($this->sellOrder->getSell() as $sell){
+                            $inventory=$sell->getProduct()->getInventory();
+                            $priceValue = $sell->getPriceValue();
+                            $qty=$sell->getQuantity();
+                            $packUnit=$sell->getPackUnit();
+                            $discount=$sell->getDiscount();
+                            //mua theo thung
+                            if($sell->isPack()){
+                                $qtySale=$sell->isPack();
+                                $unitSale='Thùng';
+                                $price=$packUnit*$priceValue;//gia ban theo thung
+                            }else{
+                                $qtySale=$qty;
+                                $unitSale=$sell->getProduct()->getUnit()->getName();
+                                $price=$priceValue;//gia ban le
+                            }
+
+                            $return='';
+                            $returnNumber = $sell->getReturn();
+                            if($returnNumber >0){
+                                if($returnNumber%$packUnit==0)
+                                    $return = 'Đã trả lại: '.$returnNumber/$packUnit . ' thùng';
+                                else
+                                    $return = 'Đã trả lại : '.$returnNumber.' '.$sell->getProduct()->getUnit()->getName();
+                            }
+                            ?>
+                            <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1 title"><a href="<?=$this->url('product-admin',['action'=>'price','id'=>$sell->getProduct()->getId()])?>"> <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></a></h5>
+                                </div>
+                                <table style="width: 100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="padding-right: 5px; width: 40px">
+                                            <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
+                                        </td>
+                                        <td>
+                                            <table style=" width: 100%;" >
+                                                <tbody>
+                                                <tr>
+                                                    <th style="width: 30%"></th>
+                                                    <th nowrap="">Đơn vị</th>
+                                                    <th nowrap="" class="text-right">Số lượng</th>
+                                                    <th nowrap="" class="text-right">Giá bán</th>
+                                                    <th nowrap="" class="text-right">Chiết khấu</th>
+                                                    <th style="padding-left: 5px" class="text-right">Thành tiền</th>
+                                                </tr>
+                                                <tr>
+                                                    <td></td>
+                                                    <td><?=$unitSale?></td>
+                                                    <td class="text-right"><?=$qtySale?><br><small style="color: red"><?=$return?></small></td>
+                                                    <td style="color: #2691ec; font-weight: bold" class="text-right" nowrap="">
+                                                        <?=Common::formatMoney($price)?>
+                                                    </td>
+
+                                                    <td class="text-right"><?=Common::formatMoney($discount)?></td>
+                                                    <?php
+                                                    $totalPrice = $price*$qtySale;
+                                                    $total_order_price+=$totalPrice;
+                                                    $total_order_product_discount+=$discount*$qtySale;
+                                                    ?>
+                                                    <td class="text-right"><?=Common::formatMoney($totalPrice)?></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                            <small class="warning-color"></small>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </li>
+                            <?php
+                        }
+                        ?>
+                        <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="form-group" style="padding-top: 10px; padding-right: 10px;">
+                                <table>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 5px; border-bottom: 1px solid #cccccc" nowrap="">Tổng cộng:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 5px; border-bottom: 1px solid #cccccc"><?=Common::formatMoney($total_order_price)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="text-align: right; border-bottom: 1px solid #cccccc; padding: 3px 10px;" nowrap="">Chiết khấu theo sản phẩm:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($total_order_product_discount)?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap="">Chiết khấu theo đơn (<?=@round(($this->sellOrder->getDiscount()/$total_order_price)*100,2).'%'?>):</td>
+                                        <td style="text-align: right; font-weight: bold; padding-bottom: 3px; padding-top: 3px; border-bottom: 1px solid #cccccc" nowrap=""><?=Common::formatMoney($this->sellOrder->getDiscount())?></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 100%"></td>
+                                        <td style="padding-right: 10px; text-align: right; padding-top: 3px;" nowrap="">Số tiền phải thanh toán:</td>
+                                        <td style="text-align: right; font-weight: bold; padding-top: 3px;" nowrap=""><?=Common::formatMoney(round(($total_order_price-$total_order_product_discount-$this->sellOrder->getDiscount())/1000)*1000)?></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="d-flex w-100 justify-content-between">
+                                <table>
+                                    <tr>
+                                        <td style="width: 100%">Created date: <?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></td>
+                                        <td nowrap="">
+                                            <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-info"><span class="fa fa-print"> In đơn</span></a>
+                                            <?php
+                                            $status = $this->sellOrder->getStatus();
+                                            if($status==1 || $status==11)
+                                                echo '<button id="btnDeliveryConfirm" onclick="showModalDeliveryConfirm('.$this->sellOrder->getId().')" type="button" class="btn btn-primary"><span class="fa fa-truck"> Giao hàng</span></button>';
+
+                                            if($status==2 || $status==1 || $status==11 || $status==21){
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'return','id'=>$this->sellOrder->getId()]).'" class="btn btn-warning"><span class="fa fa-warning"> Trả hàng</span></a> ';
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'edit-order','id'=>$this->sellOrder->getId()]).'" class="btn btn-default"><span class="fa fa-edit"> Sửa đơn</span></a> ';
+                                            }
+
+                                            if($status!=3 && $status!=-1 && $status!=0)
+                                                echo '<button id="btnPayConfirm" onclick="showModalPayConfirm('.$this->sellOrder->getId().',\''.$this->sellOrder->getGrocery()->getGroceryName().'\')" type="button" class="btn btn-success"><span class="fa fa-credit-card"> Thanh toán</span></button>';
+                                            ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalPayConfirm" tabindex="-1" role="dialog" aria-labelledby="modalPayConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="delivery-form" action="<?=$this->url('sell-admin',['action'=>'paid-order'])?>" method="post" name="delivery-form" class="form-horizontal">
+            <input type="hidden" name="oid" id="oid">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modalPayConfirmLabel">Xác nhận thanh toán</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <label class="check"><input type="radio" class="iradio" name="payMethod" value="1" checked="checked"/>Hoàn thành</label>
+                            <label class="check"><input type="radio" class="iradio" name="payMethod" value="2"/>Chưa thanh toán hoặc Thanh toán một phần</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success">Xác nhận</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDeliveryConfirm" tabindex="-1" role="dialog" aria-labelledby="modalDeliveryConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="delivery-form" action="<?=$this->url('sell-admin',['action'=>'delivery'])?>" method="post" name="delivery-form" class="form-horizontal">
+            <input type="hidden" name="oid" id="oidDelivery">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="modalPayConfirmLabel">Ghi chú cho shipper</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class='col-md-12 padding-bottom-5'>
+                            <textarea type="text" class="form-control" id="note" name="note" placeholder="Ghi chú" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success">Chuyển shipper</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<style>
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+    .warning-color{color: red}
+
+    .timeline .timeline-item .timeline-date{padding: 7px 0px !important;}
+</style>
+<script type="text/javascript" src="/joli/js/plugins/icheck/icheck.min.js"></script>
+<script>
+    function showModalPayConfirm(oId,groceryName){
+        $('#oid').val(oId);
+        $('#modalPayConfirmLabel').html('Xác nhận thanh toán đơn hàng <b>'+groceryName+'</b>');
+        $('#modalPayConfirm').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+    function showModalDeliveryConfirm(oId){
+        $('#oidDelivery').val(oId);
+        $('#modalDeliveryConfirm').modal({
+            keyboard: false,
+            backdrop:'static',
+            show:true
+        });
+    }
+</script>

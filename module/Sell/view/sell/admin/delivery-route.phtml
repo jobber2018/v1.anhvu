@@ -1,0 +1,380 @@
+<?php
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\ConfigManager;
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NPP ANH VŨ</title>
+    <meta name="viewport" content="width&#x3D;device-width,&#x20;initial-scale&#x3D;1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE&#x3D;edge">
+    <!-- Le styles -->
+    <link href="&#x2F;favicon.png" rel="shortcut&#x20;icon" type="image&#x2F;x-icon">
+
+    <!-- CSS INCLUDE -->
+    <link rel="stylesheet" type="text/css" id="theme" href="/joli/css/theme-default.css"/>
+
+    <!-- START SCRIPTS -->
+    <!-- START PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap.min.js"></script>
+    <!-- END PLUGINS -->
+
+    <!-- THIS PAGE PLUGINS -->
+    <script type="text/javascript" src="/joli/js/plugins/mcustomscrollbar/jquery.mCustomScrollbar.min.js"></script>
+    <!-- END PAGE PLUGINS -->
+
+    <!-- START NOTY -->
+    <script type='text/javascript' src='/joli/js/plugins/noty/jquery.noty.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/layouts/topRight.js'></script>
+    <script type='text/javascript' src='/joli/js/plugins/noty/themes/default.js'></script>
+
+    <!-- START TEMPLATE -->
+    <script type="text/javascript" src="/joli/js/plugins.js"></script>
+    <script type="text/javascript" src="/joli/js/actions.js"></script>
+
+    <link href="/vendor/jquery/waitMe/waitMe.css" rel="stylesheet">
+    <script src="/vendor/jquery/waitMe/waitMe.js"></script>
+    <script type="text/javascript" src="/js/admin.js"></script>
+    <!-- END TEMPLATE -->
+    <!-- END SCRIPTS -->
+
+</head>
+<body>
+<div id="wrapper">
+    <div id="header">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div id="infoCar"></div>
+                <table style="width: 100%">
+                    <tr>
+                        <td style="padding-top: 10px; text-align: right">
+                            <select name="car" id="car">
+                                <option value="30M71302">30M-71302</option>
+                                <option value="30M61300">30M-61300</option>
+                                <option value="29H23118">29H-23118</option>
+                            </select>
+                            <select name="time" id="time">
+                                <option value="AM">Sáng</option>
+                                <option value="PM">Chiều</option>
+                                <option value="ALL">Cả ngày</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="map-canvas"></div>
+</div>
+</body>
+</html>
+<style>
+    html, body, #wrapper{
+        height: 100%;
+        width: 100%;
+    }
+    #header{
+        background-color:#ff6700;
+        padding:5px;
+        margin:10px;
+        position: absolute;
+        z-index: 1000;
+    }
+    #map-canvas{
+        height: 100%;
+        width: 100%;
+    }
+</style>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?=$this->geoKey?>&callback=initMap"></script>
+<script>
+    var map;
+    let marketSelected=[];
+    <?php
+    echo PHP_EOL;
+    echo 'jsonObj = [];'.PHP_EOL;
+    echo 'carInfo = [];'.PHP_EOL;
+    $blue=0;
+    $yeallow=0;
+    $red=0;
+    $purple=0;
+    if($this->sellOrder){
+        $arrCarInfo=array();
+        $totalAmount=0;
+        $totalOrderNumber=0;
+        foreach ($this->sellOrder as $sellOrderItem) {
+            if(!is_null($sellOrderItem->getGrocery()->getLat()) && !is_null($sellOrderItem->getGrocery()->getLng()) && $sellOrderItem->getStatus()>0){
+                $amount=$sellOrderItem->getTotalAmountToPaid();
+                $statusString=ConfigManager::getOrderStatus()[$sellOrderItem->getStatus()];
+                $groceryName=htmlspecialchars(trim($sellOrderItem->getGrocery()->getGroceryName()),ENT_QUOTES);
+
+                $debt=0;
+                foreach ($sellOrderItem->getGrocery()->getSellOrder() as $sellOrderTmp){
+                    if($sellOrderTmp->getStatus() == 21 || $sellOrderTmp->getStatus() ==31)
+                        $debt+=$sellOrderTmp->getTotalAmountToPaid();
+                }
+
+                echo PHP_EOL;
+                echo 'item = {};'.PHP_EOL;
+                echo 'item["name"]=\''.$groceryName.' ['.$statusString.']'.'\';'.PHP_EOL;
+                echo 'item["id"]=\''.$sellOrderItem->getId().'\';'.PHP_EOL;
+                echo 'item["grocery_id"]=\''.$sellOrderItem->getGrocery()->getId().'\';'.PHP_EOL;
+                echo 'item["lat"]=\''.trim($sellOrderItem->getGrocery()->getLat()).'\';'.PHP_EOL;
+                echo 'item["lng"]=\''.trim($sellOrderItem->getGrocery()->getLng()).'\';'.PHP_EOL;
+                echo 'item["tp"]=\''.Common::formatMoney($amount).'\';'.PHP_EOL;
+                echo 'item["debt"]=\''.Common::formatMoney($debt).'\';'.PHP_EOL;
+                echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
+                echo 'item["created_date"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
+                echo 'item["pack_number"]='.(is_null($sellOrderItem->getPackNumber())?0:$sellOrderItem->getPackNumber()).';'.PHP_EOL;
+
+                if($sellOrderItem->getDeliveryCar()){
+                    @$arrCarInfo[$sellOrderItem->getDeliveryCar()][$sellOrderItem->getDeliveryCarTime()]['totalOrder']+=$sellOrderItem->getTotalPrice();
+                    @$arrCarInfo[$sellOrderItem->getDeliveryCar()][$sellOrderItem->getDeliveryCarTime()]['totalOrderNumber']+=1;
+                    $icon=$sellOrderItem->getDeliveryCarTime().'-'.$sellOrderItem->getDeliveryCar().'.png';
+                }else{
+                    $icon='yeallow.png';
+                }
+
+                $totalAmount+=$amount;
+                $totalOrderNumber++;
+
+                if($sellOrderItem->getStatus()==2){
+                    $blue=$blue+1;
+                }else if($sellOrderItem->getStatus()==1||$sellOrderItem->getStatus()==11){
+                    $red=$red+1;
+                }else if($sellOrderItem->getStatus()==111){
+                    $yeallow=$yeallow+1;
+                }else if($sellOrderItem->getStatus()==-1 || $sellOrderItem->getStatus()==-2){
+                    $purple=$purple+1;
+                }
+
+                echo 'item["icon"]=\''.$icon.'\';'.PHP_EOL;
+                echo 'jsonObj.push(item);'.PHP_EOL;
+            }
+        }
+        echo 'carInfo='.json_encode($arrCarInfo).';'.PHP_EOL;
+    }
+    ?>
+    let tbl='<table>';
+    $.each(carInfo, function (key, data) {
+
+        $.each(data, function (k, d) {
+            tbl+='<tr>';
+            tbl+='<td style="text-align: center; padding-right: 10px; padding-top:10px;border-bottom: 1px solid #cccccc"><img src="/img/icons/icon-grocery-'+k+'-'+key+'.png" style="width: 35px"><br><b>'+key+'</b></td>';
+            tbl+='<td>'+k+':</td>';
+            tbl+='<td style="padding-left: 10px; font-weight: bold"> '+formatMoney(d.totalOrder)+' ('+d.totalOrderNumber+' đơn)</td>';
+            tbl+='</tr>';
+        })
+    });
+    tbl+='</table>';
+    tbl+='<div style="padding-top: 15px; text-align: right; font-weight: bold; color: #0082ff;"><?=$totalOrderNumber.' đơn = '.Common::formatMoney($totalAmount)?></div>';
+    tbl+='<div style="padding-top: 5px; text-align: right;"><?=$purple.' chờ xử lý, '.$blue.' đang giao, '.($red+$yeallow).' chuẩn bị giao'?></div>';
+    $('#infoCar').html(tbl);
+
+    var myStyles =[
+        {
+            featureType: 'poi.business',
+            stylers:  [
+                { visibility: "off" }
+            ]
+        },{
+            featureType: 'poi.attraction',
+            elementType: 'labels.text.fill',
+            stylers: [{color: '#e28b0b'}]
+        },{
+            "featureType": "administrative",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        },{
+            "elementType": "labels",
+            "stylers": [
+                { "visibility": "on" }
+            ]
+        },{
+            "featureType": "poi",
+            "stylers": [
+                { "visibility": "off" }
+            ]
+        }
+    ];
+
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+            disableDefaultUI: true,
+            fullscreenControl: true,
+            zoom: 15,
+            styles: myStyles
+        });
+
+        var bounds = new google.maps.LatLngBounds();
+        // let i=1;
+        $.each(jsonObj, function (key, data) {
+            var latLng = new google.maps.LatLng(data.lat, data.lng);
+            var marker = new google.maps.Marker({
+                id:data.id,
+                selected:0,
+                map: map,
+                position: latLng
+            });
+
+            let icon={};
+            if(iconExists("/img/icons/icon-grocery-"+data.icon)){
+                icon = {
+                    url:"/img/icons/icon-grocery-"+data.icon,
+                    scaledSize: new google.maps.Size(35, 35)
+                };
+            }
+            marker.setIcon(icon);
+
+            var url='/admin/grocery/detail/'+data.grocery_id+'.html';
+            var infowindow = new google.maps.InfoWindow({
+                content: '<div id="content"><a target="_blank" href="'+url+'"><b>'+data.name+'</b></a>,<br>Tổng đơn: <i><b>'+data.tp+' ('+data.pack_number+' thùng)</b></i><br><span style="color: #ee1e2d; font-weight: bold">Công nợ: '+data.debt+'</span><br> Ngày tạo: '+data.created_date+'<br>'+data.note+'</div>'
+                ,headerDisabled:true
+            });
+
+            marker.addListener("mouseover", () => {
+                infowindow.open(map, marker);
+            });
+            marker.addListener("mouseout", () => {
+                infowindow.close(map, marker);
+            });
+
+            marker.addListener('click', function (event) {
+                infowindow.headerDisabled=false;
+                infowindow.open(map, marker);
+            });
+
+            marker.addListener('click', function (event) {
+                // infowindow.open(map, marker);
+                // console.log(event);
+                var icon;
+                if(marker.selected==0){
+                    icon = {
+                        url: '/img/icons/icon-grocery-'+$('#time').val()+'-'+$('#car').val()+'.png',
+                        scaledSize : new google.maps.Size(35, 35),
+                    };
+                    marker.selected=1;
+                    marketSelected.push(marker.id);
+                }else{
+                    icon = {
+                        url: '/img/icons/icon-grocery-yeallow.png',
+                        scaledSize : new google.maps.Size(35, 35),
+                    };
+                    marker.selected=0;
+                    let tmp=[];
+                    $.each(marketSelected, function (index, id) {
+                        if(id!=marker.id){
+                            tmp.push(id);
+                        }
+                    })
+                    marketSelected=tmp;
+                }
+
+                marker.setIcon(icon);
+                viewInfoDeliverySelected(marker.id,marker.selected);
+
+                // infowindow.open(map, marker);
+            });
+
+            bounds.extend(latLng);
+        });
+        var mapBound = 0;
+        if(jsonObj.length>0){
+            map.fitBounds(bounds);
+             mapBound = 1;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+
+                var center = new google.maps.LatLng(position.coords.latitude,
+                    position.coords.longitude);
+
+                if(mapBound == 0)
+                    map.setCenter(center);
+
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: center,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        strokeColor: 'white',
+                        strokeWeight: 2,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.6
+                    }
+                });
+                marker.setMap(map);
+                marker.setPosition(center);
+
+                var markerWaveCurrent = new google.maps.Marker({
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 0,
+                        strokeColor: 'white',
+                        strokeWeight: 1,
+                        fillColor: '#1A73E8',
+                        fillOpacity: 0.3
+                    },
+                });
+                markerWaveCurrent.setMap(map);
+                markerWaveCurrent.setPosition(center);
+
+                var count=0;
+                window.setInterval(function() {
+                    var icon = markerWaveCurrent.get('icon');
+                    if(icon.scale<30){
+                        icon.scale = icon.scale+1;
+                    }else{
+                        count = count+1;
+                        icon.scale = 8;
+                    }
+                    markerWaveCurrent.set('icon', icon);
+                }, 35);
+
+            }, function () {
+                // handleLocationError(true, infowindow, map.getCenter());
+                // stop_waitMe();
+            });
+        } else {
+            // Browser doesn't support Geolocation
+            // handleLocationError(false, infowindow, map.getCenter());
+            // stop_waitMe();
+        }
+
+    }
+
+    function viewInfoDeliverySelected(selectedId,option){
+        let url='<?=$this->url('sell-admin',['action'=>'delivery-car'])?>';
+        let car = $('#car').val();
+        let time = $('#time').val();
+
+        if(car=='29H23118') time='ALL';//fix
+
+        $.ajax({
+            method: "POST",
+            headers: {Accept: "application/json; charset=utf-8"},
+            data: {orderId:selectedId,option:option,car:car,time:time},
+            url: url
+        }).done(function(res) {
+            if(res.status==0){
+                noty({text: res.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+        });
+    }
+    function iconExists(image_url){
+
+        var http = new XMLHttpRequest();
+
+        http.open('HEAD', image_url, false);
+        http.send();
+
+        return http.status != 404;
+
+    }
+</script>

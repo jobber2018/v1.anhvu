@@ -1,0 +1,137 @@
+
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn đang giao";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('staff-dashboard')?>">Home</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Danh sách đơn đang giao</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)){
+                ?>
+                <div class="alert alert-success" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS)?>
+                </div>
+                <?php
+            }
+            if($this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR)?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <a href="<?=$this->url('sell-staff',['action'=>'delivery-map'])?>" class="btn btn-success">
+                        <span class="fa fa-map-marker"></span>
+                        Bản đồ
+                    </a>
+                    <ul class="panel-controls" style="color: #943adb">
+                        <li>
+                            <span class="fa fa-truck" style="font-size: 18pt"></span>
+                            <?php
+                            $carLicense='';
+                            if($this->carLicense)
+                                $carLicense = substr($this->carLicense,0,3).'-'.substr($this->carLicense,3);
+                            ?>
+                            <b style="font-size: 16pt; padding-left: 10px"><?=$carLicense?></b>
+                        </li>
+                    </ul>
+
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
+                        <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng đơn</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php
+                        $i=1;
+                        foreach ($this->sellOrder as $order){
+                            //chỉ hiển thị các đơn đang giao
+                            if($order->getStatus()==\Sulde\Service\Common\Define::_ORDER_DELIVERING_STATUS) {
+                                echo '<tr>';
+                                echo '<td>' . $i++ . '</td>';
+                                echo '<td><a class="title" href="' . $this->url('sell-staff', ['action' => 'delivery-o-detail', 'id' => $order->getId()]) . '">' . $order->getGrocery()->getGroceryName() . '</a><br><i>(' . $order->getGrocery()->getAddress() . ')</i></td>';
+                                echo '<td>' . Common::formatMoney(round($order->getTotalPrice() / 1000) * 1000) . ' đ</td>';
+                                echo '</tr>';
+                            }
+                        }
+                        ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+<style>
+    table .title{font-weight: bold}
+    .panel-body table td{vertical-align: center !important;}
+
+    .dataTables_length{
+        float: right;
+        width: auto;
+    }
+    .dataTables_filter{
+        float: left;
+    }
+    .dataTables_filter label{
+        float: unset;
+    }
+    .dataTables_filter label input{width: 250px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#tblOrder').DataTable({
+            paging: false,
+            pageLength:50,
+            ordering: false,
+            info: false,
+            // order: [[ 1, "desc" ]],
+            // scrollX: true,
+            language: {
+                searchPlaceholder: ""
+            },
+            initComplete: function () {
+                $('.dataTables_filter label input').focus();
+            },
+        });
+    });
+</script>

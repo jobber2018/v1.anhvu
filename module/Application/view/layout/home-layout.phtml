@@ -1,0 +1,178 @@
+<?php
+
+use Sulde\Service\Common\Common;
+
+?>
+<?= $this->doctype() ?>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <?= $this->headTitle('Đặt phòng homestay giá rẻ nhanh chóng, tìm kiếm homestay, nhà nghỉ, khách sạn trên bản đồ và tìm chỉ đường tại bestay')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+        <?= $this->headMeta()
+            ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+            ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+        ?>
+        <meta data-n-head="true" name="robots" content="index,follow">
+        <meta data-n-head="true" name="author" content="BESTAY">
+        <meta data-n-head="true" name="description" content="Kênh chính thức về Homestay tại Việt Nam, Kinh nghiệm đặt phòng homestay, Ưu Đãi Tốt Nhất Giảm Tới 40% Ngay Hôm Nay. Bạn là chủ Homestay đăng tin ngày để hàng nghìn người tìm thấy homestay của bạn, đăng tin một lần có khách mãi mãi. Homestay Sapa, Homestay Đà Lạt, Homestay Hà Nội, Homestay Hồ Chí Minh, Homestay Vũng Tàu, Homestay Tam Đảo, Homestay Hội An, Homestay Đà Nẵng, Homestay Hạ Long, Homestay Phan Thiết.">
+        <meta data-n-head="true" name="apple-mobile-web-app-title" content="vnhomestay.com.vn">
+
+        <!-- Le styles -->
+        <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/x-icon', 'href' => $this->basePath() . '/img/favicon-32x32.png'])?>
+        <!-- CSS INCLUDE -->
+        <link rel="stylesheet" type="text/css" id="theme" href="/vendor/bootstrap/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" id="theme" href="/vendor/fontawesome-free/css/all.css"/>
+<!--        /joli/css/bootstrap/bootstrap.min.css-->
+        <link rel="stylesheet" type="text/css" id="theme" href="/css/simple-sidebar.css"/>
+        <link rel="stylesheet" href="/css/jquery.mCustomScrollbar.min.css">
+
+<!--        <link href="/vendor/MDB_4.8.7/css/mdb.min.css" rel="stylesheet">-->
+        <link rel="stylesheet" type="text/css" href="/vendor/slick-1.8.1/slick/slick.css"/>
+        <link rel="stylesheet" type="text/css" href="/vendor/slick-1.8.1/slick/slick-theme.css"/>
+        <script data-ad-client="ca-pub-9910654742181507" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- Bootstrap core JavaScript -->
+        <script type="text/javascript" src="/vendor/jquery/jquery.min.js"></script>
+        <script src="/vendor/bootstrap/js/popper.min.js"></script>
+        <script src="/vendor/bootstrap/js/bootstrap.min.js"></script>
+        <!-- jQuery Custom Scroller CDN -->
+        <script src="/js/jquery.mCustomScrollbar.concat.min.js"></script>
+
+
+        <script type="text/javascript" src="/vendor/jquery/jquery-migrate-1.2.1.min.js"></script>
+        <script type="text/javascript" src="/vendor/slick-1.8.1/slick/slick.min.js"></script>
+
+        <!--datetimepicker-->
+        <link rel="stylesheet" href="/vendor/datetimepicker/css/bootstrap-datetimepicker.min.css">
+        <script src="/js/moment.min.js" type="text/javascript"></script>
+        <script src="/vendor/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+
+        <!--upload file-->
+        <script src="/vendor/jquery/jquery.form.min.js"></script>
+        <?php
+        include_once(ROOT_PATH."/css/svg-icons.svg");
+        ?>
+    </head>
+    <body>
+    <div class="overlay"></div>
+    <div class="d-flex" id="wrapper">
+
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <!--<div id="dismiss">
+                <i class="fas fa-arrow-left"></i>
+            </div>-->
+
+            <div class="sidebar-header">
+                <img src="/img/logo_small_bestay.svg" width="70px">
+            </div>
+                <?php
+                if($this->authIdentity){
+                    $fullname = $this->authIdentity->getFullname();
+                    $name = substr(strrchr($fullname , ' '), 1). '! ';
+                    $email = $this->authIdentity->getEmail();
+                    if(!$email) $email='-/-';
+                    ?>
+                    <div class="panel panel-default">
+                        <div class="panel-body profile">
+                            <div class="profile-image">
+                                <img src="/img/users/avatar.png" alt="<?=$fullname?>">
+                            </div>
+                            <div class="profile-data">
+                                <div class="profile-data-name"><?=$fullname?></div>
+                                <div class="profile-data-title"><?=$this->authIdentity->getMobile()?></div>
+                            </div>
+                            <div class="profile-controls">
+                                <a href="<?=$this->url('user-front',['action'=>'profile'])?>" class="profile-control-left"><span class="fa fa-info"></span></a>
+                                <a href="#" class="profile-control-right"><span class="fa fa-phone"></span></a>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="contact-info">
+                                <p><a href="<?=$this->url('user-front',['action'=>'profile'])?>"><i class="fa fa-user"></i><span>Thông tin thành viên</span></a></p>
+                                <p><a href="<?=$this->url('user-dashboard')?>"><i class="fa fa-desktop"></i><span></span>Dashboard</span></a></p>
+                                <p><a href="<?=$this->url('hotel-user',['action'=>'list'])?>"><i class="fa fa-bed"></i><span>Danh sách homestay</span></a></p>
+                                <p><a href="<?=$this->url('hotel-user',['action'=>'add-hotel'])?>"><i class="fa fa-plus-circle"></i><span>Thêm mới homestay</span></a></p>
+                                <p><a href="<?=$this->url('transaction-user')?>"><i class="fa fa-history"></i><span>Lịch sử giao dịch điểm</span></a></p>
+                            </div>
+
+                        </div>
+                    </div>
+                    <?php
+                }else{
+                ?>
+                    <div class="list-group list-group-flush">
+                        <a href="<?=$this->url('user-login')?>" class="list-group-item list-group-item-action"><i class="fa fa-users"></i> <?=$this->translate('Sign up')?></a>
+                        <a href="<?=$this->url('user-login')?>" class="list-group-item list-group-item-action"><i class="fa fa-user"></i> <?=$this->translate('Sign in')?></a>
+                    </div>
+            <?php
+                }
+                ?>
+        </nav>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <nav id="navbar" class="navbar navbar-expand-lg navbar-light border-bottom">
+                <div id="logoNavBar" class="padding-right-15">
+                    <a href="/"><img src="/img/small-logo.png" width="150px" class="mCS_img_loaded"></a>
+                </div>
+
+                <div class="input-group" id="cardMapSearch">
+                    <span class="input-group-prepend">
+                        <div class="input-group-text transparent border-right-di"><i class="fa fa-bars fa-lg" id="menu-toggle"></i></div>
+                    </span>
+                    <input type="search" class="form-control py-2 border-left-0 border border-right-0 search-box" type="text"
+                           placeholder="<?php printf('%s'. $this->translate('Where are you going?'),$name)?>" name="mapSearchInput" id="mapSearchInput">
+
+                    <span class="input-group-append">
+                        <div class="input-group-text transparent border-left-0"><i class="fa fa-search fa-lg"></i></div>
+                    </span>
+                </div>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="white-space:nowrap">
+                    <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+                        <li class="nav-item active">
+                            <a class="nav-link">Hotline: 0980 800 800</a>
+                        </li>
+                        <?php
+                        if(!$this->authIdentity){
+                        ?>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="<?=$this->url('user-login')?>"><?=$this->translate('Sign up')?></a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="<?=$this->url('user-login')?>"><?=$this->translate('Sign in')?></a>
+                        </li>
+
+                        <?php }else{
+                            ?>
+                            <li class="nav-item active">
+                                <a class="nav-link" href="<?=$this->url('user-dashboard')?>"><?=$this->translate('Hello').': '. substr(strrchr($fullname , ' '), 1)?></a>
+                            </li>
+                        <?php
+                        }?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                                <a class="nav-link" href="#"><?=$this->translate('About Us')?><span class="sr-only"></span></a>
+                                <a class="nav-link" href="#"><?=$this->translate('Terms & conditions')?></a>
+                                <a class="nav-link" href="#"><?=$this->translate('Privacy policy')?></a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="container-fluid">
+                <?= $this->content ?>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    </body>
+</html>

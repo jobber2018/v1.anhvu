@@ -1,0 +1,58 @@
+<?php
+$title ='Hotel and Amenities';
+$this->headTitle($title);
+?>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('hotel-admin')?>"><?=$this->translate('Hotel list')?></a></li>
+    <li><a href="<?=$this->url('hotel-admin',['action'=>'detail','id'=>$this->escapeHtml($hotel->getId())])?>"><?=$this->translate('Hotel information')?></a></li>
+    <li class="active">Hotel and Amenities</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> <?=$title?></h2>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <?php
+                        $hotelAmenities = array();
+                        foreach ($this->hotel->getAmenities() as $item){
+                            $hotelAmenities[$item->getId()] = $item->getId();
+                        }
+                        foreach ($this->amenities as $item){
+                            if($hotelAmenities[$item->getId()])
+                                echo $this->partial('amenities/partial/amenities-item', ['amenities' => $item,'checked'=>1]);
+                            else
+                                echo $this->partial('amenities/partial/amenities-item', ['amenities' => $item,'checked'=>0]);
+                        }
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('.ckAmenities').click(function () {
+        var amenitiesId = $(this).val();
+        $('#sp_'+amenitiesId).css("color", "blue").html(" Updating...");
+        $.ajax({
+            method: "POST",
+            url: "<?=$this->url('amenities-admin',['action'=>'update-to-hotel','id'=>$hotel->getId()])?>",
+            data: {amenitiesId:amenitiesId}
+        }).done(function(response) {
+            if(response.status==0){
+                $('#sp_'+amenitiesId).css("background-color", "red").html(' '+response.message);
+            }else{
+                $('#sp_'+amenitiesId).html('');
+            }
+        });
+
+    });
+</script>

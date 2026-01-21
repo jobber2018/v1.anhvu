@@ -1,0 +1,351 @@
+<?php
+$this->headTitle("Tạo đơn bán hàng");
+?>
+<style>.error{color: red}</style>
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('user-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
+    <li><a href="<?=$this->url('grocery-user',['action'=>'panel','id'=>$this->escapeHtml($this->grocery->getId())])?>"><?=$this->grocery->getGroceryName()?></a></li>
+    <li class="active">Tạo đơn</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> <?=$this->grocery->getGroceryName()?> | Tạo đơn</h3>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <?php
+            if(count($this->flashMessenger()->getErrorMessages())>0){
+                ?>
+                <div class="alert alert-danger" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <?=$this->flashMessenger()->getErrorMessages()[0]?>
+                </div>
+                <?php
+            }
+            ?>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Chọn sản phẩm</label>
+                    <div class="col-md-9">
+                        <select class="form-control selectpicker" id="selectPro" data-live-search="true">
+                            <?php
+                            foreach ($this->productList as $product){
+                                $arrTmp["id"]=$product->getId();
+                                $arrTmp["name"]=$product->getName();
+                                $arrTmp["code"]=$product->getCode();
+                                $arrTmp["unit_name"]=$product->getUnit()->getName();
+                                $arrTmp["box_unit"]=$product->getBoxUnit();
+                                $arrTmp["inventory"]=$product->getInventory();
+                                $arrTmp["weight"]=$product->getWeight();
+                                $arrTmp["price"]=$product->getUnitPriceAfterSale();
+                                $arrTmp["unit_sale_value"]=$product->getUnitPriceSale();
+                                $arrTmp["price_pack"]=$product->getPackPriceAfterSale();
+                                $arrTmp["pack_sale_value"]=$product->getPackPriceSale();
+                                $arrTmp["option"]='unit';
+                                $arrTmp["note_order"]=$product->getNoteOrder();
+                                $arrTmp["qty"]=0;
+                                $arrTmp["exchange_unit"]=$product->getExchangeUnit();
+
+                                if(is_null($product->getImg()))
+                                    $arrTmp["img"]='<img src="/img/icons/no-image-icon.png" width="40px">';
+                                else
+                                    $arrTmp["img"]='<img src="'.$product->getImg().'" style="max-width:40; max-height:30px">';
+
+                                $json = json_encode($arrTmp);
+
+                                if($product->getUnitPriceSale() || $product->getPackPriceSale())
+                                    $class='class="special"';
+                                else
+                                    $class='';
+
+                                echo '<option '.$class.' data-subtext="'.$product->getCode().'" value="'.$product->getId().'" data=\''.$json.'\'>'.$product->getName(). " | ".$product->getWeight().'</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <ul id="productList" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="product-bottom-panel">
+    <div class="pull-left" style="padding-top: 5px; padding-right: 20px">
+        <span id="total-price-lable" style="font-weight: bold"></span>
+        <span id="total-price" class="price"></span>
+    </div>
+    <div class="pull-right">
+        <small class="pull-right" style="padding-left: 15px; color: red; padding-top: 7px">Đơn hàng tối thiểu từ 1 triệu</small>
+        <input type="submit" disabled name="btnSubmit"  id="btnSubmit" class="btn btn-info pull-right" value="Tạo đơn">
+    </div>
+</div>
+<link rel="stylesheet" href="/css/bootstrap-select.min.css">
+<script src="/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
+<script src="/js/ajax-bootstrap-select.js"></script>
+
+<script type='text/javascript' src='/joli/js/plugins/icheck/icheck.min.js'></script>
+<style>
+    .product-bottom-panel {
+        background-color: #fff;
+        border: solid rgba(0,0,0,.09)!important;
+        border-width: 1px 0 0!important;
+        box-shadow: 0 0 6px 0 rgba(0,0,0,.09);
+        position: fixed;
+        bottom: 0;
+        max-height: 4.25rem;
+        width: 100%;
+        display: flex;
+        z-index: 101;
+        padding: 10px;0
+    }
+    .special {
+        color: #1065e7 !important;
+        font-weight: bold!important;
+    }
+    .warning-color{color: red}
+    .list-group-item .title{font-weight: bold}
+    .list-group .list-group-item:last-child{
+        border-bottom: 1px solid #E5E5E5;
+    }
+    .price{color: #26a9d1; font-weight: bold; padding-left: 10px}
+
+</style>
+<script>
+    var myProSelect=[];
+
+    $( document ).ready(function() {
+
+    })
+
+    $("#selectPro").on("changed.bs.select",
+        function(e, clickedIndex, newValue, oldValue) {
+            let data = $(this).find(':selected').attr('data');
+            let obj = jQuery.parseJSON(data);
+            let msg='',cls='',defaultQuantity=1;
+
+            obj.qty=defaultQuantity;
+
+            let unit_price_old='';
+            let unit_price_old_lable='';
+            let pack_price_old='';
+            let pack_price_old_lable='';
+
+            if(obj.unit_sale_value){
+                unit_price_old=obj.price + obj.unit_sale_value
+                unit_price_old_lable='<span style="color: red; text-decoration: line-through;">('+formatCurrency(unit_price_old.toString())+')</span>';
+            }
+
+            if(obj.pack_sale_value){
+                pack_price_old=obj.price_pack + obj.pack_sale_value
+                pack_price_old_lable='<span style="color: red; text-decoration: line-through">('+formatCurrency(pack_price_old.toString())+')</span>';
+            }
+
+            var html='<li id="li'+obj.id+'" href="#" class="list-group-item list-group-item-action flex-column align-items-start">';
+            html+='<div class="d-flex w-100 justify-content-between">';
+            html+='<h5 class="mb-1 title">';
+            html+=obj.name +'|'+obj.weight;
+            html+='<span class="fa fa-times pull-right" onclick="removeProduct('+obj.id+')"></span>';
+            html+='</h5>';
+            html+='</div>';
+            html+='<table style="width: 100%">';
+            html+='<tr>';
+            html+='<td style="padding-right: 5px; width: 40px">'+obj.img+'</td>';
+            html+='<td>';
+            html+='<table>';
+            html+='     <tr>';
+            html+='         <td nowrap="">Giá lẻ:</td>';
+            html+='         <td style="padding-left: 10px; color: #0C7FCC; font-weight: bold; width: 100%" nowrap="">'+formatCurrency(obj.price.toString())+' '+unit_price_old_lable+'</td>';
+            html+='     </tr><tr>';
+            html+='         <td nowrap="">Giá thùng:</td>';
+            html+='         <td style="padding-left: 10px;color: #0C7FCC; font-weight: bold;" nowrap="">'+formatCurrency(obj.price_pack.toString())+' '+pack_price_old_lable+'</td>';
+            html+='     </tr><tr>';
+            html+='         <td nowrap="">Mua theo</td>';
+            html+='         <td style="padding-left: 10px">';
+            html+='             <label class="check"><input type="radio" value="unit" dataId="'+obj.id+'" class="iradio" name="opt'+obj.id+'" checked="checked"/> '+obj.unit_name+'</label>';
+            html+='             <label class="check"><input type="radio" value="pack" dataId="'+obj.id+'" class="iradio" name="opt'+obj.id+'"/> Thùng ('+obj.box_unit+' '+obj.unit_name+')</label>';
+            html+='         </td>';
+            html+='     </tr><tr>';
+            html+='         <td nowrap="">Số lượng:</td>';
+            html+='         <td style="padding-left: 10px">';
+            html+='             <input style="width: 100px" id="qty'+obj.id+'" name="quantity" type="number" onchange="qtyOnchange('+obj.id+')"  value="'+defaultQuantity+'" min="1" class="form-control">';
+            html+='         </td>';
+            html+='     </tr>';
+            html+='</table>';
+            //if(obj.exchange_unit > 1)
+                //msg='Tối thiểu bán '+obj.exchange_unit+' '+obj.unit_name+' ';
+            if(obj.note_order.length>0)
+                msg=obj.note_order;
+
+            html+='<small id="msg'+obj.id+'" class="warning-color">'+msg+'</small>';
+            html+='</td></tr></table>';
+            html+='</li>';
+
+            var alreadyLi=0;
+            $.each( myProSelect, function( key, data ) {
+                if(data.id==obj.id) {
+                    alreadyLi=1;
+                }
+            });
+            if(alreadyLi==1){
+                var liItem =$('#li'+obj.id);
+                $('#li'+obj.id).remove();
+                $('#productList').prepend(liItem);
+            }else{
+                $('#productList').prepend(html);
+                $('.iradio').iCheck({radioClass: 'iradio_minimal-grey'}).on('ifChecked', function(e) {
+                    let option = e.target.value;
+                    let id = $(this).attr('dataId');
+                    $.each( myProSelect, function( key, data ) {
+                        if(data.id==id){
+                            $.extend(data,{
+                                option:option
+                            });
+                        }
+                    });
+                    showInforOrder();
+                });
+                myProSelect.push(obj);
+            }
+            $('#qty'+obj.id).focus();
+
+            showInforOrder();
+            // showButtonSubmitOrder();
+        });
+
+    function removeProduct(id){
+        $('#li'+id).remove();
+        myProSelect = $.grep(myProSelect, function(e){
+            return e.id != id;
+        });
+        showInforOrder();
+        // showButtonSubmitOrder();
+    }
+
+    function showButtonSubmitOrder(){
+        if(myProSelect.length > 0)
+            $('#btnSubmit').prop('disabled', false);
+        else
+            $('#btnSubmit').prop('disabled', true);
+    }
+
+    function showInforOrder(){
+        var totalPrice=0;
+
+        if(myProSelect.length==0){
+            $('#total-price').html('');
+            $('#total-price-lable').html('');
+            return;
+        }
+
+        let price;
+        let quantity;
+        $.each( myProSelect, function( key, data ) {
+            quantity=data.qty
+            if(data.option=='unit') {
+                price = data.price;
+                totalPrice += price * quantity;
+            }else{
+                price=data.price_pack;
+                totalPrice+=price*quantity;
+            }
+        });
+
+        $('#total-price').html(formatCurrency(totalPrice.toString())+" đ");
+        $('#total-price-lable').html('Tổng tiền tạm tính:');
+
+        if(totalPrice<1000000)
+            $('#btnSubmit').prop('disabled', true);
+        else
+            $('#btnSubmit').prop('disabled', false);
+    }
+
+    function qtyOnchange(id){
+        var obj=$('#qty'+id);
+        var value=obj.val();
+        if(!value) value=0;
+
+        if(value<0){
+            $('#msg'+id).html('Không thể nhập số âm!');
+            return;
+        }else{
+            $('#msg'+id).html('');
+        }
+
+        $.each( myProSelect, function( key, data ) {
+            if(data.id==id){
+                //console.log(data);
+                $.extend(data,{
+                    qty:parseInt(value)
+                });
+            }
+        });
+
+        showInforOrder();
+    }
+
+    $('#btnSubmit').click(function(){
+        if(!myProSelect.length){
+            alert("Vui lòng chọn sản phẩm.");
+            return;
+        }
+        var err=0;
+        $.each( myProSelect, function( key, data ) {
+            if(!data.qty){
+                alert("Vui lòng nhập số lượng bán sản phẩm "+data.name);
+                err=1;
+                return;
+            };
+        });
+
+        if(err==1) return;
+
+        let jsonObj = [];
+        $.each( myProSelect, function( key, data ) {
+            let item = {};
+            item["id"]=data.id;
+            item["option"]=data.option;
+            item["qty"]=data.qty;
+            jsonObj.push(item);
+        });
+
+        run_waitMe();
+
+        var url = "<?=$this->url('sell-user',['action'=>'add-draft-order','id'=>$this->grocery->getId()])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {pro:jsonObj}
+        }).done(function (data) {
+            if(data.status){
+                alert('Đơn hàng đã được tạo, sẽ mất vài phút để xác nhận!');
+                window.location.href = '<?=$this->url('user-dashboard')?>';
+            }
+            else{
+                alert(data.msg);
+                stop_waitMe();
+            }
+        })
+    });
+
+    function formatCurrency(value){
+        var result=0;
+        if (value && value.length >3){
+            var numFormat = new Intl.NumberFormat("en-US");
+            result= numFormat.format(value.replace( ",","" ));
+        }else{
+            result= value;
+        }
+        return result;
+    }
+</script>
