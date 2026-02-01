@@ -1,0 +1,403 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\Define;
+
+$title = "Nhập hàng";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-check-admin',['action'=>'list'])?>">Danh sách đơn</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> Tạo đơn nhập hàng: <?=$this->supplier->getName()?></h2>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm cần kiểm</h3>
+                    <ul class="panel-controls">
+                        <li><button id="" onclick="createPurchaseOrder();" class="btn btn-info btn-block"><i class="fa fa-save"></i> Tạo đơn</button></li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblProductList">
+                        <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>is product</th>
+                            <th>Mã sản phẩm</th>
+                            <th>Mã thùng</th>
+                            <th>Tên sản phẩm</th>
+                            <th>SL</th>
+                            <th>Đơn vị</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="modalAddProduct" tabindex="-1" role="dialog" aria-labelledby="modalAddProductLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalAddProductLabel">Thêm sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row pb-2" style="margin-bottom: 15px">
+                    <label class="col-md-3 control-label">Mã sản phẩm</label>
+                    <div class="col-md-9">
+                        <input name="product-code" id="product-code" class="form-control" value="">
+                    </div>
+                </div>
+                <div class="row pb-2" style="margin-bottom: 15px">
+                    <label for="name" class="col-md-3 control-label">Mã thùng:</label>
+                    <div class="col-md-9">
+                        <input type="text" name="pack-code" id="pack-code" class="form-control" value="">
+                    </div>
+                </div>
+                <div class="row pb-2" style="margin-bottom: 15px">
+                    <label class="col-md-3 control-label">Tên sản phẩm</label>
+                    <div class="col-md-9">
+                        <input name="product-name" id="product-name" class="form-control" value="">
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom: 15px">
+                    <label class="col-md-3 control-label">Số lượng</label>
+                    <div class="col-md-3">
+                        <input type="number" name="product-qty" id="product-qty" class="form-control" value="1">
+                    </div>
+                    <div class="col-md-6">Thùng</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="btnAddProduct" type="button" class="btn btn-success">
+                    <span class="fa fa-plus"></span>
+                    Thêm mới
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/js/jquery.scannerdetection.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<style>
+    .progress{width: 200px!important;margin-bottom:0 !important;}
+    .modal-dialog {
+        min-width: 600px !important;
+        width: auto !important; /* allows the dialog to shrink-wrap its content */
+    }
+    .noty_bar{
+        min-height: 80px;
+        align-items:center;
+        display:flex;
+        /*font-size: 14pt;*/
+    }
+    .noty_message{font-size: larger!important; line-height: unset!important;font-weight: bold}
+    #noty_topRight_layout_container li{margin-bottom: 2px}
+
+    .row-highlight {
+        background-color: #fff3cd !important;
+        animation: flash 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes flash {
+        from { background-color: #fff3cd; }
+        to   { background-color: #ffe08a; }
+    }
+
+</style>
+<script>
+    let tblProductList;
+    let tblDataProducts;
+    let supplierId=<?=$this->supplier->getId()?>;
+    $(document).ready(function () {
+        tblProductList=$('#tblProductList').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            searching: true,
+            fixedColumns: true,
+            rowId: 'id',
+            deferRender: true,
+            autoWidth: false,
+            columns: [
+                { data:'id',visible:false},
+                { data:'is_product',visible:false},
+                { data:'barcode',width: "100px"},
+                { data:'pack_barcode',width: "100px"},
+                { data:'name', className:'title'},
+                {
+                    data: 'qty',width: "100px", className: 'highlight price',
+                    render:function (data,type){
+                        if(type==='display'){
+                            return `
+                                <input type="number"
+                                        class="qty-input form-control"
+                                        min="0"
+                                        value=${data}>
+                            `;
+                        }
+                        return data;
+                    }
+                },{ data:'unit',
+                    render:function (data,type){
+                        if(type==='display'){
+                            return `
+                                <select class="unit-select">
+                                    <option value="pack" ${data == 'pack' ? 'selected' : ''}>Thùng</option>
+                                    <option value="unit" ${data == 'unit' ? 'selected' : ''}>Lẻ</option>
+                                </select>
+                            `;
+                        }
+                        return data;
+                    }
+                },{
+                    data: null,
+                    render: () => {
+                        return `<button type="button" class="btn-delete btn btn-warning btn-rounded">❌</button>`;
+                    }
+                }
+            ]
+        });
+        document
+            .querySelector('#tblProductList tbody')
+            .addEventListener('input', (e) => {
+
+                if (!e.target.classList.contains('qty-input')) return;
+                const input = e.target;
+                const tr = input.closest('tr');
+                const row = tblProductList.row(tr);
+                const data = row.data();
+
+                let qty = parseInt(e.target.value, 10);
+                //let qty=0;
+                //console.log(data);
+                //if (isNaN(qty) || qty < 0) qty = 0;
+
+                data.qty = qty;
+                row.data(data).invalidate().draw(false);
+            });
+
+        $('#tblProductList').on('change', '.unit-select', function () {
+            var tr   = $(this).closest('tr');
+            var row  = tblProductList.row(tr);
+            var data = row.data();
+
+            // gán giá trị mới
+            data.unit = $(this).val();
+
+            // update lại DataTables
+            row.data(data).invalidate().draw(false);
+
+            //console.log('Row data mới:', row.data());
+        });
+
+        document
+            .querySelector('#tblProductList tbody')
+            .addEventListener('click', (e) => {
+
+                if (!e.target.classList.contains('btn-delete')) return;
+
+                const tr = e.target.closest('tr');
+                const row = tblProductList.row(tr);
+                const data = row.data();
+
+                if (!data) return;
+
+                if (!confirm(`Xoá sản phẩm "${data.name}" ?`)) return;
+
+                row.remove().draw(false);
+            });
+
+        $("#btnAddProduct").click(function() {
+            const newProduct = {
+                id: $('#product-code').val().trim(),
+                is_product:0,
+                barcode: $('#product-code').val().trim(),
+                pack_barcode: $('#pack-code').val().trim(),
+                name: $('#product-name').val().trim(),
+                qty: parseInt($('product-qty').val(), 10) || 1,
+                unit:'pack'
+            };
+
+            if (!newProduct.id || !newProduct.name) {
+                alert('Vui lòng nhập đầy đủ thông tin');
+                $('#product-name').focus();
+                return;
+            }
+            // thêm vào DataTable
+            tblProductList.row.add(newProduct).draw(false);
+            playAudio('fail');
+
+            // Đưa row vừa thêm lên top
+            var rowNode = tblProductList.row(':last').node();
+            $(rowNode).prependTo(tblProductList.table().body());
+            // Highlight
+            $(rowNode).addClass('row-highlight');
+
+            // Remove highlight sau 3s
+            /*setTimeout(function () {
+                $(rowNode).removeClass('row-highlight');
+            }, 3000);*/
+
+            // (tuỳ chọn) thêm vào data gốc
+            //productData.push(newProduct);
+            $('#modalAddProduct').modal('hide');
+
+        });
+    });
+
+    $(document).scannerDetection({
+        timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+        startChar: [120], // Prefix character for the cabled scanner (OPL6845R)
+        endChar: [13], // be sure the scan is complete if key 13 (enter) is detected
+        avgTimeByChar: 40, // it's not a barcode if a character takes longer than 40ms
+        onComplete: function(barcode, qty){
+            // console.log('scannerDetection:'+barcode +'/'+qty);
+            // $('.prompt').val('');
+            // $('.prompt').focus();
+
+            if ($('#modalAddProduct').hasClass('in'))
+                return;
+
+
+            if ($('#dt-search-0').is(':focus'))
+                return;
+
+            findProductByBarcode(barcode);
+        } // main callback function
+    });
+
+    function findProductByBarcode(barcode){
+        if(!barcode){
+            noty({text: 'Sản phẩm không có mã vạch. Hãy thêm mã trước khi kiểm!', layout: 'topRight', type: 'error',timeout: 5000});
+            return;
+        }
+
+        let url = "<?=$this->url('werehouse-admin',['action'=>'purchase-scan'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {barcode:barcode}
+        }).done(function (response) {
+            if(response.status){
+                // console.log('tim thay san pham trong db: '+response.data.id);
+                increaseQty(response.data, 1);
+                noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                $('#modalAddProduct').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                }).on('shown.bs.modal', function (e) {
+                    $('#product-code').val('').focus();
+                    $('#pack-code').val(barcode);
+                    $('#product-name').val('');
+                    $('#product-qty').val(1);
+                    playAudio('warning');
+                });
+            }
+        });
+    }
+
+    function increaseQty(product, step = 1) {
+        const row = tblProductList.row('#' + product.id);
+
+        if (!row.any()) {
+            tblProductList.row.add(product).draw(false); // Add new data
+            playAudio('fail');
+            // Đưa row vừa thêm lên top
+            var rowNode = tblProductList.row(':last').node();
+            $(rowNode).prependTo(tblProductList.table().body());
+            // Highlight
+            $(rowNode).addClass('row-highlight');
+
+            // Remove highlight sau 3s
+            setTimeout(function () {
+                $(rowNode).removeClass('row-highlight');
+            }, 3000);
+            return;
+        }
+
+        const data = row.data();
+        data.qty += step;
+
+        row.data(data);
+
+        // cập nhật input đang hiển thị
+        const input = row.node().querySelector('.qty-input');
+        if (input) input.value = data.qty;
+        playAudio('fail');
+
+        var node = row.node();
+
+        // Đưa lên top
+        $(node).detach().prependTo(tblProductList.table().body());
+        // Highlight
+        $(node).addClass('row-highlight');
+
+        // Remove highlight sau 3s
+        setTimeout(function () {
+            $(node).removeClass('row-highlight');
+        }, 3000);
+    }
+
+    function getSubmitData() {
+        return tblProductList
+            .rows()
+            .data()
+            .toArray()
+            .filter(p => p.qty > 0); // chỉ lấy hàng có nhập
+    }
+
+    function createPurchaseOrder(){
+        let orderData = getSubmitData();
+
+        if(!orderData){
+            noty({text: 'Không tìm thấy sản phẩm trong đơn hàng!', layout: 'topRight', type: 'error',timeout: 4000});
+            return;
+        }
+        //console.log(orderData);
+        //return;
+        let url = "<?=$this->url('werehouse-admin',['action'=>'p-scan-add'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {data:orderData,supplier_id:supplierId}
+        }).done(function (response) {
+            if(response.status){
+                noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                window.location.href = '/admin/werehouse/p-scan-edit/'+response.warehouse_id+'.html';
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+        });
+    }
+</script>

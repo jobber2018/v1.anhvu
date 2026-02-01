@@ -2084,7 +2084,7 @@ class AdminController extends SuldeAdminController
                     $productActivity->setNote('Sửa đơn: '.$sellOrder->getGrocery()->getGroceryName());
                     $productActivity->setChange(-1*$qtyChange);
 
-                    $action='Bỏ '.$qtyChange.' '.$product->getName();
+                    $action='Thêm '.$qtyChange.' '.$product->getName();
                     $sellOrderActivity->setAction($action);
                     $sellOrderActivity->setActionIcon('fa-minus-square');
                 }else{
@@ -2092,7 +2092,7 @@ class AdminController extends SuldeAdminController
                     $productActivity->setChange(abs($qtyChange));
 
                     $sellOrderActivity->setActionIcon('fa-plus-square');
-                    $action='Thêm '.abs($qtyChange).' '.$product->getName();
+                    $action='Bỏ '.abs($qtyChange).' '.$product->getName();
                     $sellOrderActivity->setAction($action);
                 }
 

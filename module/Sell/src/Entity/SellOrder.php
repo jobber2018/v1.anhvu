@@ -852,5 +852,14 @@ class SellOrder
         }
         return $noteView;
     }
+    public function getProgressCheck(){
+        $totalOrderQty=0;
+        $totalCheckQty=0;
+        foreach ($this->getSell() as $sellItem){
+            $totalOrderQty+=$sellItem->getQuantity();//so luong dat don
+            $totalCheckQty+=$sellItem->getCheckQty();//sl da kiem
+        }
 
+        return ($totalCheckQty/$totalOrderQty)*100;
+    }
 }

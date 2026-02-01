@@ -1,0 +1,127 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Sulde\Service\Common\Define;
+
+$title = "Nhập hàng";
+$this->headTitle($title);
+
+
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('sell-check-admin',['action'=>'list'])?>">Danh sách đơn</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+<div class="page-title">
+    <h2><span class="fa fa-arrow-circle-o-left"></span> Danh sách đơn</h2>
+</div>
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm cần kiểm</h3>
+                    <ul class="panel-controls">
+                        <li><a href="<?=$this->url('werehouse-admin',['action'=>'purchase-supplier'])?>" class="btn btn-info btn-block">Tạo đơn</a></li>
+                    </ul>
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblProductList">
+                        <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>No.</th>
+                            <th>NCC</th>
+                            <th>Ngày tạo</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
+<script>
+    let tblProductList;
+    $(document).ready(function () {
+        tblProductList=$('#tblProductList').DataTable({
+            paging: false,
+            ordering: false,
+            info:false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            searching: true,
+            fixedColumns: true,
+            deferRender: true,
+            columnDefs: [
+                {
+                    targets: 0,visible:false
+                },{
+                    targets: 2,
+                    name:'supplier_name',
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name='<a href="/admin/werehouse/p-scan-edit/'+rowData[0]+'.html">'+cellData+'</a>';
+                        $(td).html(name);
+                    }
+                },
+                {
+                    name: 'action',
+                    targets: 4,
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(`<button type="button" class="btn-delete btn btn-warning btn-rounded">❌</button>`);
+                    }
+                }
+            ],
+            ajax: {
+                url: '<?=$this->url('werehouse-admin',['action'=>'p-scan-list'])?>',
+                type: 'POST',
+                dataSrc: function (response) {
+                    let data=[];
+                    let i=1;
+                   $.each(response.data, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value.id);
+                        dataItem.push(i++);
+                        dataItem.push(value.supplier_name);
+                        dataItem.push(value.created_date);
+                        dataItem.push('');
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
+            }
+        });
+
+        document
+            .querySelector('#tblProductList tbody')
+            .addEventListener('click', (e) => {
+
+                if (!e.target.classList.contains('btn-delete')) return;
+
+                const tr = e.target.closest('tr');
+                const row = tblProductList.row(tr);
+                const data = row.data();
+
+                if (!data) return;
+
+                if (!confirm(`Xoá sản phẩm "${data.name}" ?`)) return;
+
+                row.remove().draw(false);
+            });
+    });
+</script>

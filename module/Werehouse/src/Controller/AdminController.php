@@ -16,6 +16,7 @@ use Product\Entity\ProductInventory;
 use Product\Service\ProductManager;
 use Sulde\Service\Common\Common;
 use Sulde\Service\Common\ConfigManager;
+use Sulde\Service\Common\Define;
 use Sulde\Service\ImageUpload;
 use Supplier\Entity\Supplier;
 use Supplier\Service\SupplierManager;
@@ -24,6 +25,8 @@ use Werehouse\Entity\Werehouse;
 use Werehouse\Entity\WerehouseCheck;
 use Werehouse\Entity\WerehouseOrder;
 use Werehouse\Entity\WerehouseOrderInvoice;
+use Werehouse\Entity\WerehouseScan;
+use Werehouse\Entity\WerehouseScanDetail;
 use Werehouse\Entity\WerehouseSheet;
 use Werehouse\Form\WerehouseForm;
 use Werehouse\Service\WerehouseManager;
@@ -282,6 +285,7 @@ class AdminController extends SuldeAdminController
                 $this->entityManager->flush();
                 $this->flashMessenger()->addSuccessMessage('Lưu nháp thành công!');
                 $result['status']=1;
+                $result['warehouse_id']=$werehouseOrder->getId();
             }catch (\Exception $e){
                 $result['status']=0;
                 $result['msg']=$e->getMessage();
@@ -928,5 +932,157 @@ class AdminController extends SuldeAdminController
             ];
         }
         return new JsonModel($result);
+    }
+
+    public function purchaseScanAction(){
+        $supplierId = $this->params()->fromRoute('id',0);
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            $barcode = $request->getPost("barcode");
+            $result['status']=0;
+            $result['message']='Không tìm thấy sản phẩm';
+            if($barcode){
+                $productManager = new ProductManager($this->entityManager);
+                $productItem = $productManager->getBarcode($barcode);
+                if($productItem){
+                    $resultProductItem['id']=$productItem[0]->getId();
+                    $resultProductItem['is_product']=1;
+                    $resultProductItem['barcode']=$productItem[0]->getCode();
+                    $resultProductItem['pack_barcode']=$productItem[0]->getPackCode();
+                    $resultProductItem['name']=$productItem[0]->getName().'|'.$productItem[0]->getWeight();
+                    $resultProductItem['unit']='pack';
+                    $resultProductItem['qty']=1;
+                    $resultProductItem['button']=1;
+
+                    $result['status']=1;
+                    $result['message']='Đã thêm: '.$productItem[0]->getName();
+                    $result['data']=$resultProductItem;
+                }
+            }
+            return new JsonModel($result);
+        }
+        $supplierManager = new SupplierManager($this->entityManager);
+        $supplier = $supplierManager->getById($supplierId);
+        return new ViewModel(['supplier'=>$supplier]);
+    }
+    public function purchaseSupplierAction(){
+        $supplierManager = new SupplierManager($this->entityManager);
+        $supplier = $supplierManager->getAll();
+        return new ViewModel(['supplier'=>$supplier]);
+    }
+    /*
+     * them moi hang scan
+     */
+    public function pScanAddAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()) {
+            $orderData = $request->getPost("data");
+            $supplierId = $request->getPost("supplier_id");
+            $result['status']=0;
+            $result['message']='Không tìm thấy sản phẩm';
+
+            try{
+                if(!$supplierId)
+                    throw new Exception("Không tìm thấy NCC!");
+                if(!$orderData)
+                    throw new Exception("Không tìm thấy sản phẩm trong đơn hàng!");
+
+                $supplierManager = new SupplierManager($this->entityManager);
+                $supplier = $supplierManager->getById($supplierId);
+
+                $werehouseScan = new WerehouseScan();
+                $werehouseScan->setSupplier($supplier);
+                $werehouseScan->setCreatedDate(new \DateTime());
+
+                $userId= $this->userInfo->getId();
+                $werehouseScan->setCreatedBy($userId);
+
+                foreach ($orderData as $orderItem) {
+                    $werehouseScanDetail = new WerehouseScanDetail();
+                    $werehouseScanDetail->setWerehouseScan($werehouseScan);
+                    if($orderItem["is_product"]==1)
+                        $werehouseScanDetail->setProductId($orderItem['id']);
+
+                    $werehouseScanDetail->setProductName($orderItem['name']);
+                    $werehouseScanDetail->setProductBarcode($orderItem['barcode']);
+                    $werehouseScanDetail->setPackBarcode($orderItem['pack_barcode']);
+                    $werehouseScanDetail->setQty($orderItem['qty']);
+                    $werehouseScanDetail->setUnitName($orderItem['unit']);
+                    $werehouseScan->addWerehouseScanDetail($werehouseScanDetail);
+                }
+
+                $this->entityManager->persist($werehouseScan);
+                $this->entityManager->flush();
+                $result['status']=1;
+                $result['warehouse_id']=$werehouseScan->getId();
+                $result['message']='Đã tạo mới đơn hàng!';
+
+            }catch (\Exception $e){
+                $result['status']=0;
+                $result['message']=$e->getMessage();
+            }
+
+            return new JsonModel($result);
+        }
+    }
+
+    public function pScanListAction(){
+        $request = $this->getRequest();
+
+        if($request->isPost()){
+            $keyword = @$this->params()->fromPost('search')['value'];
+            $length = $this->params()->fromPost('length', Define::ITEM_PAGE_COUNT);
+            $start = $this->params()->fromPost('start', 0);
+            $purchaseScan = $this->werehouseManager->searchPurchaseScan($keyword, $length, $start);
+            $purchaseScanResult=array();
+            foreach ($purchaseScan as $purchaseScanItem) {
+                $tmp['id'] = $purchaseScanItem->getId();
+                $tmp['supplier_name'] = $purchaseScanItem->getSupplier()->getName();
+                $tmp['created_date'] = Common::formatDateTime($purchaseScanItem->getCreatedDate());
+                $tmp['created_by'] = $purchaseScanItem->getCreatedBy();
+                $purchaseScanResult[]=$tmp;
+            }
+            $result['recordsTotal']=count($purchaseScan);
+            $result['recordsFiltered']=count($purchaseScan);
+            $result['data']=$purchaseScanResult;
+            return new JsonModel($result);
+        }
+
+        return new ViewModel();
+    }
+    public function pScanEditAction(){
+        $pScanId = $this->params()->fromRoute('id',0);
+
+        $request = $this->getRequest();
+        if($request->isPost()){
+            $pScanId = $this->params()->fromPost('id', 0);
+            $purchaseScan=$this->werehouseManager->getPurchaseScanById($pScanId);
+
+            foreach ($purchaseScan->getWerehouseScanDetail() as $purchaseScanDetailItem) {
+                $tmp['id']=$purchaseScanDetailItem->getProductId();
+                $tmp['is_product']=0;
+                if($purchaseScanDetailItem->getProductId()) $tmp['is_product']=1;
+                $tmp['barcode']=$purchaseScanDetailItem->getProductBarcode();
+                $tmp['pack_barcode']=$purchaseScanDetailItem->getPackBarcode();
+                $tmp['name']=$purchaseScanDetailItem->getProductName();
+                $tmp['unit']=$purchaseScanDetailItem->getUnitName();
+                $tmp['qty']=$purchaseScanDetailItem->getQty();
+                $tmp['button']=1;
+                $resultProductItem[]=$tmp;
+            }
+            $result['status']=1;
+            $result['data']=$resultProductItem;
+            return new JsonModel($result);
+        }
+
+        $purchaseScan=$this->werehouseManager->getPurchaseScanById($pScanId);
+        $productManager = new ProductManager($this->entityManager);
+        $allProductList = $productManager->getAll();
+        return new ViewModel([
+            'purchaseScan'=>$purchaseScan,
+            'allProductList'=>$allProductList
+        ]);
     }
 }

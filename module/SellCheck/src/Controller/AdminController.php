@@ -59,6 +59,7 @@ class AdminController extends SuldeAdminController
             $tmp['status_name']=ConfigManager::getOrderStatus()[$sellOrder->getStatus()];
             $tmp['status_id']=$sellOrder->getStatus();
             $tmp['customer_name']=$sellOrder->getGrocery()->getGroceryName();
+            $tmp['progress_check']=$sellOrder->getProgressCheck();
 
             $checkDate='';
             if($sellOrder->getCheckDate()) $checkDate=Common::formatDateTime($sellOrder->getCheckDate());

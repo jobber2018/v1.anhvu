@@ -166,7 +166,7 @@ use Sulde\Service\Common\ConfigManager;
     let tbl='<table>';
     $.each(carInfo, function (key, data) {
         $.each(data, function (k, d) {
-            tbl+='<tr>';
+                        tbl+='<tr>';
             tbl+='<td style="text-align: center; padding-right: 10px; padding-top:10px;border-bottom: 1px solid #cccccc"><img src="/img/icons/icon-grocery-'+k+'-'+key+'.png" style="width: 35px"><br><b>'+key+'</b></td>';
             tbl+='<td>'+k+':</td>';
             tbl+='<td style="padding-left: 10px; font-weight: bold"> '+formatMoney(d.totalOrder)+' ('+Object.keys(d.grocery).length+' đơn)</td>';

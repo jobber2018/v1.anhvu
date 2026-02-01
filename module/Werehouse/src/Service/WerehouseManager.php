@@ -10,6 +10,8 @@ namespace Werehouse\Service;
 
 
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+use Product\Entity\Product;
 use Werehouse\Entity\Werehouse;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
@@ -17,6 +19,7 @@ use Hotels\Service\HotelManage;
 use Sulde\Service\Common\SessionManager;
 use Werehouse\Entity\WerehouseCheck;
 use Werehouse\Entity\WerehouseOrder;
+use Werehouse\Entity\WerehouseScan;
 use Werehouse\Entity\WerehouseSheet;
 
 class WerehouseManager
@@ -127,5 +130,38 @@ class WerehouseManager
             ->setParameter('sDate', date("Y-m-d"));
 //        echo $queryBuilder->getQuery()->getSQL();
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    /**
+     * @param mixed $p_keyword
+     * @param mixed $p_length
+     * @param mixed $p_start
+     * @return Paginator
+     */
+    public function searchPurchaseScan($p_keyword, $p_length, $p_start)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('ws')
+            ->from(WerehouseScan::class, 'ws')
+            ->innerJoin('ws.supplier', 's')
+            ->where('1 = 1')
+            ->setFirstResult($p_start)
+            ->setMaxResults($p_length)
+            ->orderBy('ws.id', 'DESC');
+
+        if($p_keyword) {
+            $queryBuilder->andWhere('s.name LIKE :name')
+                ->setParameter('name', '%'.$p_keyword.'%');
+        }
+        return new Paginator($queryBuilder->getQuery());
+    }
+
+    /**
+     * @param mixed $pScanId
+     * @return WerehouseScan
+     */
+    public function getPurchaseScanById($pScanId)
+    {
+        return $this->entityManager->getRepository(WerehouseScan::class)->find($pScanId);
     }
 }

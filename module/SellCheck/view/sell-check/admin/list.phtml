@@ -76,6 +76,7 @@ $this->headTitle($title);
                             <th>Mã</th>
                             <th>Khách hàng</th>
                             <th>Trạng thái</th>
+                            <th>%</th>
                             <th>Đóng bởi</th>
                             <th>Ngày đóng</th>
                             <th>Số thùng</th>
@@ -94,6 +95,17 @@ $this->headTitle($title);
 </div>
 <style>
     .content-frame-body{padding-top: 0px!important;}
+    .cell-highlight-warning {
+        background-color: red !important;
+        font-weight: bold;
+        border: 2px solid #ffc107;
+    }
+    .cell-highlight-success {
+        background-color: #0627b5  !important;
+        color: white;
+        font-weight: bold;
+        border: 2px solid #ffc107;
+    }
 </style>
 
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
@@ -136,26 +148,38 @@ $this->headTitle($title);
                     createdCell:function (td, cellData, rowData, row, col){
                         $(td).html(cellData);
                     }
+                },{
+                    name: 'progress',
+                    targets: 5,
+                    width:'100px',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        if (cellData<100)
+                            td.classList.add('cell-highlight-warning');
+                        else
+                            td.classList.add('cell-highlight-success');
+
+                        $(td).html(cellData);
+                    }
                 }, {
                     name: 'check_by',
-                    targets: 5,
+                    targets: 6,
                     width:'50px',
                     visible:0
                 }, {
                     name: 'check_date',
-                    targets: 6,
+                    targets: 7,
                     width:'200px',
                     visible:0
                 },{
                     name: 'pack_number',
-                    targets: 7,
+                    targets: 8,
                     width:'50px',
                     className: "number",
                     visible:0
                 },{
                     name: 'total_paid_order',
                     width:'100px',
-                    targets: 10,
+                    targets: 11,
                     className: 'dt-body-nowrap price number',
                     createdCell: function (td, cellData, rowData, row, col) {
                         $(td).html(formatMoney(cellData));
@@ -221,6 +245,7 @@ $this->headTitle($title);
                 dataItem.push(value.order_code);
                 dataItem.push(value.customer_name);
                 dataItem.push(value.status_name);
+                dataItem.push(value.progress_check);
                 dataItem.push(value.check_by);
                 dataItem.push(value.check_date);
                 dataItem.push(value.pack_number);
@@ -239,11 +264,14 @@ $this->headTitle($title);
             tblOrder.column(7).visible(1);
             tblOrder.column(8).visible(1);
             tblOrder.column(9).visible(1);
+            tblOrder.column(10).visible(1);
         }else {
             tblOrder.column(5).visible(0);
             tblOrder.column(6).visible(0);
+            tblOrder.column(7).visible(0);
             tblOrder.column(8).visible(0);
             tblOrder.column(9).visible(0);
+            tblOrder.column(10).visible(0);
         }
     }
 </script>

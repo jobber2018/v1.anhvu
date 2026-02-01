@@ -58,8 +58,8 @@ $this->headTitle($title);
                             <?php
                                 foreach ($this->supplier as $supplierItem){
                             ?>
-                            <tr style="cursor: pointer" onclick="window.location.href='<?=$this->url('werehouse-admin',['action'=>'add','id'=>$this->escapeHtml($supplierItem->getId())])?>'">
-                                <td><a href="<?=$this->url('werehouse-admin',['action'=>'add','id'=>$this->escapeHtml($supplierItem->getId())])?>"><?=$supplierItem->getName()?></a></td>
+                            <tr style="cursor: pointer">
+                                <td><a href="<?=$this->url('werehouse-admin',['action'=>'purchase-scan','id'=>$this->escapeHtml($supplierItem->getId())])?>"><?=$supplierItem->getName()?></a></td>
                                 <td><?=$supplierItem->getMobile()?></td>
                                 <td><?=$supplierItem->getAddress()?></td>
                             </tr>
