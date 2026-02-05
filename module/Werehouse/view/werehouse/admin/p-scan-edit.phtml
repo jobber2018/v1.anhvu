@@ -177,6 +177,7 @@ $this->headTitle($title);
         background-color: #fff3cd !important;
         /*animation: flash 1s ease-in-out infinite alternate;*/
     }
+    .qty-input{width: 60px}
 </style>
 <script>
     let tblProductList,tblProductListConfirm,tblAllProductList;
@@ -217,12 +218,13 @@ $this->headTitle($title);
             fixedColumns: true,
             rowId: 'barcode',
             deferRender: true,
+            autoWidth: false,
             columns: [
                 { data:'id',visible:false},
                 { data:'is_product',visible:false},
                 { data:'barcode',width: "100px"},
                 { data:'pack_barcode',width: "100px"},
-                { data:'name', className:'title'},
+                { data:'name', className:'title',width: "200px"},
                 {
                     data: 'qty',width: "100px", className: 'highlight price',
                     render:function (data,type){
@@ -236,7 +238,7 @@ $this->headTitle($title);
                         }
                         return data;
                     }
-                },{ data:'unit',
+                },{ data:'unit',width: "100px",
                     render:function (data,type){
                         if(type==='display'){
                             return `
@@ -249,7 +251,7 @@ $this->headTitle($title);
                         return data;
                     }
                 },{
-                    data: null,
+                    data: null,width: "100px",
                     render: () => {
                         return `<button type="button" class="btn-confirm btn btn-success btn-rounded">✅</button>`;
                     }
@@ -274,12 +276,13 @@ $this->headTitle($title);
             fixedColumns: true,
             rowId: 'barcode',
             deferRender: true,
+            autoWidth: false,
             columns: [
                 { data:'id',visible:false},
                 { data:'is_product',visible:false},
                 { data:'barcode',width: "100px"},
                 { data:'pack_barcode',width: "100px"},
-                { data:'name', className:'title'},
+                { data:'name', className:'title',width: "200px"},
                 {
                     data: 'qty',width: "100px", className: 'highlight price',
                     render:function (data,type){
@@ -293,7 +296,7 @@ $this->headTitle($title);
                         }
                         return data;
                     }
-                },{ data:'unit',
+                },{ data:'unit',width: "100px",
                     render:function (data,type){
                         if(type==='display'){
                             return `
@@ -306,7 +309,7 @@ $this->headTitle($title);
                         return data;
                     }
                 },{
-                    data: null,
+                    data: null,width: "100px",
                     render: () => {
                         return `<button type="button" class="btn-delete btn btn-warning btn-rounded">❌</button> <button type="button" class="btn-confirm btn btn-success btn-rounded">✅</button>`;
                     }
