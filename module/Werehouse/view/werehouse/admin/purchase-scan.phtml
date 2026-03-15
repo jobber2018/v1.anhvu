@@ -242,7 +242,7 @@ $this->headTitle($title);
                 barcode: $('#product-code').val().trim(),
                 pack_barcode: $('#pack-code').val().trim(),
                 name: $('#product-name').val().trim(),
-                qty: parseInt($('product-qty').val(), 10) || 1,
+                qty: parseInt($('#product-qty').val(), 10) || 1,
                 unit:'pack'
             };
 
@@ -300,32 +300,42 @@ $this->headTitle($title);
             return;
         }
 
-        let url = "<?=$this->url('werehouse-admin',['action'=>'purchase-scan'])?>";
-        $.ajax({
-            headers: {Accept: "application/json; charset=utf-8"},
-            method: "POST",
-            url: url,
-            data: {barcode:barcode}
-        }).done(function (response) {
-            if(response.status){
-                // console.log('tim thay san pham trong db: '+response.data.id);
-                increaseQty(response.data, 1);
-                noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
-            }else{
-                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
-                $('#modalAddProduct').modal({
-                    keyboard: false,
-                    backdrop:'static',
-                    show:true
-                }).on('shown.bs.modal', function (e) {
-                    $('#product-code').val('').focus();
-                    $('#pack-code').val(barcode);
-                    $('#product-name').val('');
-                    $('#product-qty').val(1);
-                    playAudio('warning');
-                });
-            }
-        });
+        let row = tblProductList.row('#' + barcode);
+        if (row.any()) {
+            //
+            let data = row.data();
+            data.qty += 1;
+            row.data(data);
+            const input = row.node().querySelector('.qty-input');
+            if (input) input.value = data.qty;
+        }else{
+            let url = "<?=$this->url('werehouse-admin',['action'=>'purchase-scan'])?>";
+            $.ajax({
+                headers: {Accept: "application/json; charset=utf-8"},
+                method: "POST",
+                url: url,
+                data: {barcode:barcode}
+            }).done(function (response) {
+                if(response.status){
+                    // console.log('tim thay san pham trong db: '+response.data.id);
+                    increaseQty(response.data, 1);
+                    noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                }else{
+                    noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                    $('#modalAddProduct').modal({
+                        keyboard: false,
+                        backdrop:'static',
+                        show:true
+                    }).on('shown.bs.modal', function (e) {
+                        $('#product-code').val('').focus();
+                        $('#pack-code').val(barcode);
+                        $('#product-name').val('');
+                        $('#product-qty').val(1);
+                        playAudio('warning');
+                    });
+                }
+            });
+        }
     }
 
     function increaseQty(product, step = 1) {

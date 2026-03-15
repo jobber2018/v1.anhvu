@@ -2200,6 +2200,7 @@ class AdminController extends SuldeAdminController
         $tmp['created_by']=$createdBy;
 
         $tmp['delivery_car']=$orderItem->getDeliveryCar();
+        $tmp['delivery_time']=$orderItem->getDeliveryCarTime();
         $tmp['order_message']=($orderItem->getNoteTooltip()?'<button type="button" class="btn btn-rounded btn-warning fa fa-bell popover-dismiss" data-content="'.$orderItem->getNoteTooltip().'"></button>':'');
         $tmp['total_amount_paid']=Common::round($orderItem->getTotalAmountToPaid());
 

@@ -184,12 +184,13 @@ $this->headTitle($title);
                     let data=[];
                     let i=1;
                     $.each( json.data, function( key, value ) {
+                        let deliveryCar=(value.delivery_car?value.delivery_car+'-'+value.delivery_time:'');
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(i++);
                         dataItem.push(value.order_code);
                         dataItem.push(value.customer_name);
-                        dataItem.push(value.delivery_car);
+                        dataItem.push(deliveryCar);
                         dataItem.push(value.created_date);
                         dataItem.push(value.created_by);
                         dataItem.push(value.total_amount_paid);
