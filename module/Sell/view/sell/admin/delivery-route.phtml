@@ -127,6 +127,7 @@ use Sulde\Service\Common\ConfigManager;
                 echo 'item["tp"]=\''.Common::formatMoney($amount).'\';'.PHP_EOL;
                 echo 'item["debt"]=\''.Common::formatMoney($debt).'\';'.PHP_EOL;
                 echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
+                echo 'item["order_message"]=\''.htmlspecialchars(trim($sellOrderItem->getNote())).'\';'.PHP_EOL;
                 echo 'item["created_date"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
                 echo 'item["pack_number"]='.(is_null($sellOrderItem->getPackNumber())?0:$sellOrderItem->getPackNumber()).';'.PHP_EOL;
 
@@ -236,7 +237,7 @@ use Sulde\Service\Common\ConfigManager;
 
             var url='/admin/grocery/detail/'+data.grocery_id+'.html';
             var infowindow = new google.maps.InfoWindow({
-                content: '<div id="content"><a target="_blank" href="'+url+'"><b>'+data.name+'</b></a>,<br>Tổng đơn: <i><b>'+data.tp+' ('+data.pack_number+' thùng)</b></i><br><span style="color: #ee1e2d; font-weight: bold">Công nợ: '+data.debt+'</span><br> Ngày tạo: '+data.created_date+'<br>'+data.note+'</div>'
+                content: '<div id="content"><a target="_blank" href="'+url+'"><b>'+data.name+'</b></a>,<br>Tổng đơn: <i><b>'+data.tp+' ('+data.pack_number+' thùng)</b></i><br><span style="color: #ee1e2d; font-weight: bold">Công nợ: '+data.debt+'</span><br> Ngày tạo: '+data.created_date+'<br>'+data.note+'<br><span style="color: #0066ff">'+data.order_message+'</span></div>'
                 ,headerDisabled:true
             });
 

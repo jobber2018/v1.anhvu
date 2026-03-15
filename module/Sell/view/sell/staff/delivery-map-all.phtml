@@ -95,6 +95,7 @@ use Sulde\Service\Common\Common;
                 echo 'item["img"]=\''.$sellOrderItem->getGrocery()->getImg().'\';'.PHP_EOL;
                 echo 'item["tp"]=\''.Common::formatMoney($sellOrderItem->getTotalPrice()).'\';'.PHP_EOL;
                 echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
+                echo 'item["order_message"]=\''.htmlspecialchars(trim($sellOrderItem->getNote())).'\';'.PHP_EOL;
                 echo 'item["cd"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
                 echo 'item["zalo"]=\''.($sellOrderItem->getGrocery()->getZaloAppItem()?'App: Đã cài':'App: Chưa cài').'\';'.PHP_EOL;
 
@@ -174,13 +175,14 @@ use Sulde\Service\Common\Common;
             var content = `<div id="content">`;
 
             if(data.img)
-                content += `<p><img src="${data.img}" style="max-width: 320px"><p>`;
+                content += `<p><img src="${data.img}" style="max-width: 270px; max-height: 270px"><p>`;
 
              content += `<a target="_blank" style="font-weight: bold" href="${url}">${data.name} | ${data.zalo}</a>`;
              content += `<br> Ngày tạo: ${data.cd}`;
              content += `<br> Tổng đơn: <i>${data.tp}`;
              content += `<br> <span style="color: #ee1e2d; font-weight: bold">Công nợ: ${data.debt}</span>`;
              content += `<br> ${data.note}`;
+             content += `<br><span style="color: #0066ff"> ${data.order_message}</span>`;
              content += `</div>`;
             var infowindow = new google.maps.InfoWindow({
                 // content: '<div id="content"><a target="_blank" href="'+url+'">'+data.name+' | '+data.zalo+'</a>,<br> Ngày tạo: '+data.cd+' <br>Tổng đơn: <i>'+data.tp+' đ</i><br><span style="color: #ee1e2d; font-weight: bold">Công nợ: '+data.debt+'</span><br>'+data.note+'</div>'

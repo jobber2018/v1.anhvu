@@ -67,7 +67,7 @@ $this->headTitle($title);
                         foreach ($this->sellOrder as $order){
                             echo '<tr>';
                             echo '<td>'.$i++.'</td>';
-                            echo '<td><a class="title" href="'.$this->url('sell-staff',['action'=>'delivery-o-detail','id'=>$order->getId()]).'">'.$order->getGrocery()->getGroceryName().'</a><br><i>('.$order->getGrocery()->getAddress().')</i></td>';
+                            echo '<td><a class="title" href="'.$this->url('sell-staff',['action'=>'delivery-o-detail','id'=>$order->getId()]).'">'.$order->getGrocery()->getGroceryName().'</a> '.($order->getGrocery()->getDeliveryNote()?'<span style="color: red; font-weight: bold">('.$order->getGrocery()->getDeliveryNote().')</span>':'').'<br><i>('.$order->getGrocery()->getAddress().')</i></td>';
                             echo '<td>'.Common::formatMoney(round($order->getTotalPrice()/1000)*1000).' đ</td>';
                             echo '</tr>';
                         }
