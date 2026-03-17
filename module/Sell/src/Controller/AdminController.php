@@ -2188,6 +2188,7 @@ class AdminController extends SuldeAdminController
     {
         $tmp['order_id']=$orderItem->getId();
         $tmp['order_code']=$orderItem->getOrderCode();
+        $tmp['pack_number']=$orderItem->getPackNumber();
         $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
         $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);
         $tmp['created_date']=Common::formatDateTime($orderItem->getCreatedDate());

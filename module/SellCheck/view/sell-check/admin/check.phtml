@@ -50,6 +50,9 @@ $this->headTitle($title);
             <div class="panel panel-default">
                 <div class="panel-heading ui-draggable-handle">
                     <h3 class="panel-title">Sản phẩm cần kiểm</h3>
+                    <ul class="panel-controls">
+                        <li class="panel-title message"></li>
+                    </ul>
                 </div>
                 <div class="panel-body">
                     <table class="table nowrap table-hover display dataTable" style="width:100%" id="tblMissingList">
@@ -160,7 +163,7 @@ $this->headTitle($title);
     }
     .noty_message{font-size: larger!important; line-height: unset!important;font-weight: bold}
     #noty_topRight_layout_container li{margin-bottom: 2px}
-
+    .noty_text b{font-size: 70pt}
 </style>
 <script>
     let products=<?=json_encode($this->products)?>;
@@ -445,14 +448,16 @@ $this->headTitle($title);
 
             if(productItem.check_qty==productItem.order_qty){
                 // msg="["+productItem.code+"]: "+productItem.name+" <b>đã kiểm đủ "+productItem.check_qty+"/"+productItem.order_qty+"</b>";
-                msg=productItem.name+" <b>đã kiểm đủ "+productItem.check_qty+"/"+productItem.order_qty+"</b>";
+                msg=productItem.name+" đã kiểm đủ <b> "+productItem.check_qty+"/"+productItem.order_qty+"</b>";
                 noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+                $('.message').html(msg);
                 playAudio('warning');
                 return;
             }else if(productItem.check_qty+checkQty>productItem.order_qty){
                 // msg="["+productItem.code+"]: "+productItem.name+" <b>Thừa "+parseInt(productItem.check_qty+checkQty)+"/"+productItem.order_qty+"</b>";
                 msg=productItem.name+" <b>Thừa "+parseInt(productItem.check_qty+checkQty)+"/"+productItem.order_qty+"</b>";
                 noty({text: msg, layout: 'topRight', type: 'error',timeout: 5000});
+                $('.message').html(msg);
                 playAudio('warning');
                 return;
             }
@@ -469,14 +474,14 @@ $this->headTitle($title);
                         if(value.sell_id==sellId)
                             products[index].check_qty+=checkQty;
                     });
-                    let msg;
+                    //let msg;
 
                     if (productItem.check_qty == productItem.order_qty){
-                        msg = productItem.name + " <b style='font-size: x-large'> đã đủ " + productItem.order_qty + " " + productItem.unit + "</b>";
+                        msg = productItem.name + " đã đủ <b> " + productItem.order_qty  + "</b> " + productItem.unit;
                         playAudio('success');
                     }
                     else{
-                        msg = productItem.name + " <b style='font-size: x-large'>" + (productItem.check_qty) + "/" + productItem.order_qty + " " + productItem.unit + "</b>";
+                        msg = productItem.name + " <b>" + (productItem.check_qty) + "/" + productItem.order_qty + "</b> "+ productItem.unit;
                         playAudio('fail');
                     }
                     // $('#lastScan').removeClass('alert-danger').addClass('alert alert-success').html(msg);
@@ -486,6 +491,7 @@ $this->headTitle($title);
                     playAudio('warning');
                     noty({text: res.message, layout: 'topRight', type: 'error',timeout: 5000});
                 }
+                $('.message').html(msg);
                 stop_waitMe()
             });
 
@@ -569,7 +575,7 @@ $this->headTitle($title);
                             // console.log(products[index]);
                         }
                     });
-                    let msg="Đã huỷ dữ liệu kiểm của sản phầm <b>"+productItem[0].name+"</b><b>";
+                    let msg="Đã huỷ dữ liệu kiểm của sản phầm "+productItem[0].name;
                     // $('#lastScan').removeClass('alert-danger').addClass('alert alert-success').html(msg);
                     noty({text: msg, layout: 'topRight', type: 'information',timeout: 3000});
                     isOrderStatus=<?=Define::_ORDER_PACKING_STATUS?>;

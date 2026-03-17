@@ -141,7 +141,7 @@ $this->headTitle($title);
 
         <?php
         if($this->groceryCat){
-            foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+            foreach (@$this->groceryCatAnalytic as $k=>$analyticItem){
                 //data for chart order
                 $owner=$analyticItem->getOrderOwnerCreated();
                 if(!$owner) $owner=0;
@@ -322,7 +322,7 @@ $this->headTitle($title);
             });
         <?php
         }else{
-            foreach ($this->groceryCatAnalytic as $k=>$analyticItem){
+            foreach (@$this->groceryCatAnalytic as $k=>$analyticItem){
                 $catId = $analyticItem->getGroceryCat()->getId();
                 $catDay = $analyticItem->getGroceryCat()->getDay();
                 $catName = $analyticItem->getGroceryCat()->getName();
@@ -335,8 +335,8 @@ $this->headTitle($title);
                 $arr[$catDay][$catId]['time-on-route']=@$arr[$catDay][$catId]['time-on-route']+$analyticItem->getTotalDiffTimeOnRoute();
             }
 
-            foreach ($arr as $k=>$arr1){
-                foreach ($arr1 as $k1=>$value){
+            foreach (@$arr as $k=>$arr1){
+                foreach (@$arr1 as $k1=>$value){
                     if($value['total_order_number']){
                         $chartCategories[]=$value['route_name'];
                         $chartSeriesTotalOrderNumber[]=$value['total_order_number'];
@@ -359,7 +359,7 @@ $this->headTitle($title);
                 align: 'left'
             },
             xAxis: {
-                categories: <?=json_encode($chartCategories)?>
+                categories: <?=@json_encode($chartCategories)?>
             },
             yAxis: [{ // Primary yAxis
                 labels: {
@@ -420,16 +420,16 @@ $this->headTitle($title);
                     name:"Số đơn hàng",
                     type: 'column',
                     yAxis: 1,
-                    data:<?=json_encode($chartSeriesTotalOrderNumber)?>
+                    data:<?=@json_encode($chartSeriesTotalOrderNumber)?>
                 },{
                     name: 'Thời gian trên tuyến (h)',
                     type: 'spline',
                     yAxis: 1,
-                    data:<?=json_encode($chartTimeOnRoute)?>
+                    data:<?=@json_encode($chartTimeOnRoute)?>
                 },{
                     name:"Giá trị đơn hàng",
                     type: 'spline',
-                    data:<?=json_encode($chartSeriesTotalOrderValue)?>
+                    data:<?=@json_encode($chartSeriesTotalOrderValue)?>
                 }
             ],
 

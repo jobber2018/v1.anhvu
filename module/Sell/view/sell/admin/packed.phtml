@@ -87,6 +87,7 @@ $this->headTitle($title);
                                 <th>No.</th>
                                 <th>Mã đơn</th>
                                 <th>Khách hàng</th>
+                                <th>Số thùng</th>
                                 <th>Xe giao</th>
                                 <th>Ngày tạo</th>
                                 <th>Người tạo</th>
@@ -99,7 +100,9 @@ $this->headTitle($title);
                             </tbody>
                             <tfoot>
                             <tr>
-                                <th colspan="7" style="text-align:right">Tổng cộng:</th>
+                                <th colspan="4" style="text-align:right"></th>
+                                <th></th>
+                                <th colspan="3" style="text-align: right">Tổng cộng:</th>
                                 <th colspan="2"></th>
                             </tr>
                             </tfoot>
@@ -138,10 +141,11 @@ $this->headTitle($title);
                         $(td).html(name);
                     }
                 },
-                { name: 'car', width: 50, targets: 4},
-                { name: 'created-date', width: 50, targets: 5},
-                { name: 'created-by', width: 50, targets: 6},
-                { name: 'total-order', width: 50, targets: 7,
+                { name: 'pack_number', width: 50, targets: 4},
+                { name: 'car', width: 50, targets: 5},
+                { name: 'created-date', width: 50, targets: 6},
+                { name: 'created-by', width: 50, targets: 7},
+                { name: 'total-order', width: 50, targets: 8,
                     className: 'price dt-body-right',
                     createdCell: function (td, cellData, rowData, row, col) {
                         $(td).html(formatMoney(cellData));
@@ -149,7 +153,7 @@ $this->headTitle($title);
                 },{
                     name: 'button',
                     width: 50,
-                    targets: 8,
+                    targets: 9,
                     // className: 'number price',
                     createdCell: function (td, cellData, rowData, row, col) {
                         // console.log(rowData[2].name);
@@ -188,6 +192,7 @@ $this->headTitle($title);
                         dataItem.push(i++);
                         dataItem.push(value.order_code);
                         dataItem.push(value.customer_name);
+                        dataItem.push(value.pack_number);
                         dataItem.push(deliveryCar);
                         dataItem.push(value.created_date);
                         dataItem.push(value.created_by);
@@ -231,13 +236,22 @@ $this->headTitle($title);
                 };
                 // Total over this page
                 pageTotal = api
-                    .column(7, { page: 'current' })
+                    .column(8, { page: 'current' })
                     .data()
                     .reduce(function (a, b) {
                         return intVal(a) + intVal(b);
                     }, 0);
+                // Total over this page
+                packTotal = api
+                    .column(4, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+                console.log(packTotal);
                 // Update footer
-                $(api.column(7).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+                $(api.column(4).footer()).html(formatCurrency(packTotal.toString()));
+                $(api.column(8).footer()).html(formatCurrency(pageTotal.toString())+' đ');
             }
         })
             .on('click', 'tbody tr', (e) => {
