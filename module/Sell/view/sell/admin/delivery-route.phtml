@@ -127,7 +127,7 @@ use Sulde\Service\Common\ConfigManager;
                 echo 'item["tp"]=\''.Common::formatMoney($amount).'\';'.PHP_EOL;
                 echo 'item["debt"]=\''.Common::formatMoney($debt).'\';'.PHP_EOL;
                 echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
-                echo 'item["order_message"]=\''.htmlspecialchars(trim($sellOrderItem->getNote())).'\';'.PHP_EOL;
+                echo 'item["order_message"]=\''.trim($sellOrderItem->getNoteTooltip()).'\';'.PHP_EOL;
                 echo 'item["created_date"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
                 echo 'item["pack_number"]='.(is_null($sellOrderItem->getPackNumber())?0:$sellOrderItem->getPackNumber()).';'.PHP_EOL;
 

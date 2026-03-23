@@ -95,7 +95,9 @@ use Sulde\Service\Common\Common;
                 echo 'item["img"]=\''.$sellOrderItem->getGrocery()->getImg().'\';'.PHP_EOL;
                 echo 'item["tp"]=\''.Common::formatMoney($sellOrderItem->getTotalPrice()).'\';'.PHP_EOL;
                 echo 'item["note"]=\''.htmlspecialchars(trim($sellOrderItem->getGrocery()->getDeliveryNote())).'\';'.PHP_EOL;
-                echo 'item["order_message"]=\''.htmlspecialchars(trim($sellOrderItem->getNote())).'\';'.PHP_EOL;
+
+                echo 'item["order_message"]=\''.trim($sellOrderItem->getNoteTooltip()).'\';'.PHP_EOL;
+
                 echo 'item["cd"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
                 echo 'item["zalo"]=\''.($sellOrderItem->getGrocery()->getZaloAppItem()?'App: Đã cài':'App: Chưa cài').'\';'.PHP_EOL;
 
