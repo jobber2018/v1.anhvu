@@ -26,17 +26,17 @@ use Sulde\Service\Common\Common;
                         <td style="width: 100%">
                             <h4 style="padding-bottom: 0px; margin-bottom: 5px;">NPP ANH VŨ</h4>
                             <div style="padding-bottom: 3px">KĐT Thanh Hà, Hà Đông</div>
-                            <div><b>Điện thoại:</b> 0946 021 021</div>
-                            <div><b>Zalo</b>: 0367 459 253</div>
+                            <div>Điện thoại: <b style="font-size: 12pt">0946 021 021</b></div>
+                            <div>Zalo: <b style="font-size: 12pt">0367 459 253</b></div>
 <!--                            <div><b>Số tài khoản:</b> 1018 7770 9178 | Vu Thi Thuy | Ngân hàng Viettinbank</div>-->
                         </td>
                         <td>
                             <img id="bank-qrcode" width="83px"><br>
                         </td>
                         <td nowrap="">
-                            <label>Số TK:</label><label style="font-weight: bold;"> 800.0155.9933</label><br>
+                            <label>Số TK:</label><label style="font-weight: bold; font-size: 12pt"> 800.0155.9933</label><br>
                             <label style="font-weight: bold; text-decoration-line: underline ">VU THI THUY</label> <br>
-                            <label>Ngân hàng MSB</label><br>
+                            <label style="font-weight: bold">Ngân hàng MSB</label><br>
                             <label>Nội dung: <?=$odn?></label>
                         </td>
                     </tr>
@@ -50,13 +50,15 @@ use Sulde\Service\Common\Common;
 
                 ?>
                 <div style="padding-bottom: 3px"><b>Khách hàng</b>: <?=mb_strtoupper($this->sellOrder->getGrocery()->getGroceryName(), "UTF-8") .$deliveryNote?></div>
-                <div><b>Địa chỉ</b>: <?=$this->sellOrder->getGrocery()->getAddress()?> | <b>Điện thoại</b>: <?=$this->sellOrder->getGrocery()->getMobile()?></div>
+                <div>
+                    <b>Địa chỉ</b>: <?=$this->sellOrder->getGrocery()->getAddress()?> | <b>Điện thoại</b>: <?=$this->sellOrder->getGrocery()->getMobile()?>
+                </div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="panel panel-default">
-            <div style="text-align: right; padding-right: 5px; padding-bottom: 5px;"><i><?=date("H:i")?> Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
+            <div style="text-align: right; padding-right: 5px; padding-bottom: 5px;"><i><?=$this->sellOrder->getGrocery()->getGroceryCat()->getUser()->getFullname()?>: <?=date("H:i")?> Ngày <?=date("d")?> tháng <?=date("m")?> năm <?=date("Y")?></i></div>
             <div class="info-order">
                 <?php
                 $isProductDiscount = $this->sellOrder->isProductDiscount();
@@ -165,7 +167,15 @@ use Sulde\Service\Common\Common;
                             </tr>
                         </table>
                     </div>
-                    <div style="padding-top: 5px; padding-right: 5px; font-style: italic;">Quý khách vui lòng kiểm tra thật kỹ hàng hoá, đối chiếu sản phẩm với chứng từ trước khi nhận hàng. Sau khi đã giao hàng thành công, NPP Anh Vũ chỉ chịu trách nhiệm nếu xảy ra lỗi do sản xuất, mọi trường hợp khác sẽ không thuộc trách nhiệm của chúng tôi.</div>
+<!--                    <div style="padding-top: 5px; padding-right: 5px; font-style: italic;">Quý khách vui lòng kiểm tra thật kỹ hàng hoá, đối chiếu sản phẩm với chứng từ trước khi nhận hàng. Sau khi đã giao hàng thành công, NPP Anh Vũ chỉ chịu trách nhiệm nếu xảy ra lỗi do sản xuất, mọi trường hợp khác sẽ không thuộc trách nhiệm của chúng tôi.</div>-->
+                    <div style="padding-top: 5px; padding-right: 5px;">
+                        <table>
+                            <tr>
+                                <td style="font-style: italic; font-size: 12pt; width: 100%">Mở Zalo, quét mã QR để đặt hàng và cập nhật giá cùng các chương trình khuyến mại mới nhất!</td>
+                                <td><img src="/img/zalo-qr-app-anhvu.png" width="83px"></td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="info-sender">
