@@ -371,6 +371,15 @@ $this->headTitle($title);
         // findProductByBarcode('127947zk');
         // findProductByBarcode('8934868161448');
         // findProductByBarcode('69716623');
+
+        $('#txtPackNumber').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // tránh submit form nếu có
+                confirmCheck();
+                //console.log('Bạn đã nhấn Enter');
+                // xử lý logic ở đây
+            }
+        });
     });
 
     $(document).scannerDetection({
@@ -639,7 +648,8 @@ $this->headTitle($title);
             show:true
         }).on('shown.bs.modal', function (e) {
             let packNumber=<?=($this->sellOrder->getPackNumber())?$this->sellOrder->getPackNumber():0?>;
-            $('#txtPackNumber').val(packNumber).focus();
+            // $('#txtPackNumber').val(packNumber).focus();
+            $('#txtPackNumber').val(packNumber).select();
         });
     }
     function confirmCheck(){
@@ -672,4 +682,5 @@ $this->headTitle($title);
             stop_waitMe('.modal-dialog');
         });
     }
+
 </script>
