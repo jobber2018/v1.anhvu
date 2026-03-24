@@ -117,7 +117,8 @@ use Sulde\Service\Common\ConfigManager;
                                     echo '<button class="btn btn-dark"><span class="fa fa-shopping-cart"></span> Không thể xác nhận đơn hàng</button>';
                                 }
                                 ?>
-                                <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-default"><span class="fa fa-print"> In đơn</span></a>
+                                <button id="btnSplitOrder" class="btn btn-info"> Tách đơn hàng</button>
+                                <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-default pull-right"><span class="fa fa-print"> In đơn</span></a>
                                 <button onclick="deleteOrderCustomer(<?=$this->sellOrder->getId()?>)" class="btn btn-danger pull-right"><span class="fa fa-trash-o"></span> Xoá đơn</button>
                             </div>
                         </li>
@@ -448,6 +449,26 @@ use Sulde\Service\Common\ConfigManager;
             $('#btnAddProductToOrder').prop('disabled', false);
 
         });
+
+    $('#btnSplitOrder').click(function (){
+        let orderId = <?=$this->sellOrder->getId()?>;
+        run_waitMe();
+        var url = "<?=$this->url('sell-admin',['action'=>'split-order'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {oid:orderId}
+        }).done(function (data) {
+            alert(data.message);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    });
 
     function deleteOrderCustomer(oId){
         let text = "Nếu nhấn OK đơn hàng sẽ bị xoá mà không thể khôi phục lại. Nếu chưa chắc bạn có thể nhấn Cancel.";

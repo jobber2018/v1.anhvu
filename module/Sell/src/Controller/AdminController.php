@@ -1995,6 +1995,79 @@ class AdminController extends SuldeAdminController
     }
 
     /**
+     * tách các sản pẩm hết sang đơn khác
+     * @return void
+     */
+    public function splitOrderAction()
+    {
+        $request = $this->getRequest();
+        $result['status'] = 0;
+        $result['message']='';
+        if($request->isPost()) {
+            $isSplitOrder=0;//=1 thuc hien tach don
+            $sellOrderID = $this->params()->fromPost('oid',0);
+            $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
+            foreach ($sellOrder->getSell() as $sell){
+                $productInventory=$sell->getProduct()->getInventory();
+                $orderQty=$sell->getQuantity();
+                if($orderQty>$productInventory)
+                    $isSplitOrder=1;
+            }
+
+            //trong don co san pham khong du hang =>thuc hien tach don
+            if($isSplitOrder==1){
+                $sellOrderNew = new SellOrder();
+                $sellOrderNew->setCreatedDate(new \DateTime());
+                $sellOrderNew->setStatus($sellOrder->getStatus());
+                $sellOrderNew->setGrocery($sellOrder->getGrocery());
+                $sellOrderNew->setMethod($sellOrder->getMethod());
+                $sellOrderNew->setNote('Tách từ đơn: '.$sellOrder->getId());
+
+                $userId= $this->userInfo->getId();
+                $user = $this->entityManager->getRepository(User::class)->find($userId);
+                $sellOrderNew->setUser($user);
+
+                foreach ($sellOrder->getSell() as $sell){
+                    $productInventory=$sell->getProduct()->getInventory();
+                    $orderQty=$sell->getQuantity();
+
+                    if($productInventory==0){
+                        $sell->setSellOrder($sellOrderNew);
+                        $sellOrderNew->addSell($sell);
+                    }else if($orderQty>$productInventory){
+                        //ton kho khong du de ban => ban not so ton kho, va tao phan thieu sang don khac
+                        $sell->setQuantity($productInventory);
+
+                        $sellNew = new Sell();
+                        $sellNew->setQuantity($orderQty-$productInventory);
+                        $sellNew->setProduct($sell->getProduct());
+                        $sellNew->setPrice($sell->getPrice());
+                        $sellNew->setCost($sell->getCost());
+                        $sellNew->setReturn(0);
+                        $sellNew->setPackUnit($sell->getPackUnit());
+                        $sellNew->setCheckQty(0);
+                        $sellNew->setSellOrder($sellOrderNew);
+                        $sellOrderNew->addSell($sellNew);
+                    }
+
+                }
+                $this->entityManager->persist($sellOrder);
+                $this->entityManager->persist($sellOrderNew);
+                $this->entityManager->flush();
+
+                $result['status'] = 1;
+                $result['message'] = 'Đã tách đơn thành công, mã đơn tách: '.$sellOrderNew->getId();
+            }else{
+                $result['message'] = 'Không tìm thấy sản phẩm nào cần tách';
+                $result['status'] = 0;
+            }
+        }else{
+            $result['message'] = 'Phương thức không đúng!';
+        }
+        return new JsonModel($result);
+    }
+
+    /**
      * Created by   : TruongHM
      * Created date: 4/04/2025 10:53 AM
      * Sua so luong sản phẩm trong đơn hàng đã được xác nhận

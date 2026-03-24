@@ -90,6 +90,7 @@ use Sulde\Service\Common\ConfigManager;
                         <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
                             <div class="d-flex w-100 justify-content-between">
                                 <button onclick="showModalSelectProduct()" class="btn btn-success"><span class="fa fa-plus-square"></span> Thêm sản phẩm</button>
+                                <button id="btnSplitOrder" class="btn btn-info">Tách đơn hàng</button>
                                 <button onclick="deleteOrderCustomer(<?=$this->sellOrder->getId()?>)" class="btn btn-danger pull-right"><span class="fa fa-trash-o"></span> Xoá đơn</button>
                                 <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-info pull-right"><span class="fa fa-print"> In đơn</span></a>
                                 <?php
@@ -330,6 +331,26 @@ use Sulde\Service\Common\ConfigManager;
             data: {oid:orderId,pid:proId,qty:qty,opt:opt}
         }).done(function (data) {
             alert(data.msg);
+            if(data.status){
+                location.reload();
+            }
+            else{
+                stop_waitMe();
+            }
+        })
+    });
+
+    $('#btnSplitOrder').click(function (){
+        let orderId = <?=$this->sellOrder->getId()?>;
+        run_waitMe();
+        var url = "<?=$this->url('sell-admin',['action'=>'split-order'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {oid:orderId}
+        }).done(function (data) {
+            alert(data.message);
             if(data.status){
                 location.reload();
             }
