@@ -2021,11 +2021,12 @@ class AdminController extends SuldeAdminController
                 $sellOrderNew->setStatus($sellOrder->getStatus());
                 $sellOrderNew->setGrocery($sellOrder->getGrocery());
                 $sellOrderNew->setMethod($sellOrder->getMethod());
-                $sellOrderNew->setNote('Tách từ đơn: '.$sellOrder->getId());
 
                 $userId= $this->userInfo->getId();
                 $user = $this->entityManager->getRepository(User::class)->find($userId);
-                $sellOrderNew->setUser($user);
+
+                $sellOrderNew->setNote($user->getFullname().' Tách từ đơn: '.$sellOrder->getId());
+                $sellOrderNew->setUser($sellOrder->getUser());
 
                 foreach ($sellOrder->getSell() as $sell){
                     $productInventory=$sell->getProduct()->getInventory();

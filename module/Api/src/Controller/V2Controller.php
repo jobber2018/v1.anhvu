@@ -567,7 +567,7 @@ class V2Controller extends SuldeFrontController
     private function setProductResult(Product $productItem)
     {
         $product["id"]=$productItem->getId();
-        $product["name"]=$productItem->getName();
+        $product["name"]=$productItem->getName().' | '.$productItem->getWeight();
         $product["price"]=$productItem->getActivePriceValue();
         $product["pack"]=$productItem->getBoxUnit();
         $product["unit"]=$productItem->getUnit()->getName();

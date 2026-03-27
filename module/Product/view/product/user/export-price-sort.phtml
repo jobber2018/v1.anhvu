@@ -175,7 +175,7 @@ use Sulde\Service\Common\Common;
             },
             stop: function (e, ui) {
                 // ui.item.removeClass("selected");
-
+                /*
                 $(this).find("tr").each(function (index) {
                     if (index > 0) {
                         $(this).find("td").eq(0).html(index);
@@ -187,16 +187,16 @@ use Sulde\Service\Common\Common;
                     id:id,
                     index: newIndex
                 });
-
+                */
+                    //console.log(sortListChange);
                 // console.log('newIndex',newIndex);
                 // console.log(ui.item.attr('id'));
             }
         });
 
         $('#btnSubmit').click(function(){
-
             $body.addClass("loading");
-            /*var x = document.getElementsByTagName("tr");
+            var x = document.getElementsByTagName("tr");
             var sortList=[];
             for (i = 0; i < x.length;i++) {
                 if(x[i].rowIndex>0){
@@ -205,9 +205,12 @@ use Sulde\Service\Common\Common;
                         index: x[i].rowIndex
                     });
                 }
-            }*/
+            }
+            //console.log(sortList);
+            //return;
             var url = "<?=$this->url('product-user',['action'=>'sort'])?>";
-            $.post( url, {d: sortListChange }).done(function( data ) {
+
+            $.post( url, {d: JSON.stringify(sortList)}).done(function( data ) {
                 $body.removeClass("loading");
                 sortListChange=[];
             });

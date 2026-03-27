@@ -75,7 +75,7 @@ class UserController extends SuldeUserController
         $result["success"]=0;
         if($request->isPost()){
             try{
-                $data = $request->getPost("d");
+                $data = json_decode($request->getPost("d"));
                 foreach ($data as $key=>$item) {
                     $obj = json_decode(json_encode($item));
                     $productId = $obj->id;

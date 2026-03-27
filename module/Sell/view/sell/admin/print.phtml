@@ -68,12 +68,12 @@ use Sulde\Service\Common\Common;
                         <th style="text-align: center; ">STT<br>(1)</th>
                         <th style="">Mã hàng<br>(2)</th>
                         <th style="text-align: left">Tên hàng hoá<br>(3)</th>
-                        <th style="text-align: center">Loại<br>(4)</th>
-                        <th style="text-align: center">ĐVT<br>(5)</th>
-                        <th style="text-align: center">Số lượng <br>(6)</th>
-                        <th style="text-align: right">Đơn giá <br>(7)</th>
-                        <?=($isProductDiscount==1?'<th style="text-align: right">Chiết khấu<br>(8)</th>':'')?>
-                        <th style="text-align: right">Thành tiền <br>(=6*7)</th>
+<!--                        <th style="text-align: center">Loại<br>(4)</th>-->
+                        <th style="text-align: center">ĐVT<br>(4)</th>
+                        <th style="text-align: center">Số lượng <br>(5)</th>
+                        <th style="text-align: right">Đơn giá <br>(6)</th>
+                        <?=($isProductDiscount==1?'<th style="text-align: right">Chiết khấu<br>(7)</th>':'')?>
+                        <th style="text-align: right">Thành tiền <br>(=5*6)</th>
                     </tr>
                     <?php
                     $i=1;
@@ -102,8 +102,8 @@ use Sulde\Service\Common\Common;
                             echo '<tr>';
                             echo '<td style="text-align: center">' . $sell->getProduct()->getSort() . '</td>';
                             echo '<td style="text-align: center">' . $sell->getProduct()->getSubCode() . '</td>';
-                            echo '<td>' . $sell->getProduct()->getName() . '</td>';
-                            echo '<td style="text-align: center">' . $sell->getProduct()->getWeight() . '</td>';
+                            echo '<td>' . $sell->getProduct()->getName(). ' | '.$sell->getProduct()->getWeight(). '</td>';
+//                            echo '<td style="text-align: center">' . $sell->getProduct()->getWeight() . '</td>';
                             echo '<td style="text-align: center" class="'.$clsTip.'">' . $unitName . '</td>';
                             echo '<td style="text-align: center" class="'.$clsTip.'">' . $qty. '</td>';
                             echo '<td style="text-align: right" nowrap="">' . Common::formatMoney($price) . '</td>';
