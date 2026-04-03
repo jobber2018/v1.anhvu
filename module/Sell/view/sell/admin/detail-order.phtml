@@ -44,81 +44,6 @@ use Sulde\Service\Common\ConfigManager;
     <div class="row">
         <div class="panel panel-default">
             <div class="panel-body">
-                <div class="col-md-4">
-                    <form action="<?=$this->url('sell-admin',['action'=>'note'])?>" method="post">
-                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
-                        <div class="input-group" style="padding-bottom: 10px">
-                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" type="submit">Send</button>
-                            </span>
-                        </div>
-                    </form>
-                    <?php
-                    $summary='';
-                    if($this->sellOrder->getSummary()){
-                        $summary=$this->sellOrder->getSummary();
-                        ?>
-                        <div class="list-group-item">
-                            <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
-                            <span class="contacts-title"><b>Ghi chú</b></span>
-                            <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></span>
-                            <p><i><?=$summary?></i></p>
-                        </div>
-                        <?php
-                    }
-
-                    $noteArr =explode("\n",$this->sellOrder->getNote());
-                    if($this->sellOrder->getNote()){
-                        if(count($noteArr)){
-                            foreach ($noteArr as $value){
-                                $arrNote = explode("|",$value);
-                                    ?>
-                                <div class="list-group-item">
-                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
-                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
-                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
-                                    <p><i><?=@$arrNote[2]?></i></p>
-                                </div>
-                            <?php
-                            }
-                        }
-                    }
-                    ?>
-                    <!-- START TIMELINE -->
-                    <div class="timeline timeline-right" style="padding-top: 10px; background: rgba(223, 226, 226, 0.74)">
-                        <!-- START TIMELINE ITEM -->
-                        <div class="timeline-item timeline-main">
-                            <div class="timeline-date">Activity</div>
-                        </div>
-                        <!-- END TIMELINE ITEM -->
-                        <?php
-                        foreach ($this->sellOrder->getActivity() as $activityItem){
-
-                            ?>
-                            <!-- START TIMELINE ITEM -->
-                            <div class="timeline-item timeline-item-right">
-                                <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
-                                <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
-                                <div class="timeline-item-content">
-                                    <div class="timeline-body">
-                                        <b><?=$activityItem->getActionBy()?></b><br>
-                                        <i><?=$activityItem->getAction()?></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- END TIMELINE ITEM -->
-                            <?php
-                        }
-                        ?>
-                        <!-- START TIMELINE ITEM -->
-                        <div class="timeline-item timeline-main">
-                            <div class="timeline-date"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></div>
-                        </div>
-                        <!-- END TIMELINE ITEM -->
-                    </div>
-                    <!-- END TIMELINE -->
-                </div>
                 <div class="col-md-8">
                     <ul id="productList" class="list-group">
                         <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
@@ -127,19 +52,19 @@ use Sulde\Service\Common\ConfigManager;
                                     <tr>
                                         <td style="width: 100%">Created date: <?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></td>
                                         <td nowrap="">
-                                            <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-info"><span class="fa fa-print"> In đơn</span></a>
+                                            <a href="<?=$this->url('sell-admin',['action'=>'print','id'=>$this->sellOrder->getId()])?>" class="btn btn-info"><span class="fa fa-print"></span> In đơn</a>
                                             <?php
                                             $status = $this->sellOrder->getStatus();
                                             if($status==1 || $status==11)
-                                                echo '<button id="btnDeliveryConfirm" onclick="showModalDeliveryConfirm('.$this->sellOrder->getId().')" type="button" class="btn btn-primary"><span class="fa fa-truck"> Giao hàng</span></button>';
+                                                echo '<button id="btnDeliveryConfirm" onclick="showModalDeliveryConfirm('.$this->sellOrder->getId().')" type="button" class="btn btn-primary"><span class="fa fa-truck"></span> Giao hàng</button>';
 
 //                                            if($status==2 || $status==1 || $status==11 || $status==21|| $status==3|| $status==31){
-                                                echo '<a href="'.$this->url('sell-admin',['action'=>'return','id'=>$this->sellOrder->getId()]).'" class="btn btn-warning"><span class="fa fa-warning"> Trả hàng</span></a> ';
-                                                echo '<a href="'.$this->url('sell-admin',['action'=>'edit-order','id'=>$this->sellOrder->getId()]).'" class="btn btn-default"><span class="fa fa-edit"> Sửa đơn</span></a> ';
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'return','id'=>$this->sellOrder->getId()]).'" class="btn btn-warning"><span class="fa fa-warning"></span> Trả hàng</a> ';
+                                                echo '<a href="'.$this->url('sell-admin',['action'=>'edit-order','id'=>$this->sellOrder->getId()]).'" class="btn btn-default"><span class="fa fa-edit"></span> Sửa đơn</a> ';
 //                                            }
 
                                             if($status!=3 && $status!=-1 && $status!=0)
-                                                echo '<button id="btnPayConfirm" onclick="showModalPayConfirm('.$this->sellOrder->getId().',\''.$this->sellOrder->getGrocery()->getGroceryName().'\')" type="button" class="btn btn-success"><span class="fa fa-credit-card"> Thanh toán</span></button>';
+                                                echo '<button id="btnPayConfirm" onclick="showModalPayConfirm('.$this->sellOrder->getId().',\''.$this->sellOrder->getGrocery()->getGroceryName().'\')" type="button" class="btn btn-success"><span class="fa fa-credit-card"></span> Thanh toán</button>';
                                             ?>
                                         </td>
                                     </tr>
@@ -177,7 +102,11 @@ use Sulde\Service\Common\ConfigManager;
                             ?>
                             <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1 title"><a href="<?=$this->url('product-admin',['action'=>'price','id'=>$sell->getProduct()->getId()])?>"> <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></a></h5>
+                                    <h5 class="mb-1 title">
+                                        <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$sell->getProduct()->getId()])?>"> <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></a>
+                                        <span class="pull-right text-muted" style="font-size: 12px; font-weight: normal">Checked: <?=Common::formatDateTime($sell->getCheckDate())?></span>
+                                    </h5>
+
                                 </div>
                                 <table style="width: 100%">
                                     <tbody>
@@ -274,7 +203,81 @@ use Sulde\Service\Common\ConfigManager;
                         </li>
                     </ul>
                 </div>
+                <div class="col-md-4">
+                    <form action="<?=$this->url('sell-admin',['action'=>'note'])?>" method="post">
+                        <input type="hidden" name="oid" value="<?=$this->sellOrder->getId()?>">
+                        <div class="input-group" style="padding-bottom: 10px">
+                            <input type="text" name="note" class="form-control" placeholder="Type a message..."/>
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="submit">Send</button>
+                            </span>
+                        </div>
+                    </form>
+                    <?php
+                    $summary='';
+                    if($this->sellOrder->getSummary()){
+                        $summary=$this->sellOrder->getSummary();
+                        ?>
+                        <div class="list-group-item">
+                            <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                            <span class="contacts-title"><b>Ghi chú</b></span>
+                            <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></span>
+                            <p><i><?=$summary?></i></p>
+                        </div>
+                        <?php
+                    }
 
+                    $noteArr =explode("\n",$this->sellOrder->getNote());
+                    if($this->sellOrder->getNote()){
+                        if(count($noteArr)){
+                            foreach ($noteArr as $value){
+                                $arrNote = explode("|",$value);
+                                ?>
+                                <div class="list-group-item">
+                                    <img src="/img/users/avatar.png" style="padding-right: 5px" width="40px" class="pull-left" alt="Brad Pitt"/>
+                                    <span class="contacts-title"><b><?=$arrNote[0]?></b></span>
+                                    <span class="pull-right" style="color: #cccccc"><?=Common::formatDateTime(@$arrNote[1])?></span>
+                                    <p><i><?=@$arrNote[2]?></i></p>
+                                </div>
+                                <?php
+                            }
+                        }
+                    }
+                    ?>
+                    <!-- START TIMELINE -->
+                    <div class="timeline timeline-right" style="padding-top: 10px; background: rgba(223, 226, 226, 0.74)">
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date">Activity</div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                        <?php
+                        foreach ($this->sellOrder->getActivity() as $activityItem){
+
+                            ?>
+                            <!-- START TIMELINE ITEM -->
+                            <div class="timeline-item timeline-item-right">
+                                <div class="timeline-item-info"><?=Common::formatDateTime($activityItem->getActionTime());?></div>
+                                <div class="timeline-item-icon"><span class="fa <?=$activityItem->getActionIcon()?>"></span></div>
+                                <div class="timeline-item-content">
+                                    <div class="timeline-body">
+                                        <b><?=$activityItem->getActionBy()?></b><br>
+                                        <i><?=$activityItem->getAction()?></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END TIMELINE ITEM -->
+                            <?php
+                        }
+                        ?>
+                        <!-- START TIMELINE ITEM -->
+                        <div class="timeline-item timeline-main">
+                            <div class="timeline-date"><?=Common::formatDateTime($this->sellOrder->getCreatedDate())?></div>
+                        </div>
+                        <!-- END TIMELINE ITEM -->
+                    </div>
+                    <!-- END TIMELINE -->
+                </div>
             </div>
         </div>
     </div>
