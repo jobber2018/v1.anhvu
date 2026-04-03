@@ -38,6 +38,9 @@ class WerehouseSheet
     /** @orm\Column(type="datetime", name="created_date") */
     private $created_date;
 
+    /** @orm\Column(type="string", name="name") */
+    private $name;
+
     /**
      * @orm\OneToMany(targetEntity="Werehouse\Entity\WerehouseCheck", mappedBy="werehouseSheet", cascade={"persist", "remove"})
      * @orm\JoinColumn(name="id", referencedColumnName="sheet_id")
@@ -116,4 +119,21 @@ class WerehouseSheet
         }
         return 0;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param mixed $name
+     */
+    public function setName($name): void
+    {
+        $this->name = $name;
+    }
+
 }

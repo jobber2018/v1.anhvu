@@ -41,6 +41,7 @@ $this->headTitle("Kiểm kho");
                         <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Mô tả</th>
                             <th>Người kiểm</th>
                             <th>Ngày kiểm</th>
                             <th>Sản phẩm kiểm</th>
@@ -52,6 +53,7 @@ $this->headTitle("Kiểm kho");
                         ?>
                         <tr>
                             <td><?=$werehouseSheetItem->getId()?></td>
+                            <td class="title"><?=$werehouseSheetItem->getName()?></td>
                             <td>
                                 <a href="<?=$this->url('werehouse-admin',['action'=>'inventory-check','id'=>$werehouseSheetItem->getId()])?>"><?=$werehouseSheetItem->getUser()->getFullname()?></a>
                             </td>

@@ -15,6 +15,7 @@ use Product\Entity\ProductRecommend;
 use Product\Form\ProductForm;
 use Product\Service\ProductManager;
 use Doctrine\ORM\EntityManager;
+use Sulde\Service\Common\Common;
 use Sulde\Service\Common\Define;
 use Sulde\Service\ImageUpload;
 use Sulde\Service\SuldeAdminController;
@@ -68,7 +69,9 @@ class AdminController extends SuldeAdminController
                 $tmp['pack_price_sale'] = $productItem->getPackPriceSale();
                 $tmp['product_price_after_sale'] = $productItem->getUnitPriceAfterSale();
                 $tmp['pack_price_after_sale'] = $productItem->getPackPriceAfterSale();
+                $tmp['inventory_check_date'] = Common::formatDateTime($productItem->getInventoryCheck());
                 $tmp['inventory'] = $productItem->getInventory();
+                $tmp['exchange_unit'] = $productItem->getExchangeUnit();
                 $productResult[]=$tmp;
             }
             $result['draw']=$draw;
