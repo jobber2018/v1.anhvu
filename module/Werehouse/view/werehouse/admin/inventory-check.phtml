@@ -116,6 +116,7 @@ $this->headTitle("Kiểm kho");
 
 <?=$this->partial('product/partial/update-barcode');?>
 
+
 <div class="modal fade" id="modalSelectProduct" tabindex="-1" role="dialog" aria-labelledby="modalSelectProductLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -162,11 +163,55 @@ $this->headTitle("Kiểm kho");
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalScanProductInfo" tabindex="-1" role="dialog" aria-labelledby="modalProductInfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalSelectProductLabel">Thông tin sản phẩm</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-success add-product-to-sheet">Thêm sản phẩm</button>
+            </div>
+        </div>
+    </div>
+    <script type="text/html" id="product-info-template">
+        <input type="hidden" id="product_scan_id" value="{{id}}">
+        <div class="row">
+            <label class="col-md-3">Name</label>
+            <div class="col-md-9 title">{{name}}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-3">Mã sản phẩm</label>
+            <div class="col-md-9 title">{{barcode}}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-3">Mã thùng</label>
+            <div class="col-md-9 title">{{pack_barcode}}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-3">Tồn kho hiện tại</label>
+            <div class="col-md-9 title" style="color: #1f6def; font-size: large">{{inventory}}</div>
+        </div>
+        <div class="row">
+            <label class="col-md-3">Tồn kho thực tế</label>
+            <div class="col-md-9"><input type="number" class="form-control" id="actualInventory" name="actualInventory"  value="{{inventory}}"></div>
+        </div>
+    </script>
+</div>
+
 <link rel="stylesheet" href="/css/bootstrap-select.min.css">
 <script src="/js/bootstrap-select.min.js"></script>
 <link rel="stylesheet" href="/css/ajax-bootstrap-select.css">
 <script src="/js/ajax-bootstrap-select.js"></script>
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript" src="/js/jquery.scannerdetection.js"></script>
+
 <style>
     .special {
         color: #fff !important;
@@ -193,7 +238,24 @@ $this->headTitle("Kiểm kho");
     }
 
 </style>
+
+
 <script>
+    $(document).scannerDetection({
+        timeBeforeScanTest: 200, // wait for the next character for upto 200ms
+        startChar: [120], // Prefix character for the cabled scanner (OPL6845R)
+        endChar: [13], // be sure the scan is complete if key 13 (enter) is detected
+        avgTimeByChar: 40, // it's not a barcode if a character takes longer than 40ms
+        onComplete: function(barcode, qty){
+            // console.log('scannerDetection:'+barcode +'/'+qty);
+            // $('.prompt').val('');
+            // $('.prompt').focus();
+            if ($('#dt-search-0').is(':focus'))
+                return;
+
+            findProductByBarcode(barcode);
+        } // main callback function
+    });
     $( document ).ready(function() {
         $('#tblWerehouse').DataTable({
             paging: true,
@@ -205,7 +267,7 @@ $this->headTitle("Kiểm kho");
                 searchPlaceholder: "Tìm kiếm sản phẩm"
             },
             initComplete: function () {
-                $('.dataTables_filter label input').focus();
+                //$('.dataTables_filter label input').focus();
             }
         });
     })
@@ -234,45 +296,16 @@ $this->headTitle("Kiểm kho");
     });
 
     $('#btnAddProductToSheet').click(function(){
-        run_waitMe();
-
         var proId = $('#proId').val();
         var qty = $('#txtQty').val();
-
-        var url = "<?=$this->url('werehouse-admin',['action'=>'inventory-check','id'=>$this->werehouseSheet->getId()])?>";
-        $.ajax({
-            method: "POST",
-            url: url,
-            data: {pid:proId,qty:qty}
-        }).done(function (res) {
-            if(res.status){
-                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
-                var difference = 0;
-                difference=res.data.actual_inventory-res.data.book_inventory;
-                var cls='';
-                if(difference != 0) cls='warning-color';
-                else cls='success-color'
-
-                var html='<tr id="tr_'+res.data.id+'">';
-                html+='<td></td>';
-                html+='<td>'+res.data.img+'</td>';
-                html+='<td>'+res.data.code+'</td>';
-                html+='<td>'+res.data.pack_code+'</td>';
-                html+='<td>'+res.data.name+'</td>';
-                html+='<td>'+res.data.book_inventory+'</td>';
-                html+='<td>'+res.data.actual_inventory+'</td>';
-                html+='<td class="'+cls+'">'+difference+'</td>';
-                html+='<td>'+res.data.created_date+'</td>';
-                html+='<td><span class="fa fa-trash-o" style="font-size: 16px" onclick="removeCheck('+res.data.id+')"></span></td>';
-                html+='</tr>';
-                $('#tblWerehouse tr:first').after(html);
-                $('#modalSelectProduct').modal('hide');
-            }
-            else{
-                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
-            }
-            stop_waitMe();
-        })
+        addProductToSheet(proId,qty);
+        $('#modalSelectProduct').modal('hide');
+    });
+    $('.add-product-to-sheet').click(function(){
+        var proId = $('#product_scan_id').val();
+        var qty = $('#actualInventory').val();
+        addProductToSheet(proId,qty);
+        $('#modalScanProductInfo').modal('hide');
     });
 
     $("#selectPro").on("changed.bs.select",
@@ -314,6 +347,43 @@ $this->headTitle("Kiểm kho");
                 }
             } );
         });
+
+    function addProductToSheet(proId,qty){
+        run_waitMe();
+        var url = "<?=$this->url('werehouse-admin',['action'=>'inventory-check','id'=>$this->werehouseSheet->getId()])?>";
+        $.ajax({
+            method: "POST",
+            url: url,
+            data: {pid:proId,qty:qty}
+        }).done(function (res) {
+            if(res.status){
+                noty({text: res.msg, layout: 'topRight', type: 'success',timeout: 4000});
+                var difference = 0;
+                difference=res.data.actual_inventory-res.data.book_inventory;
+                var cls='';
+                if(difference != 0) cls='warning-color';
+                else cls='success-color'
+
+                var html='<tr id="tr_'+res.data.id+'">';
+                html+='<td></td>';
+                html+='<td>'+res.data.img+'</td>';
+                html+='<td>'+res.data.code+'</td>';
+                html+='<td>'+res.data.pack_code+'</td>';
+                html+='<td>'+res.data.name+'</td>';
+                html+='<td>'+res.data.book_inventory+'</td>';
+                html+='<td>'+res.data.actual_inventory+'</td>';
+                html+='<td class="'+cls+'">'+difference+'</td>';
+                html+='<td>'+res.data.created_date+'</td>';
+                html+='<td><span class="fa fa-trash-o" style="font-size: 16px" onclick="removeCheck('+res.data.id+')"></span></td>';
+                html+='</tr>';
+                $('#tblWerehouse tr:first').after(html);
+            }
+            else{
+                noty({text: res.msg, layout: 'topRight', type: 'error',timeout: 4000});
+            }
+            stop_waitMe();
+        })
+    }
 
     function showModalSelectProduct(){
         $('#productInfo').html('');
@@ -366,5 +436,42 @@ $this->headTitle("Kiểm kho");
             }
             stop_waitMe();
         })
+    }
+
+
+    function findProductByBarcode(barcode){
+        if(!barcode){
+            noty({text: 'Sản phẩm không có mã vạch. Hãy thêm mã trước khi kiểm!', layout: 'topRight', type: 'error',timeout: 5000});
+            playAudio('warning');
+            return;
+        }
+        //console.log(barcode);
+        let url = "<?=$this->url('werehouse-admin',['action'=>'purchase-scan'])?>";
+        $.ajax({
+            headers: {Accept: "application/json; charset=utf-8"},
+            method: "POST",
+            url: url,
+            data: {barcode:barcode}
+        }).done(function (response) {
+            if(response.status){
+                // console.log('tim thay san pham trong db: '+response.data.id);
+                //increaseQty(response.data, 1);
+                //playAudio('warning');
+                //noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                $('#modalScanProductInfo').modal({
+                    keyboard: false,
+                    backdrop:'static',
+                    show:true
+                }).on('shown.bs.modal', function (e) {
+                    let productInfoTemplate = $('#product-info-template').text();
+                    let productInfoContent = Mustache.render(productInfoTemplate, response.data);
+                    $('#modalScanProductInfo .modal-body').html(productInfoContent)
+                    $('#actualInventory').select();
+                });
+            }else{
+                noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
+                playAudio('warning');
+            }
+        });
     }
 </script>

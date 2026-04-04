@@ -952,6 +952,8 @@ class AdminController extends SuldeAdminController
                     $resultProductItem['pack_barcode']=$productItem[0]->getPackCode();
                     $resultProductItem['name']=$productItem[0]->getName().'|'.$productItem[0]->getWeight();
                     $resultProductItem['unit']='pack';
+                    $resultProductItem['inventory']=$productItem[0]->getInventory();
+                    $resultProductItem['base_unit_name']=$productItem[0]->getUnit()->getName();
                     $resultProductItem['qty']=1;
                     $resultProductItem['button']=1;
 
