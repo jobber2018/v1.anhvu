@@ -18,6 +18,8 @@ class Define
     const _ORDER_WAITING_PACKING_STATUS=1;//trang thai don hang da cho dong goi
     const _ORDER_PACKING_STATUS=11;//trang thai don hang dang dong goi
     const _ORDER_PACKED_STATUS=111;//trang thai don hang da dong goi
+    const _ORDER_CUSTOMER_STATUS=-2;//Khach tao
+    const _ORDER_DRAFT_STATUS=-1;//don nhap
 
     const PUBLISHED =1;
     const INPUBLISHED =0;

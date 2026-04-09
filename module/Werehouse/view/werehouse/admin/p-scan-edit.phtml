@@ -173,6 +173,8 @@ $this->headTitle($title);
     }
     .noty_message{font-size: larger!important; line-height: unset!important;font-weight: bold}
     #noty_topRight_layout_container li{margin-bottom: 2px}
+    .noty_text b{font-size: 70pt}
+
     .row-highlight {
         background-color: #fff3cd !important;
         /*animation: flash 1s ease-in-out infinite alternate;*/
@@ -521,6 +523,8 @@ $this->headTitle($title);
             row.data(data);
             const input = row.node().querySelector('.qty-input');
             if (input) input.value = data.qty;
+            noty({text: data.name+': <b>'+data.qty+'</b>', layout: 'topRight', type: 'success',timeout: 8000});
+            playAudio('fail');
         }else{
             let url = "<?=$this->url('werehouse-admin',['action'=>'purchase-scan'])?>";
             $.ajax({
@@ -532,7 +536,7 @@ $this->headTitle($title);
                 if(response.status){
                     // console.log('tim thay san pham trong db: '+response.data.id);
                     increaseQty(response.data, 1);
-                    noty({text: response.message, layout: 'topRight', type: 'success',timeout: 8000});
+                    noty({text: response.message+'<b>1</b>', layout: 'topRight', type: 'success',timeout: 8000});
                 }else{
                     noty({text: response.message, layout: 'topRight', type: 'error',timeout: 4000});
                     $('#modalAddProduct').modal({
@@ -573,6 +577,8 @@ $this->headTitle($title);
         data.qty = parseInt(data.qty)+step;
 
         row.data(data);
+
+        console.log('data.qty:'+data.qty);
 
         // cập nhật input đang hiển thị
         const input = row.node().querySelector('.qty-input');

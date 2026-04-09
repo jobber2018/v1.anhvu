@@ -136,8 +136,9 @@ $this->headTitle($title);
                 { name: 'name', targets: 3,
                     createdCell:function (td, cellData, rowData, row, col){
                         let name='<a href="<?=$this->url('sell-admin',['action'=>'do-packed'])?>/'+rowData[0].order_id+'" class="title">'+cellData+'</a>';
-                        name+=' '+rowData[0].order_message;
-                        name+='<p><i>'+rowData[0].customer_address+'</i></p>';
+                        name+=' '+rowData[0].order_message+'<br>';
+                        name+='<span><i>'+rowData[0].customer_address+'</i></span><br>';
+                        name+='<label style="color: red"><i>'+rowData[0].tmp+'</i></label>';
                         $(td).html(name);
                     }
                 },

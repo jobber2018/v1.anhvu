@@ -48,12 +48,35 @@ class AdminController extends SuldeAdminController
      */
     public function indexAction(){
 
-        $sellOrder = $this->sellManager->getSellOrder(1);
+        //danh sach order
+        $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+            Define::_ORDER_DELIVERED_STATUS,
+            Define::_ORDER_DELIVERING_STATUS,
+            Define::_ORDER_WAITING_PACKING_STATUS,
+            Define::_ORDER_PACKED_STATUS,
+            Define::_ORDER_PACKING_STATUS,
+            Define::_ORDER_CUSTOMER_STATUS,
+            Define::_ORDER_DRAFT_STATUS,
+        ));
+
         $arrOrders=[];
-        foreach ($sellOrder as $orderItem){
-            $groceryId = $orderItem->getGrocery()->getId();
-            $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
+        $arrOrderWaitingPacking = array();
+        $arrOrderNotWaitingPacking = array();
+        foreach($sellOrders as $sellOrder){
+            $groceryId = $sellOrder->getGrocery()->getId();
+            if($sellOrder->getStatus() == Define::_ORDER_WAITING_PACKING_STATUS){
+                //lấy các đơn hàng đang chờ đong gói
+                $arrOrderWaitingPacking[]=$sellOrder;
+                $arrOrders[$groceryId][]=$sellOrder->getGrocery()->getGroceryName();
+
+            }else{
+                //lấy đn hàng của khách hàng đang ở trạng thái khác
+                $arrOrderNotWaitingPacking[$groceryId][]=$sellOrder;
+            }
         }
+
+        //$sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_WAITING_PACKING_STATUS);
+
         $listGroceryMerge=array();
         foreach ($arrOrders as $key=>$arr) {
             //1 khach hang co nhieu hon 1 don khach tao nhung chua xac nhan
@@ -64,7 +87,8 @@ class AdminController extends SuldeAdminController
         }
 
         return new ViewModel([
-            'sellOrder'=>$sellOrder,
+            'arrOrderNotWaitingPacking'=>$arrOrderNotWaitingPacking,
+            'arrOrderWaitingPacking'=>$arrOrderWaitingPacking,
             'listGroceryMerge'=>$listGroceryMerge
         ]);
     }
@@ -242,11 +266,41 @@ class AdminController extends SuldeAdminController
         $request = $this->getRequest();
         if($request->isPost()){
             try{
-                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKING_STATUS);
+
+                //danh sach order
+                $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+                    Define::_ORDER_DELIVERED_STATUS,
+                    Define::_ORDER_DELIVERING_STATUS,
+                    Define::_ORDER_WAITING_PACKING_STATUS,
+                    Define::_ORDER_PACKED_STATUS,
+                    Define::_ORDER_PACKING_STATUS,
+                    Define::_ORDER_CUSTOMER_STATUS,
+                    Define::_ORDER_DRAFT_STATUS,
+                ));
+                $orders = array();
+                foreach($sellOrders as $sellOrder){
+                    $tmp='';
+                    $groceryId = $sellOrder->getGrocery()->getId();
+                    if($sellOrder->getStatus() == Define::_ORDER_PACKING_STATUS){
+                        //lấy các đơn hàng đang chờ đong gói
+                        $arrOrderPacking=$this->getDataOrderListResult($sellOrder);
+
+                        foreach($sellOrders as $sellOrderTmp){
+                            if($sellOrderTmp->getGrocery()->getId()==$groceryId && $sellOrderTmp->getStatus()!=Define::_ORDER_PACKING_STATUS){
+                                $tmp.=ConfigManager::getOrderStatus()[$sellOrderTmp->getStatus()].' ('.Common::formatMoney(round($sellOrderTmp->getTotalAmountToPaid()/1000)*1000).')| ';
+                            }
+                        }
+                        $arrOrderPacking['tmp']=$tmp;
+                        $orders[]=$arrOrderPacking;
+                    }
+                }
+
+
+                /*$sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKING_STATUS);
                 $orders = array();
                 foreach ($sellOrder as $orderItem){
                     $orders[]=$this->getDataOrderListResult($orderItem);
-                }
+                }*/
                 $result['data']=$orders;
             }catch (\Exception $e){
                 $result['status'] = 0;
@@ -799,7 +853,36 @@ class AdminController extends SuldeAdminController
         if($request->isPost()) {
             try {
 
-                $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKED_STATUS);
+                $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+                    Define::_ORDER_DELIVERED_STATUS,
+                    Define::_ORDER_DELIVERING_STATUS,
+                    Define::_ORDER_WAITING_PACKING_STATUS,
+                    Define::_ORDER_PACKED_STATUS,
+                    Define::_ORDER_PACKING_STATUS,
+                    Define::_ORDER_CUSTOMER_STATUS,
+                    Define::_ORDER_DRAFT_STATUS,
+                ));
+                $orders = array();
+                $arrOrders=[];
+                foreach($sellOrders as $sellOrder){
+                    $tmp='';
+                    $groceryId = $sellOrder->getGrocery()->getId();
+                    if($sellOrder->getStatus() == Define::_ORDER_PACKED_STATUS){
+                        //lấy các đơn hàng đang chờ đong gói
+                        $arrOrderPacking=$this->getDataOrderListResult($sellOrder);
+
+                        foreach($sellOrders as $sellOrderTmp){
+                            if($sellOrderTmp->getGrocery()->getId()==$groceryId && $sellOrderTmp->getStatus()!=Define::_ORDER_PACKED_STATUS){
+                                $tmp.=ConfigManager::getOrderStatus()[$sellOrderTmp->getStatus()].' ('.Common::formatMoney(round($sellOrderTmp->getTotalAmountToPaid()/1000)*1000).')| ';
+                            }
+                        }
+                        $arrOrderPacking['tmp']=$tmp;
+                        $orders[]=$arrOrderPacking;
+                        $arrOrders[$groceryId][]=$sellOrder->getGrocery()->getGroceryName();
+                    }
+                }
+
+                /*$sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_PACKED_STATUS);
 
                 $orders = array();
                 $arrOrders=[];
@@ -808,7 +891,7 @@ class AdminController extends SuldeAdminController
 
                     $groceryId = $orderItem->getGrocery()->getId();
                     $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
-                }
+                }*/
 
                 $listGroceryMerge=array();
                 foreach ($arrOrders as $key=>$arr) {
@@ -1552,11 +1635,39 @@ class AdminController extends SuldeAdminController
 
         if($request->isPost()){
             try{
+
+                $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+                    Define::_ORDER_DELIVERED_STATUS,
+                    Define::_ORDER_DELIVERING_STATUS,
+                    Define::_ORDER_WAITING_PACKING_STATUS,
+                    Define::_ORDER_PACKED_STATUS,
+                    Define::_ORDER_PACKING_STATUS,
+                    Define::_ORDER_CUSTOMER_STATUS,
+                    Define::_ORDER_DRAFT_STATUS,
+                ));
+                $orders = array();
+                foreach($sellOrders as $sellOrder){
+                    $tmp='';
+                    $groceryId = $sellOrder->getGrocery()->getId();
+                    if($sellOrder->getStatus() == Define::_ORDER_DELIVERING_STATUS){
+                        //lấy các đơn hàng đang chờ đong gói
+                        $arrOrderPacking=$this->getDataOrderListResult($sellOrder);
+
+                        foreach($sellOrders as $sellOrderTmp){
+                            if($sellOrderTmp->getGrocery()->getId()==$groceryId && $sellOrderTmp->getStatus()!=Define::_ORDER_DELIVERING_STATUS){
+                                $tmp.=ConfigManager::getOrderStatus()[$sellOrderTmp->getStatus()].' ('.Common::formatMoney(round($sellOrderTmp->getTotalAmountToPaid()/1000)*1000).')| ';
+                            }
+                        }
+                        $arrOrderPacking['tmp']=$tmp;
+                        $orders[]=$arrOrderPacking;
+                    }
+                }
+                /*
                 $sellOrder = $this->sellManager->getSellOrder(Define::_ORDER_DELIVERING_STATUS);
                 $orders = array();
                 foreach ($sellOrder as $orderItem){
                     $orders[]=$this->getDataOrderListResult($orderItem);
-                }
+                }*/
                 $result['data']=$orders;
             }catch (\Exception $e){
                 $result['status'] = 0;
