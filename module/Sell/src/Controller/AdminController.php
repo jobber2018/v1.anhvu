@@ -1170,14 +1170,67 @@ class AdminController extends SuldeAdminController
 
         $request = $this->getRequest();
         if($request->isPost()) {
+            //$em = $this->entityManager;
+            $this->entityManager->getConnection()->beginTransaction();
             try {
                 $groceryId = $request->getPost("id");
                 $status = $request->getPost("s");
 
                 $sellOrders = $this->sellManager->getSellOrderNeedMergeByGrocery($groceryId,$status);
 
-                //Có hơn 1 đơn ở trạng thái đã đóng gói. (Chỉ cho phép merge đơn ở trạng thái đã đóng gói)
                 if(count($sellOrders)>1){
+
+                    //tim dơn chính (Đơn có số tiền lớn nhất)
+                    $maxMoney=0;
+                    $masterOrder=null;
+                    foreach ($sellOrders as $sellOrder){
+                        if($maxMoney<$sellOrder->getTotalAmountToPaid()){
+                            $masterOrder=$sellOrder;
+                            $maxMoney=$sellOrder->getTotalAmountToPaid();
+                        }
+                    }
+
+                    $discountOrder=$masterOrder->getDiscount();
+                    $noteOrder=$masterOrder->getNote();
+                    //đưa sản phẩm trong order khác sang master order
+                    foreach ($sellOrders as $sellOrder){
+                        if($sellOrder->getId()!=$masterOrder->getId()){
+                            foreach ($sellOrder->getSell() as $sellItem){
+                                $productId = $sellItem->getProduct()->getId();
+                                $isMasterOrder=0;
+                                foreach ($masterOrder->getSell() as $masterSellItem){
+                                    if($productId==$masterSellItem->getProduct()->getId()){
+                                        //san pham nay co trong master =>cong them so luong tuong ung trong don
+                                        $qty=$masterSellItem->getQuantity()+$sellItem->getQuantity();
+                                        $masterSellItem->setQuantity($qty);
+                                        $isMasterOrder=1;
+                                    }
+                                }
+
+                                //san pham khong co trong don master => them san pham nay vao master order
+                                if($isMasterOrder==0)
+                                    $sellItem->setSellOrder($masterOrder);
+                            }
+
+                            //lay discout orrder neu co
+                            if(isset($discountOrder))
+                                $discountOrder+=$sellOrder->getDiscount();
+
+                            //move note
+                            if($sellOrder->getNote())
+                                $noteOrder.="\n".$sellOrder->getNote();
+
+                            //xoa order sau khi chuyen
+                            $sellOrder->setSell(null);
+                            $this->entityManager->remove($sellOrder);
+                        }
+                    }
+
+                    $masterOrder->setNote($noteOrder);
+                    $masterOrder->setDiscount($discountOrder);
+                    $this->entityManager->persist($masterOrder);
+
+                    /*
                     $firstOrder = $sellOrders[0];
                     $discountOrder=$firstOrder->getDiscount();
 
@@ -1204,9 +1257,10 @@ class AdminController extends SuldeAdminController
                         $this->entityManager->remove($nextOrder);
                     }
                     $this->entityManager->persist($firstOrder);
+                    */
                     //insert sell order activity
                     $sellOrderActivity = new SellOrderActivity();
-                    $sellOrderActivity->setSellOrder($firstOrder);
+                    $sellOrderActivity->setSellOrder($masterOrder);
                     $sellOrderActivity->setActionBy($this->userInfo->getUsername());
                     $sellOrderActivity->setActionTime(new \DateTime());
                     $action='Gộp đơn';
@@ -1215,8 +1269,9 @@ class AdminController extends SuldeAdminController
                     $this->entityManager->persist($sellOrderActivity);
 
                     $this->entityManager->flush();
+                    $this->entityManager->getConnection()->commit();
 
-                    $result['oid']=$firstOrder->getId();
+                    $result['oid']=$masterOrder->getId();
                     $result['status']=1;
                     $result['msg']='Đơn hàng đã được gộp thành công!';
                 }else{
@@ -1226,6 +1281,7 @@ class AdminController extends SuldeAdminController
             } catch (\Exception $e) {
                 $result['status']=0;
                 $result['msg']=$e->getMessage();
+                $this->entityManager->getConnection()->rollback();
             }
             return new JsonModel($result);
         }else{
@@ -2247,6 +2303,7 @@ class AdminController extends SuldeAdminController
                 $product->setInventory($newInventory);
 
                 $sell->setQuantity($newQty);
+                $sell->setApprovedQty($newQty);
 //                $productInOrder->setSellOrder($sellOrder);
 //                $sellOrder->addSell($productInOrder);
 
