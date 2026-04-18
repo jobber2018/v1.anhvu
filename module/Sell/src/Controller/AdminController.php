@@ -1167,7 +1167,6 @@ class AdminController extends SuldeAdminController
     }
 
     public function mergeSellOrderAction(){
-
         $request = $this->getRequest();
         if($request->isPost()) {
             //$em = $this->entityManager;
@@ -1203,7 +1202,16 @@ class AdminController extends SuldeAdminController
                                         //san pham nay co trong master =>cong them so luong tuong ung trong don
                                         $qty=$masterSellItem->getQuantity()+$sellItem->getQuantity();
                                         $masterSellItem->setQuantity($qty);
+
+                                        $checkQty=$masterSellItem->getCheckQty()+$sellItem->getCheckQty();
+                                        $masterSellItem->setCheckQty($checkQty);
+
                                         $isMasterOrder=1;
+
+                                        //remove product
+                                        $sellItem->setSellOrder(null);
+                                        $this->entityManager->remove($sellItem);                                                                                 
+                        
                                     }
                                 }
 
