@@ -89,7 +89,13 @@ $this->headTitle($title);
                             <div class="widget-subtitle"><label>Open App: </label> <?=$zaloAccess?></div>
                         </div>
                     </div>
-                    <div id="checkIn" href="#">
+                    <div>
+                        <?php
+                          $imgSrc=($this->groceryDetail->getImg()?$this->groceryDetail->getImg():'/img/icon-camera.png');
+                        ?>
+                        <img src="<?=$imgSrc?>" style="max-width: 100%">
+                    </div>
+                    <div id="checkIn" href="#" style="padding-top: 15px">
                         <lable class="btn btn-info">
                             <span class="fa fa-map-marker" style="font-size: 15px"></span>Check in
                         </lable>
@@ -127,20 +133,6 @@ $this->headTitle($title);
                     </table>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading ui-draggable-handle">
-                    <h3 class="panel-title">Sản phẩm đã nhập</h3>
-                </div>
-                <div class="panel-body grocery-order">
-                    <div id="morris-donut-example" style="height: 300px;"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading ui-draggable-handle">
                     <h3 class="panel-title">Đơn hàng</h3>
@@ -152,54 +144,54 @@ $this->headTitle($title);
                     <div id="morris-bar-grocery" style="max-height: 300px; max-width: 100%"></div>
                     <table class="table nowrap table-hover display datatable_simple" style="width:100%" id="tblOrder">
                         <thead>
-                            <tr>
-                                <th>Ngày tạo</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                            </tr>
+                        <tr>
+                            <th>Ngày tạo</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            <?php
-                            $arrRevenueOfMonth =array();
-                            $arrProCat =array();
-                            foreach ($this->groceryDetail->getSellOrder() as $orderItem){
-                                $totalOrderPrice=$orderItem->getTotalPrice();
-                                if($orderItem->getStatus()==3){
-                                    //thong ke san pham ban chay theo cat
-                                    $sells = $orderItem->getSell();
-                                    foreach ($sells as $sell){
-                                        $price = $sell->getPrice()->getPrice();
-                                        $quantity = $sell->getQuantity();
-                                        $product= $sell->getProduct();
-                                        $productCat = $product->getProductCat();
-                                        $proUnit = $product->getUnit()->getName();
-                                        $proCatId=$productCat->getId();
-                                        $arrProCat[$proCatId]["name"]=$productCat->getName();
-                                        $arrProCat[$proCatId]["price"]=@$arrProCat[$proCatId]["price"]+$price*$quantity;
-                                        $arrProCat[$proCatId]["quantity"]=@$arrProCat[$proCatId]["quantity"]+$quantity;
-                                        $arrProCat[$proCatId]["unit"]=$proUnit;
-                                    }
-
-
-                                    $month = $orderItem->getCreatedDate()->format('Y.m');
-                                    $arrRevenueOfMonth[$month]=@$arrRevenueOfMonth[$month]+$totalOrderPrice;
+                        <?php
+                        $arrRevenueOfMonth =array();
+                        $arrProCat =array();
+                        foreach ($this->groceryDetail->getSellOrder() as $orderItem){
+                            $totalOrderPrice=$orderItem->getTotalPrice();
+                            if($orderItem->getStatus()==3){
+                                //thong ke san pham ban chay theo cat
+                                $sells = $orderItem->getSell();
+                                foreach ($sells as $sell){
+                                    $price = $sell->getPrice()->getPrice();
+                                    $quantity = $sell->getQuantity();
+                                    $product= $sell->getProduct();
+                                    $productCat = $product->getProductCat();
+                                    $proUnit = $product->getUnit()->getName();
+                                    $proCatId=$productCat->getId();
+                                    $arrProCat[$proCatId]["name"]=$productCat->getName();
+                                    $arrProCat[$proCatId]["price"]=@$arrProCat[$proCatId]["price"]+$price*$quantity;
+                                    $arrProCat[$proCatId]["quantity"]=@$arrProCat[$proCatId]["quantity"]+$quantity;
+                                    $arrProCat[$proCatId]["unit"]=$proUnit;
                                 }
 
-                                if($orderItem->getMethod()>0)
-                                    $method='<span class="fa fa-phone-square"></span> Admin';
-                                else if($orderItem->getMethod()==-1)
-                                    $method='<span class="glyphicon glyphicon-user"></span> Customer';
-                                else
-                                    $method=$orderItem->getUser()->getFullname();
 
-                                echo '<tr>';
-                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.$orderItem->getCreatedDate()->format('d/M').'|'.$method.'</a></td>';
-                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.Common::formatMoney($totalOrderPrice) .' đ</a></td>';
-                                echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.ConfigManager::getOrderStatus()[$orderItem->getStatus()] .'</a></td>';
-                                echo '</tr>';
+                                $month = $orderItem->getCreatedDate()->format('Y.m');
+                                $arrRevenueOfMonth[$month]=@$arrRevenueOfMonth[$month]+$totalOrderPrice;
                             }
-//                            print_r($arrRevenueOfMonth);
-                            ?>
+
+                            if($orderItem->getMethod()>0)
+                                $method='<span class="fa fa-phone-square"></span> Admin';
+                            else if($orderItem->getMethod()==-1)
+                                $method='<span class="glyphicon glyphicon-user"></span> Customer';
+                            else
+                                $method=$orderItem->getUser()->getFullname();
+
+                            echo '<tr>';
+                            echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.$orderItem->getCreatedDate()->format('d/M').'|'.$method.'</a></td>';
+                            echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.Common::formatMoney($totalOrderPrice) .' đ</a></td>';
+                            echo '<td><a href="'.$this->url('sell-admin',['action'=>'detail-order','id'=>$orderItem->getId()]).'">'.ConfigManager::getOrderStatus()[$orderItem->getStatus()] .'</a></td>';
+                            echo '</tr>';
+                        }
+                        //                            print_r($arrRevenueOfMonth);
+                        ?>
                         </tbody>
                     </table>
                 </div>
@@ -207,6 +199,14 @@ $this->headTitle($title);
         </div>
 
         <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading ui-draggable-handle">
+                    <h3 class="panel-title">Sản phẩm đã nhập</h3>
+                </div>
+                <div class="panel-body grocery-order">
+                    <div id="morris-donut-example" style="height: 300px;"></div>
+                </div>
+            </div>
             <div class="panel panel-default">
                 <div class="panel-heading ui-draggable-handle">
                     <h3 class="panel-title">Checkin/Checkout</h3>
@@ -238,7 +238,6 @@ $this->headTitle($title);
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 <!-- Modal -->
