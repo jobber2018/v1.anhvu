@@ -266,9 +266,9 @@ $this->headTitle($title);
                     className: 'title',
                     createdCell:function (td, cellData, rowData, row, col){
                         let name=rowData[0].name+' | '+rowData[0].weight;
-                        let approvedQty=rowData[0].approved_qty;
+                        let orderQty=rowData[0].order_qty;
                         let checkQty=rowData[0].check_qty;
-                        if(checkQty<approvedQty)
+                        if(checkQty<orderQty)
                             $(td).css('color', 'red');
                         $(td).html(name);
                     }
@@ -285,18 +285,18 @@ $this->headTitle($title);
                     targets: 5,
                     className: 'number price',
                     createdCell: function (td, cellData, rowData, row, col) {
-                        let approvedQty=rowData[0].approved_qty;
+                        let orderQty=rowData[0].order_qty;
                         let checkQty=rowData[0].check_qty;
 
                         if(rowData[0].is_pack){
-                            approvedQty=rowData[0].approved_qty/rowData[0].pack_unit;
+                            orderQty=rowData[0].check_qty/rowData[0].pack_unit;
                             checkQty=rowData[0].check_qty/rowData[0].pack_unit;
                         }
 
-                        if(checkQty<approvedQty)
+                        if(checkQty<orderQty)
                             $(td).css('color', 'red');
 
-                        let value=checkQty+'/'+approvedQty
+                        let value=checkQty+'/'+orderQty
                         $(td).css('font-size', '12pt');
                         $(td).html(value);
                     }
@@ -580,7 +580,7 @@ $this->headTitle($title);
                     $.each(products, function( index, value ) {
                         if(value.sell_id==sellId) {
                             products[index].check_qty = 0;
-                            products[index].order_qty = products[index].approved_qty;
+                            products[index].order_qty = products[index].order_qty;
                             // console.log(products[index]);
                         }
                     });
@@ -611,7 +611,7 @@ $this->headTitle($title);
                 if(res.status===1){
                     $.each(products, function( index, value ) {
                             products[index].check_qty=0;
-                            products[index].order_qty=value.approved_qty;
+                            products[index].order_qty=value.order_qty;
                     });
                     let msg="Đã huỷ dữ liệu kiểm của đơn hàng";
                     noty({text: msg, layout: 'topRight', type: 'information',timeout: 3000});

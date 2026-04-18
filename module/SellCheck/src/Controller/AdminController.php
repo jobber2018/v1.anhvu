@@ -134,7 +134,7 @@ class AdminController extends SuldeAdminController
                 $packUnit=$sellItem->getPackUnit();//quy cach dong thung
 
                 $tmp["sell_id"]=$sellItem->getId();
-                $tmp["approved_qty"]=$sellItem->getApprovedQty();
+                //$tmp["approved_qty"]=$sellItem->getApprovedQty();                
                 $tmp["pack_unit"]=$packUnit;
                 $tmp["name"]=$product->getName();
                 $tmp["exchange_unit"]=$product->getExchangeUnit();
@@ -181,7 +181,7 @@ class AdminController extends SuldeAdminController
                 $sellItem->setCheckQty(null);
                 $sellItem->setCheckBy(null);
                 $sellItem->setCheckDate(null);
-                $sellItem->setQuantity($sellItem->getApprovedQty());
+                //$sellItem->setQuantity($sellItem->getApprovedQty());
 
                 $sellOrder=$sellItem->getSellOrder();
                 $sellOrder->setApprovalCheckDate(null);
@@ -219,7 +219,7 @@ class AdminController extends SuldeAdminController
                     $sellItem->setCheckQty(null);
                     $sellItem->setCheckBy(null);
                     $sellItem->setCheckDate(null);
-                    $sellItem->setQuantity($sellItem->getApprovedQty());
+                    //$sellItem->setQuantity($sellItem->getApprovedQty());
                 }
                 $sellOrder->setPackNumber(null);
                 $sellOrder->setCheckDate(null);
