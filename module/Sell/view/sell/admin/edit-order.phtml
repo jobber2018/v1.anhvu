@@ -11,6 +11,7 @@ $this->headTitle("Sửa thông tin đơn hàng");
     <li><a href="<?=$this->url('grocery-admin',['action'=>'list','id'=>$this->grocery->getGroceryCat()->getId()])?>">Danh sách cửa hàng</a></li>
     <?php
     $orderStatus = $this->sellOrder->getStatus();
+    
     if($orderStatus==1)
         $url=$this->url('sell-admin');
     else if($orderStatus==11)
@@ -25,8 +26,9 @@ $this->headTitle("Sửa thông tin đơn hàng");
         $url=$this->url('sell-admin',['action'=>'paid-order']);
     else if($orderStatus==31)
         $url=$this->url('sell-admin',['action'=>'wait-for-pay']);
+    else $url='';
     ?>
-    <li><a href="<?=$url?>">Danh sách đơn hàng</a></li>
+    <li><a href="<?=@$url?>">Danh sách đơn hàng</a></li>
     <li><a href="<?=$this->url('grocery-admin',['action'=>'detail','id'=>$this->escapeHtml($this->grocery->getId())])?>"><?=$this->grocery->getGroceryName()?></a></li>
     <li class="active">Sửa đơn thông tin đơn hàng</li>
 </ul>
