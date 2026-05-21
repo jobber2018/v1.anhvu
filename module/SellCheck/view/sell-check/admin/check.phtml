@@ -444,7 +444,17 @@ $this->headTitle($title);
         if(productItemUnit.length>0){
             productItem=productItemUnit[0];
             checkQty=productItem.exchange_unit;//so luong kiem can update
+
+            //sl san pham chua kiem
+            $numberOfUninspectedProducts=productItem.order_qty-productItem.check_qty;
+
+            //nêu số lượng sản phẩm chưa kiểm nhỏ hơn số lượng bán lẻ tối thiểu thì chỉ cho kiểm 1 sản phẩm thay vì cả thùng            
+            if($numberOfUninspectedProducts<productItem.exchange_unit){
+                checkQty=1;
+            }
+
         }
+
         if(productItemPack.length>0){
             productItem=productItemPack[0];
             checkQty=productItem.pack_unit;//so luong kiem can update

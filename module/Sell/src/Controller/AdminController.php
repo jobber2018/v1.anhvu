@@ -238,6 +238,7 @@ class AdminController extends SuldeAdminController
                 $orders = array();
                 foreach ($sellOrder as $orderItem){
                     $tmp['order_id']=$orderItem->getId();
+                    $tmp['owner']=$orderItem->getUser()->getFullname();                    
                     $tmp['order_code']=$orderItem->getOrderCode();
                     $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
                     $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);
@@ -248,6 +249,8 @@ class AdminController extends SuldeAdminController
                     $tmp['order_message']=($orderItem->getNoteTooltip()?'<button type="button" class="btn btn-rounded btn-warning fa fa-bell popover-dismiss" data-content="'.$orderItem->getNoteTooltip().'"></button>':'');
                     $tmp['total_amount_paid']=Common::round($orderItem->getTotalAmountToPaid());
                     $tmp['is_invoice_image']=(count($orderItem->getInvoice())?$orderItem->getId():0);
+                    $tmp['progress_check']=round($orderItem->getProgressCheck(),2);
+
                     $orders[]=$tmp;
                 }
                 $result['data']=$orders;
@@ -330,6 +333,7 @@ class AdminController extends SuldeAdminController
                     $tmp['unpaid_by']=$orderItem->getUnpaidBy();
                     $tmp['payment_method_name']=$orderItem->getPayMethodName();
                     $tmp['is_invoice_image']=(count($orderItem->getInvoice())?$orderItem->getId():0);
+                    $tmp['owner']=$orderItem->getUser()->getFullname();
                     $orders[]=$tmp;
                 }
                 $result['data']=$orders;
@@ -345,12 +349,40 @@ class AdminController extends SuldeAdminController
         }
     }
     public function draftAction(){
+        //danh sach order
+        $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+            Define::_ORDER_DELIVERED_STATUS,
+            Define::_ORDER_DELIVERING_STATUS,
+            Define::_ORDER_WAITING_PACKING_STATUS,
+            Define::_ORDER_PACKED_STATUS,
+            Define::_ORDER_PACKING_STATUS,
+            Define::_ORDER_CUSTOMER_STATUS,
+            Define::_ORDER_DRAFT_STATUS,
+        ));
+
+        $arrOrders=[];
+        $arrOrderDraft = array();
+        $arrOrderNotDraft = array();
+        foreach($sellOrders as $sellOrder){
+            $groceryId = $sellOrder->getGrocery()->getId();
+            if($sellOrder->getStatus() == Define::_ORDER_DRAFT_STATUS){
+                //lấy các đơn hàng đang chờ đong gói
+                $arrOrderDraft[]=$sellOrder;
+                $arrOrders[$groceryId][]=$sellOrder->getGrocery()->getGroceryName();
+
+            }else{
+                //lấy đn hàng của khách hàng đang ở trạng thái khác
+                $arrOrderNotDraft[$groceryId][]=$sellOrder;
+            }
+        }
+        /*
         $sellOrder = $this->sellManager->getSellOrder(-1);
         $arrOrders=[];
         foreach ($sellOrder as $orderItem){
             $groceryId = $orderItem->getGrocery()->getId();
             $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
         }
+        */
         $listGroceryMerge=array();
         foreach ($arrOrders as $key=>$arr) {
             //1 khach hang co nhieu hon 1 don moi tao nhung chua xac nhan
@@ -360,7 +392,8 @@ class AdminController extends SuldeAdminController
             }
         }
         return new ViewModel([
-            'sellOrder'=>$sellOrder,
+            'arrOrderDraft'=>$arrOrderDraft,
+            'arrOrderNotDraft'=>$arrOrderNotDraft,
             'listGroceryMerge'=>$listGroceryMerge
         ]);
     }
@@ -870,6 +903,7 @@ class AdminController extends SuldeAdminController
                     if($sellOrder->getStatus() == Define::_ORDER_PACKED_STATUS){
                         //lấy các đơn hàng đang chờ đong gói
                         $arrOrderPacking=$this->getDataOrderListResult($sellOrder);
+                        $arrOrderPacking['progress_check']=round($sellOrder->getProgressCheck(),2);
 
                         foreach($sellOrders as $sellOrderTmp){
                             if($sellOrderTmp->getGrocery()->getId()==$groceryId && $sellOrderTmp->getStatus()!=Define::_ORDER_PACKED_STATUS){
@@ -1011,13 +1045,42 @@ class AdminController extends SuldeAdminController
      * @return ViewModel
      */
     public function customerAction(){
+
+        //danh sach order
+        $sellOrders = $this->sellManager->getSellOrderViaStatus(array(
+            Define::_ORDER_DELIVERED_STATUS,
+            Define::_ORDER_DELIVERING_STATUS,
+            Define::_ORDER_WAITING_PACKING_STATUS,
+            Define::_ORDER_PACKED_STATUS,
+            Define::_ORDER_PACKING_STATUS,
+            Define::_ORDER_CUSTOMER_STATUS,
+            Define::_ORDER_DRAFT_STATUS,
+        ));
+
+        $arrOrders=[];
+        $arrOrderCustomer = array();
+        $arrOrderNotCustomer = array();
+        foreach($sellOrders as $sellOrder){
+            $groceryId = $sellOrder->getGrocery()->getId();
+            if($sellOrder->getStatus() == Define::_ORDER_CUSTOMER_STATUS){
+                //lấy các đơn hàng đang chờ đong gói
+                $arrOrderCustomer[]=$sellOrder;
+                $arrOrders[$groceryId][]=$sellOrder->getGrocery()->getGroceryName();
+
+            }else{
+                //lấy đn hàng của khách hàng đang ở trạng thái khác
+                $arrOrderNotCustomer[$groceryId][]=$sellOrder;
+            }
+        }
+
+        /*
         $sellOrder = $this->sellManager->getSellOrder(-2);
 
         $arrOrders=[];
         foreach ($sellOrder as $orderItem){
             $groceryId = $orderItem->getGrocery()->getId();
             $arrOrders[$groceryId][]=$orderItem->getGrocery()->getGroceryName();
-        }
+        }*/
         $listGroceryMerge=array();
         foreach ($arrOrders as $key=>$arr) {
             //1 khach hang co nhieu hon 1 don khach tao nhung chua xac nhan
@@ -1026,8 +1089,10 @@ class AdminController extends SuldeAdminController
                 $listGroceryMerge[$key]['order-number']=count($arr);
             }
         }
+            
         return new ViewModel([
-            'sellOrder'=>$sellOrder,
+            'arrOrderCustomer'=>$arrOrderCustomer,
+            'arrOrderNotCustomer'=>$arrOrderNotCustomer,
             'listGroceryMerge'=>$listGroceryMerge
         ]);
     }
@@ -1059,6 +1124,7 @@ class AdminController extends SuldeAdminController
     }
 
     public function detailODraftAction(){
+
         $sellOrderID = $this->params()->fromRoute('id', 0);
 
         $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
@@ -1716,6 +1782,7 @@ class AdminController extends SuldeAdminController
                     if($sellOrder->getStatus() == Define::_ORDER_DELIVERING_STATUS){
                         //lấy các đơn hàng đang chờ đong gói
                         $arrOrderPacking=$this->getDataOrderListResult($sellOrder);
+                        $arrOrderPacking['progress_check']=round($sellOrder->getProgressCheck(),2);
 
                         foreach($sellOrders as $sellOrderTmp){
                             if($sellOrderTmp->getGrocery()->getId()==$groceryId && $sellOrderTmp->getStatus()!=Define::_ORDER_DELIVERING_STATUS){
@@ -2438,6 +2505,7 @@ class AdminController extends SuldeAdminController
     {
         $tmp['order_id']=$orderItem->getId();
         $tmp['order_code']=$orderItem->getOrderCode();
+        $tmp['owner']=$orderItem->getUser()->getFullname();
         $tmp['pack_number']=$orderItem->getPackNumber();
         $tmp['customer_name']=$orderItem->getGrocery()->getGroceryName();
         $tmp['customer_address']=Common::substrwords($orderItem->getGrocery()->getAddress(),40);

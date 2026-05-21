@@ -83,7 +83,7 @@ $this->headTitle($title);
                             <tr>
                                 <th></th>
                                 <th>STT</th>
-                                <th>Mã đơn</th>
+                                <th>Nhân viên</th>
                                 <th>Khách hàng</th>
                                 <th>Xe giao</th>
                                 <th>Ngày tạo</th>
@@ -130,6 +130,15 @@ $this->headTitle($title);
                 { name: 'name', targets: 3,
                     createdCell:function (td, cellData, rowData, row, col){
                         let name='<a href="<?=$this->url('sell-admin',['action'=>'do-delivering'])?>/'+rowData[0].order_id+'" class="title">'+cellData+'</a>';
+                        
+                        let processClass='label label-success';
+                        if(rowData[0].progress_check<100){
+                            processClass='label label-danger';
+                        }
+
+                        //name+=' <span class="'+processClass+'">Check: '+rowData[0].progress_check+'%</span>';
+                        name+=' <span class="'+processClass+'"> <a style="color: white;" href="<?=$this->url('sell-check-admin',['action'=>'check'])?>/'+rowData[0].order_id+'"> Check: '+rowData[0].progress_check+'%</a></span>';
+
                         name+=' '+rowData[0].order_message+'<br>';
                         name+='<span><i>'+rowData[0].customer_address+'</i></span><br>';
                         name+='<label style="color: red"><i>'+rowData[0].tmp+'</i></label>';
@@ -179,7 +188,7 @@ $this->headTitle($title);
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(i++);
-                        dataItem.push(value.order_code);
+                        dataItem.push(value.owner);
                         dataItem.push(value.customer_name);
 
                         dataItem.push(value.delivery_car);

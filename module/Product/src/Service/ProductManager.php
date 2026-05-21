@@ -16,9 +16,13 @@ use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Hotels\Service\HotelManage;
 use Product\Entity\ProductCat;
+use Product\Entity\ProductActivity;
+use Product\Entity\ProductInventory;
 use Product\Entity\ProductRecommend;
 use Product\Entity\ProductUnit;
 use Sulde\Service\Common\SessionManager;
+use Werehouse\Entity\Werehouse;
+use Sell\Entity\Sell;
 
 class ProductManager
 {
@@ -305,6 +309,61 @@ class ProductManager
             ->orWhere('p.code_2 = :code')
             ->orWhere('p.code_3 = :code')
             ->setParameter('code', $p_code);
+        return $queryBuilder->getQuery()->getResult();
+    }
+
+    public function getActivity($p_productId, $p_length, $p_start)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('pa')
+            ->from(ProductActivity::class, 'pa')
+            ->where('pa.product = :productId')            
+            ->setFirstResult($p_start)
+            ->setMaxResults($p_length)
+            ->setParameter('productId', $p_productId)
+            ->orderBy('pa.created_date', 'DESC');        
+        return new Paginator($queryBuilder->getQuery());
+    }
+
+    public function getInventoryHistory($p_productId, $p_length, $p_start)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('pi')
+            ->from(ProductInventory::class, 'pi')
+            ->where('pi.product = :productId')            
+            ->setFirstResult($p_start)
+            ->setMaxResults($p_length)
+            ->setParameter('productId', $p_productId)
+            ->orderBy('pi.created_date', 'DESC');        
+        return new Paginator($queryBuilder->getQuery());
+    }
+
+    public function getByHistory($p_productId, $p_length, $p_start)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('w')
+            ->from(Werehouse::class, 'w')
+            ->where('w.product = :productId')            
+            ->setFirstResult($p_start)
+            ->setMaxResults($p_length)
+            ->setParameter('productId', $p_productId)
+            ->orderBy('w.id', 'DESC');        
+        return new Paginator($queryBuilder->getQuery());
+    }
+
+    public function getSellHistory($p_productId)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $startDate = new \DateTime();
+        $startDate->modify('-12 months');
+        $queryBuilder->select('s')
+            ->from(Sell::class, 's')
+            ->join('s.sellOrder', 'so')
+            ->where('s.product = :productId')
+            ->andWhere('so.created_date >= :startDate')
+            ->setParameter('productId', $p_productId)
+            ->setParameter('startDate', $startDate)
+            ->orderBy('s.id', 'DESC');        
         return $queryBuilder->getQuery()->getResult();
     }
 

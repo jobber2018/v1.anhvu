@@ -83,7 +83,7 @@ $this->headTitle($title);
                             <tr>
                                 <th></th>
                                 <th>No.</th>
-                                <th>Mã đơn</th>
+                                <th>Nhân viên</th>
                                 <th>Khách hàng</th>
                                 <th>Xe giao</th>
                                 <th>Ngày tạo</th>
@@ -189,7 +189,7 @@ $this->headTitle($title);
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(i++);
-                        dataItem.push(value.order_code);
+                        dataItem.push(value.owner);
                         dataItem.push(value.customer_name);
                         dataItem.push(deliveryCar);
                         dataItem.push(value.created_date);
@@ -217,6 +217,9 @@ $this->headTitle($title);
                     }, 0);
                 // Update footer
                 $(api.column(7).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+            },
+            fnDrawCallback : function() {
+                $(".popover-dismiss").popover({trigger:'hover',html:true});
             }
         })
             .on('click', 'tbody tr', (e) => {

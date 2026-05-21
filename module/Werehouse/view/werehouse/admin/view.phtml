@@ -82,8 +82,11 @@ $form->prepare();
                                     </td>
                                     <td><?=$werehouse->getProduct()->getCode()?></td>
                                     <td>
-                                        <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$werehouse->getProduct()->getId()])?>"><span style="font-weight: bold"><?=$werehouse->getProduct()->getName()?> | <?=$werehouse->getProduct()->getWeight();?></span></a>
-                                        <p>Có thể bán: <b><?=$werehouse->getProduct()->getInventory(). " ". $werehouse->getProduct()->getUnit()->getName()?></b></p>
+                                        <a href="<?=$this->url('product-admin',['action'=>'detail','id'=>$werehouse->getProduct()->getId()])?>"><span style="font-weight: bold"><?=$werehouse->getProduct()->getName()?> | <?=$werehouse->getProduct()->getWeight();?></span></a>
+                                        <p>
+                                            Có thể bán: <b><?=$werehouse->getProduct()->getInventory(). " ". $werehouse->getProduct()->getUnit()->getName()?></b>
+                                            | Quy cách: <b><?=$werehouse->getBoxUnit() . " ". $werehouse->getProduct()->getUnit()->getName() . "/Thùng"?></b>
+                                        </p>
                                     </td>
                                     <td><?=Common::formatMoney($werehouse->getPrice())?> đ</td>
                                     <td><?=$werehouse->getQuantity()?> Thùng</td>
@@ -135,6 +138,14 @@ $form->prepare();
                         <tr>
                             <td style="padding-bottom: 10px"><b>Người nhập:</b></td>
                             <td style="padding-bottom: 10px" id="total-price"><?=$this->werehouseOrder->getUser()->getFullname()?></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px"><b>Trạng thái đơn hàng:</b></td>
+                            <td style="padding-bottom: 10px" id="order-status">
+                                <?= $this->werehouseOrder->getStatus() == 0 
+                                ? '<a class="btn btn-warning" href="'.$this->url('werehouse-admin',['action'=>'edit-draft','id'=>$this->escapeHtml($this->werehouseOrder->getId())]).'"><span class="fa fa-edit"></span> Sửa đơn nháp</a>' 
+                                : '<label class="label label-info">Đã nhập kho</label>' ?>
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -245,6 +256,7 @@ $form->prepare();
     .panel-body table tr td{
         vertical-align: middle;
     }
+    .table-hover tbody tr.selected{background-color: #f7ac0c4f;}
     .file-preview-image{width: 100%!important;}
 </style>
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
@@ -255,7 +267,7 @@ $form->prepare();
 
     <script>
         $(document).ready(function () {
-            $('#tblProduct').DataTable({
+            var table = $('#tblProduct').DataTable({
                 paging: false,
                 // pageLength:50,
                 ordering: false,
@@ -266,6 +278,16 @@ $form->prepare();
                 },
                 initComplete: function () {
                     $('.dataTables_filter label input').focus();
+                }
+            });
+
+            // Click to select a row (single select)
+            $('#tblProduct tbody').on('click', 'tr', function () {
+                if ($(this).hasClass('selected')) {
+                    $(this).removeClass('selected');
+                } else {
+                    $('#tblProduct tbody tr.selected').removeClass('selected');
+                    $(this).addClass('selected');
                 }
             });
 
@@ -285,7 +307,7 @@ $form->prepare();
                     <?php
                     foreach ($this->werehouseOrder->getInvoice() as $invoice) {
                         echo PHP_EOL;
-                        echo 'mockFile = { name: "File '.$invoice->getId().'", size: '.filesize(ROOT_PATH.$invoice->getPath()).' };' . PHP_EOL;
+                        echo 'mockFile = { name: "File '.$invoice->getId().'", size: '.@filesize(ROOT_PATH.$invoice->getPath()).' };' . PHP_EOL;
                         echo 'myDropzone.options.addedfile.call(myDropzone, mockFile);' . PHP_EOL;
                         echo 'myDropzone.options.thumbnail.call(myDropzone, mockFile, "'.$invoice->getPath().'");' . PHP_EOL;
                         echo 'myDropzone.files.push(mockFile);' . PHP_EOL;

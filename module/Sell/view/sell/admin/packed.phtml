@@ -85,7 +85,7 @@ $this->headTitle($title);
                             <tr>
                                 <th></th>
                                 <th>No.</th>
-                                <th>Mã đơn</th>
+                                <th>Nhân viên</th>
                                 <th>Khách hàng</th>
                                 <th>Số thùng</th>
                                 <th>Xe giao</th>
@@ -136,10 +136,18 @@ $this->headTitle($title);
                 { name: 'name', targets: 3,
                     createdCell:function (td, cellData, rowData, row, col){
                         let name='<a href="<?=$this->url('sell-admin',['action'=>'do-packed'])?>/'+rowData[0].order_id+'" class="title">'+cellData+'</a>';
+
+                        let processClass='label label-success';
+                        if(rowData[0].progress_check<100){
+                            processClass='label label-danger';
+                        }
+
+                        name+=' <span class="'+processClass+'"> <a style="color: white;" href="<?=$this->url('sell-check-admin',['action'=>'check'])?>/'+rowData[0].order_id+'"> Check: '+rowData[0].progress_check+'%</a></span>';
+
                         name+=' '+rowData[0].order_message+'<br>';
                         name+='<span><i>'+rowData[0].customer_address+'</i></span><br>';
                         name+='<label style="color: red"><i>'+rowData[0].tmp+'</i></label>';
-                        $(td).html(name);
+                        $(td).html(name);                        
                     }
                 },
                 { name: 'pack_number', width: 50, targets: 4},
@@ -191,7 +199,7 @@ $this->headTitle($title);
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(i++);
-                        dataItem.push(value.order_code);
+                        dataItem.push(value.owner);
                         dataItem.push(value.customer_name);
                         dataItem.push(value.pack_number);
                         dataItem.push(deliveryCar);
@@ -253,6 +261,9 @@ $this->headTitle($title);
                 // Update footer
                 $(api.column(4).footer()).html(formatCurrency(packTotal.toString()));
                 $(api.column(8).footer()).html(formatCurrency(pageTotal.toString())+' đ');
+            },
+            fnDrawCallback : function() {
+                $(".popover-dismiss").popover({trigger:'hover',html:true});
             }
         })
             .on('click', 'tbody tr', (e) => {

@@ -229,7 +229,7 @@
                         targets: 4,
                         createdCell: function (td, cellData, rowData, row, col) {
                             let productItem=rowData[0];
-                            let name='<a href="<?=$this->url('product-admin',['action'=>'price'])?>/'+productItem.product_id+'" class="title">'+productItem.name+' | '+productItem.weight+'</a>';
+                            let name='<a href="<?=$this->url('product-admin',['action'=>'detail'])?>/'+productItem.product_id+'" class="title">'+productItem.name+' | '+productItem.weight+'</a>';
                             if (productItem.return_message) {
                                 name+='<br><small style="color: red"> '+productItem.return_message+'</small>';
                             }

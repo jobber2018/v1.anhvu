@@ -70,6 +70,7 @@ $this->headTitle($title);
     </div>
     <div class="row">
         <div class="col-md-4">
+            <!-- DOANH THU NGÀY -->
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div class="clearfix">
@@ -95,77 +96,66 @@ $this->headTitle($title);
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="panel panel-default tabs">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="active"><a href="#tab-analytic-first" role="tab" data-toggle="tab">Chú ý hôm nay</a></li>
-                    <li><a href="#tab-analytic-second" role="tab" data-toggle="tab">Khách hàng cần chú ý</a></li>
-                </ul>
-                <div class="panel-body tab-content">
-                    <?php
-                    $datetime = new DateTime();
-                    $w = (int)$datetime->format('w')+1;
-                    $uId=$this->uId;
-                    ?>
-                    <div class="tab-pane active" id="tab-analytic-first">
-                        <div style="padding-bottom: 10px; color: red">Khách hàng ít nhất đã <?=$w?> ngày chưa lên đơn. Bạn cần quan tâm, CRM cụ thể khi đi tuyến hôm nay!.</div>
-                        <table class="table nowrap table-hover display datatable_simple" style="width:100%">
-                        <thead>
-                        <tr>
-                            <th>Khách hàng</th>
-                            <th>Đơn gần nhất</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-
+            <!-- HOÀN THÀNH TRONG NGÀY -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">HOÀN THÀNH TRONG NGÀY</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderCompleted)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
                         <?php
-                        foreach ($this->orderAnalytic as $k=>$v) {
-                            $day = $v->getGrocery()->getGroceryCat()->getDay();
-                            $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
-                            if($day ==$w && $userIdTuyen ==$uId && $v->getDiff()>=5) {
-                                echo '<tr>';
-                                echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
-                                echo '</tr>';
-                            }
+                        foreach ($this->orderCompleted as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
                         }
                         ?>
-                        </tbody>
-                    </table>
-                    </div>
-                    <div class="tab-pane" id="tab-analytic-second">
-                        <div style="padding-bottom: 10px; color: red">Khách hàng bạn quản lý nhưng lâu không thấy lên đơn, bạn cần chú ý chăm sóc và CRM cụ thể những khách hàng này khi đi tuyến.</div>
-                        <table class="table nowrap table-hover display datatable_simple" style="width:100%">
-                            <thead>
-                            <tr>
-                                <th>Khách hàng</th>
-                                <th>Đơn gần nhất</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            foreach ($this->orderAnalytic as $k=>$v) {
-                                $day = $v->getGrocery()->getGroceryCat()->getDay();
-                                $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
-                                if($day !=$w && $userIdTuyen==$uId && $v->getDiff()>12) {
-                                    echo '<tr>';
-                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
-                                    echo '</tr>';
+                    </ul>
+                </div>
+            </div>
+            <!--CHƯA QUYẾT TOÁN-->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">CHƯA QUYẾT TOÁN</h3>
+                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderUnpaid)?> đơn</span>
+                </div>
+                <div class="panel-body">
+                    <ul class="list-group border-bottom">
+                        <?php
+                        foreach ($this->orderUnpaid as $order){
+                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
+                            $deliveredDate = $order->getDeliveredDate();
+                            $deliveredStyle = '';
+                            $warrningText = '';
+                            if ($deliveredDate) {
+                                try {
+                                    $deliveredDateTime = $deliveredDate instanceof \DateTime ? $deliveredDate : new \DateTime($deliveredDate);
+                                    if ((new \DateTime())->getTimestamp() - $deliveredDateTime->getTimestamp() > 3 * 86400) {
+                                        $deliveredStyle = 'background: #f9b3a5;';
+                                        $warrningText = '<br><span style="color: #a94442;">Quá hạn thanh toán (3 ngày sau khi giao)</span>';
+                                    }
+                                } catch (\Exception $e) {
                                 }
                             }
-                            ?>
-                            </tbody>
-                        </table>
-                    </div>
+                            echo '<li class="list-group-item" style="'.$deliveredStyle.'">';
+                            echo '<a class="title" href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().'</a>';
+                            echo ' | <small style="color: #8c8a8a">'.Common::substrwords($order->getGrocery()->getAddress(),40).'</small>';
+                            echo '<span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span>';
+
+                            echo '<br><small><strong>Ngày tạo:</strong> '.Common::formatDateTime($order->getCreatedDate());
+                            echo ' <strong>Ngày giao:</strong> <span style="'.$deliveredStyle.'">'.Common::formatDateTime($deliveredDate).'</span>';
+                            echo '</small>';
+                            echo $warrningText;
+                            echo '</li>';
+                        }
+                        ?>
+                    </ul>
                 </div>
             </div>
         </div>
-
         <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
+            <!--Chờ xác nhận-->
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">CHỜ XÁC NHẬN</h3>
@@ -181,11 +171,8 @@ $this->headTitle($title);
                     </ul>
                 </div>
             </div>
-            <!-- END LIST GROUP WITH BADGES -->
-        </div>
 
-        <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
+            <!--đang thực hiện-->
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">ĐANG THỰC HIỆN</h3>
@@ -205,11 +192,8 @@ $this->headTitle($title);
                     </ul>
                 </div>
             </div>
-            <!-- END LIST GROUP WITH BADGES -->
-        </div>
 
-        <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
+            <!--đang giao-->
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">ĐANG GIAO</h3>
@@ -226,52 +210,11 @@ $this->headTitle($title);
                     </ul>
                 </div>
             </div>
-            <!-- END LIST GROUP WITH BADGES -->
+
         </div>
 
         <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">CHƯA QUYẾT TOÁN</h3>
-                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderUnpaid)?> đơn</span>
-                </div>
-                <div class="panel-body">
-                    <ul class="list-group border-bottom">
-                        <?php
-                        foreach ($this->orderUnpaid as $order){
-                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
-                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
-                        }
-                        ?>
-                    </ul>
-                </div>
-            </div>
-            <!-- END LIST GROUP WITH BADGES -->
-        </div>
-
-        <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">HOÀN THÀNH TRONG NGÀY</h3>
-                    <span style="margin-top: 5px" class="pull-right badge badge-info"><?=count($this->orderCompleted)?> đơn</span>
-                </div>
-                <div class="panel-body">
-                    <ul class="list-group border-bottom">
-                        <?php
-                        foreach ($this->orderCompleted as $order){
-                            $method = ($order->getMethod()>0?'<span class="fa fa-phone-square"></span>':'');
-                            echo '<li class="list-group-item"><a href="'.$this->url('sell-user',['action'=>'order-detail','id'=>$order->getId()]) .'">'.$method.$order->getGrocery()->getGroceryName().' | '.Common::formatDateTime($order->getCreatedDate()).'</a><span class="badge badge-success">'.Common::formatMoney($order->getTotalPrice()).' đ</span><br><small style="color: #8c8a8a">' .$order->getGrocery()->getAddress().'</small></li>';
-                        }
-                        ?>
-                    </ul>
-                </div>
-            </div>
-            <!-- END LIST GROUP WITH BADGES -->
-        </div>
-        <div class="col-md-4">
-            <!-- LIST GROUP WITH BADGES -->
+            <!--10 ĐƠN HUỶ GẦN NHẤT-->
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">10 ĐƠN HUỶ GẦN NHẤT</h3>
@@ -292,11 +235,16 @@ $this->headTitle($title);
                     </ul>
                 </div>
             </div>
-            <!-- END LIST GROUP WITH BADGES -->
         </div>
 
     </div>
 </div>
+<style>
+    .title {
+        font-weight: bold;
+        color: #5195ef;
+    }
+</style>
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
 <script>
     $( document ).ready(function() {

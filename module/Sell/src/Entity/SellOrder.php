@@ -860,6 +860,11 @@ class SellOrder
             $totalCheckQty+=$sellItem->getCheckQty();//sl da kiem
         }
 
-        return ($totalCheckQty/$totalOrderQty)*100;
+        if ($totalOrderQty != 0) {
+            $result = ($totalCheckQty/$totalOrderQty)*100;
+        } else {
+            $result = 0; // Or handle the error appropriately
+        }
+        return $result;
     }
 }

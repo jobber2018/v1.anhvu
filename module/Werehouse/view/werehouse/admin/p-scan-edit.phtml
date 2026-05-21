@@ -395,9 +395,11 @@ $this->headTitle($title);
                         .select();
                 }, 0);
                 row.remove().draw(false);
-                tblProductListConfirm.row.add(data).draw(false);
+                var currentData = tblProductListConfirm.rows().data().toArray();
+                currentData.unshift(data);
+                tblProductListConfirm.clear().rows.add(currentData).draw(false);
 
-                var rowNode = tblProductListConfirm.row(':last').node();
+                var rowNode = tblProductListConfirm.row(':first').node();
                 // Highlight
                 $(rowNode).addClass('row-highlight');
 

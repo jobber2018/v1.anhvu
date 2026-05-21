@@ -76,7 +76,7 @@ $this->headTitle("Kiểm kho");
                                 </td>
                                 <td><?=$werehouseCheckItem->getProduct()->getCode()?></td>
                                 <td><?=$werehouseCheckItem->getProduct()->getPackCode()?></td>
-                                <td><a href="<?=$this->url('product-admin',['action'=>'price','id'=>$werehouseCheckItem->getProduct()->getId()])?>">
+                                <td><a href="<?=$this->url('product-admin',['action'=>'detail','id'=>$werehouseCheckItem->getProduct()->getId()])?>">
                                     <?=$werehouseCheckItem->getProduct()->getName().' | '.$werehouseCheckItem->getProduct()->getWeight()?>
                                     </a>
                                 </td>

@@ -313,12 +313,40 @@ class V2Controller extends SuldeFrontController
     }
 
     public function productAllAction(){
+
+        $zaloAppId = $this->params()->fromRoute('id', 2);//khoong truyen id thi mac dinh la 2 de test tinh nang an gia
+
+        $zaloApp = $this->apiManager->getById($zaloAppId);
+
+        /**
+         * 1: có grocery id => hiển thị giá bình thường         * 
+         * 2: nếu không có grocery nhưng ngày tạo < 2 tuần thì hiển thị giá bình thường (Cho phép xem giá trong 2 tuần đầu tiên kể từ ngày tạo zalo app)
+         * 3: nếu không có grocery id và ngày tạo > 2 tuần thì hiển thị giá = 0 (ẩn giá)         * 
+         */
+        $displayPrice=0; //=1 luoon hien thi gia that
+
+        if($zaloApp->getGroceryId() && $zaloApp->getGroceryId()!=1){
+            $displayPrice=1;
+        }else{
+            $createdDate = strtotime($zaloApp->getCreatedDate()->format("Y-m-d"));
+            $today = strtotime(date("Y-m-d"));
+            $dateDiff = abs($createdDate - $today);
+            if(floor($dateDiff / (60*60*24))<=14){
+                $displayPrice=1;
+            }
+        }
+
         $productManager = new ProductManager($this->entityManager);
 
         $products = $productManager->getAll();
         $productResult = array();
         foreach ($products as $k=>$productItem){
-            $productResult[]=$this->setProductResult($productItem);
+            $product=array();
+            $product=$this->setProductResult($productItem);
+            if(!$displayPrice){
+                $product["price"]=0;   
+            }            
+            $productResult[]=$product;
         }
         return new JsonModel($productResult);
     }
@@ -409,6 +437,9 @@ class V2Controller extends SuldeFrontController
                 else
                     $productResult["options"]["unit_type"]="unit";
 
+                //chưa xác định được grocery của khách hàng nên tạm thời ẩn giá sản phẩm trong đơn hàng
+                if($orderItem->getGrocery()->getId()==1)
+                    $productResult["price"]=0;
 
                 $products[]=$productResult;
             }

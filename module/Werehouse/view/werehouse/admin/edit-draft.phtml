@@ -12,7 +12,7 @@ $this->headTitle("Sửa đơn nháp");
 <!-- END BREADCRUMB -->
 
 <div class="page-title">
-    <h3><span class="fa fa-arrow-circle-o-left"></span> Sửa đơn nháp:</h3>
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Sửa đơn nháp: <?=$this->supplier->getName()?></h3>
 </div>
 <!-- PAGE CONTENT WRAPPER -->
 <div class="page-content-wrap">
@@ -42,14 +42,14 @@ $this->headTitle("Sửa đơn nháp");
                     <ul id="myListPro" class="panel-body list-group list-group-contacts"></ul>
                 </div>
                 <div class="panel-footer">
-                    <button id="btnSubmit" disabled="disabled" class="btn btn-info pull-right">
+                    <button id="btnSubmit" disabled="disabled" class="btn btn-info pull-right btn-submit">
                         <span class="fa fa-save"></span>Nhập kho
                     </button>
 
-                    <button id="btnSubmitSaveDraft" class="btn btn-warning pull-right">
+                    <button id="btnSubmitSaveDraft" class="btn btn-warning pull-right btn-submit-save-draft">
                         <span class="glyphicon glyphicon-floppy-saved"></span>Lưu nháp
                     </button>
-                    <button id="btnSubmitDeleteDraft" class="btn btn-danger pull-right">
+                    <button id="btnSubmitDeleteDraft" class="btn btn-danger pull-right btn-submit-delete-draft">
                         <span class="fa fa-trash-o"></span>Xoá nháp
                     </button>
                 </div>
@@ -74,6 +74,10 @@ $this->headTitle("Sửa đơn nháp");
                             <td style="padding-bottom: 10px" id="total-price"></td>
                         </tr>
                         <tr>
+                            <td style="padding-bottom: 10px"><b>Trạng thái đơn hàng:</b></td>
+                            <td style="padding-bottom: 10px" id="order-status">Đơn nháp</td>
+                        </tr>
+                        <tr>
                             <td colspan="2" style="padding-top: 10px; padding-bottom: 10px; background: #F5F5F5; border-top: 1px solid #E3E3E3; border-bottom: 1px solid #E3E3E3"><b>Thông tin NCC</b></td>
                         </tr>
                         <tr>
@@ -90,6 +94,17 @@ $this->headTitle("Sửa đơn nháp");
                             </td>
                         </tr>
                     </table>
+                </div>
+                <div class="panel-footer">
+                    <button id="btnSubmit" disabled="disabled" class="btn btn-info pull-right btn-submit">
+                        <span class="fa fa-save"></span>Nhập kho
+                    </button>
+                    <button id="btnSubmitSaveDraft" class="btn btn-warning pull-right btn-submit-save-draft">
+                        <span class="glyphicon glyphicon-floppy-saved"></span>Lưu nháp
+                    </button>
+                    <button id="btnSubmitDeleteDraft" class="btn btn-danger pull-right btn-submit-delete-draft">
+                        <span class="fa fa-trash-o"></span>Xoá nháp
+                    </button>
                 </div>
             </div>
         </div>
@@ -144,6 +159,18 @@ $this->headTitle("Sửa đơn nháp");
     .table > tbody > tr {
         cursor: pointer;
     }
+    .list-group .list-group-item{
+        cursor: pointer;
+    }
+    .list-group .list-group-item:hover,
+    .list-group .list-group-item:focus-within {
+        background-color: #f5f5f5;
+    }
+    .list-group .list-group-item.selected,
+    .list-group .list-group-item.selected:focus-within {
+        background-color: #f7ac0c4f;
+        border-color: #f7ac0c4f;
+    }
     .list-group .list-group-item:last-child{
         border-bottom: 1px solid #E5E5E5;
     }
@@ -189,10 +216,12 @@ $this->headTitle("Sửa đơn nháp");
         $arrTmp["inventory"]=$product->getInventory();
         $arrTmp["weight"]=$product->getWeight();
         $arrTmp["average_price"]=$product->getAveragePrice();
+        $arrTmp["active"]=$product->getActive();        
+
         $arrTmp["price"]=$werehouse->getPrice();
         $arrTmp["werehouse"]=$werehouse->getId();
         $arrTmp["box"]= $werehouse->getQuantity();
-        $arrTmp["url"]= $this->url('product-admin',['action'=>'price','id'=>$product->getId()]);
+        $arrTmp["url"]= $this->url('product-admin',['action'=>'detail','id'=>$product->getId()]);
 
         if(is_null($product->getImg()))
             $arrTmp["img"]='<img src=\"/img/icons/no-image-icon.png\" class=\"pull-left\" width=\"40px\">';
@@ -226,14 +255,14 @@ $this->headTitle("Sửa đơn nháp");
 
         $('#product tbody').on( 'click', 'tr', function () {
             var rowData = table.row( this ).data();
-            // console.log(rowData);
+             console.log(rowData);
             $('#productModal').modal('hide');
             var htmlLi ='<li id="li'+rowData.id+'" class="list-group-item">';
             htmlLi+='<table style="width: 90%">';
             htmlLi+='<tr><td>';
             htmlLi+=rowData.img;
             htmlLi+='</td><td style="width: 40%"><span class="contacts-title">'+rowData.name +'</span>';
-            htmlLi+='<p><b>'+rowData.code +'</b> | Tồn kho: <b>'+ rowData.inventory + ' '+ rowData.unit_name +'</b></p><p><b>Giá vốn hiện tại:</b> '+formatCurrency(rowData.average_price.toString())+' đ<br><small class="warning-color" id="msg'+rowData.id+'"></small></p>';
+            htmlLi+='<p><b>'+rowData.code +'</b> | Tồn kho: <b>'+ rowData.inventory + ' '+ rowData.unit_name +'</b> | Quy cách: <b>'+ rowData.box_unit +'</b></p><p>Giá vốn hiện tại: <b class="price">'+formatCurrency(rowData.average_price.toString())+'</b><br><small class="warning-color" id="msg'+rowData.id+'"></small></p>';
             htmlLi+='<td style="white-space: nowrap; width: 50px; padding-right: 5px">Giá nhập/Thùng ('+rowData.box_unit +' '+rowData.unit_name+'):</td>';
             htmlLi+='<td style="width: 50px"><input id="txtPrice'+rowData.id+'" onblur="priceOnblur('+rowData.id+')" type="text" class="form-control" style="width: 100px"></td>';
             htmlLi+='</td><td style="white-space: nowrap; width: 50px; padding-right: 5px; padding-left: 5px">Số lượng:</td>';
@@ -276,7 +305,22 @@ $this->headTitle("Sửa đơn nháp");
             $('#productModal').modal('hide');
         })
 
-        $('#btnSubmit').click(function(){
+        $('#myListPro').on('click', '.list-group-item', function () {
+            $('#myListPro .list-group-item.selected').removeClass('selected');
+            $(this).addClass('selected');
+        });
+
+        $('#myListPro').on('focusin', '.list-group-item input', function () {
+            $('#myListPro .list-group-item.selected').removeClass('selected');
+            $(this).closest('.list-group-item').addClass('selected');
+        });
+        $('#myListPro').on('focusin', '.list-group-item a', function () {
+            $('#myListPro .list-group-item.selected').removeClass('selected');
+            $(this).closest('.list-group-item').addClass('selected');
+        });
+
+
+        $('.btn-submit').click(function(){
             if(!myProSelect.length){
                 alert("Vui lòng chọn sản phẩm nhập kho.");
                 return;
@@ -286,15 +330,18 @@ $this->headTitle("Sửa đơn nháp");
 
 
             $.each( myProSelect, function( key, data ) {
+                console.log(data);
                 if(!data.price){
                     alert("Vui lòng nhập giá cho sản phẩm "+data.name);
                     err=1;
-                    return;
+                    $('#txtPrice'+data.id).select();
+                    return false;
                 }
                 if(!data.box){
                     alert("Vui lòng nhập số lượng cho sản phẩm "+data.name);
                     err=1;
-                    return;
+                    $('#box'+data.id).select();
+                    return false;
                 };
                 myProPost.push({
                     id:data.id,
@@ -325,7 +372,7 @@ $this->headTitle("Sửa đơn nháp");
             })
         });
 
-        $('#btnSubmitSaveDraft').click(function(){
+        $('.btn-submit-save-draft').click(function(){
             if(!myProSelect.length){
                 alert("Vui lòng chọn sản phẩm nhập kho.");
                 return;
@@ -362,7 +409,7 @@ $this->headTitle("Sửa đơn nháp");
         })
 
     })
-    $('#btnSubmitDeleteDraft').click(function(){
+    $('.btn-submit-delete-draft').click(function(){
         let text = "Bạn có chắc muốn xoá đơn nháp?";
         if (confirm(text) == false) {
             return;
@@ -383,12 +430,15 @@ $this->headTitle("Sửa đơn nháp");
     });
 
     function addDataToList(data){
+        console.log(data);
+        let hightlight=(data.active==0)?'<label class="warning-color"> | Sản phẩm không hoạt động</label>':'';
+
         var htmlLi ='<li id="li'+data.id+'" class="list-group-item">';
         htmlLi+='<table style="width: 90%">';
         htmlLi+='<tr><td>';
         htmlLi+=data.img;
-        htmlLi+='</td><td style="width: 40%"><span class="contacts-title" style="font-weight: bold"><a href="'+data.url+'" target="_blank">'+data.name+'</a></span>';
-        htmlLi+='<p><b>'+data.code +'</b> | Tồn kho: <b>'+ data.inventory + ' '+ data.unit_name +'</b></p><p>Giá vốn hiện tại: <b>'+formatCurrency(data.average_price.toString())+'</b><br><small class="warning-color" id="msg'+data.id+'"></small></p>';
+        htmlLi+='</td><td style="width: 40%"><span class="contacts-title" style="font-weight: bold"><a href="'+data.url+'" target="_blank">'+data.name+ ' '+ hightlight +'</a></span>';
+        htmlLi+='<p><b>'+data.code +'</b> | Tồn kho: <b>'+ data.inventory + ' '+ data.unit_name +'</b> | Quy cách: <b>'+ data.box_unit +'</b></p><p>Giá vốn hiện tại: <b class="price">'+formatCurrency(data.average_price.toString())+'</b><br><small class="warning-color" id="msg'+data.id+'"></small></p>';
         htmlLi+='<td style="white-space: nowrap; width: 50px; padding-right: 5px">Giá nhập/Thùng ('+data.box_unit +' '+data.unit_name+'):</td>';
         htmlLi+='<td style="width: 50px"><input id="txtPrice'+data.id+'" value="'+formatCurrency(data.price.toString())+'" onblur="priceOnblur('+data.id+')" type="text" class="form-control" style="width: 100px"></td>';
         htmlLi+='</td><td style="white-space: nowrap; width: 50px; padding-right: 5px; padding-left: 5px">Số lượng:</td>';
@@ -406,6 +456,18 @@ $this->headTitle("Sửa đơn nháp");
             alert("Lỗi!!!!")
             return;
         }
+        var productName = '';
+        $.each(myProSelect, function(key, data) {
+            if (data.id == id) {
+                productName = data.name;
+                return false;
+            }
+        });
+        var confirmMessage = productName ? 'Bạn có chắc muốn xóa sản phẩm: ' + productName + ' ?' : 'Bạn có chắc muốn xóa sản phẩm này?';
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
         run_waitMe();
         var werehouseId=0;
         $.each( myProSelect, function( key, data ) {
@@ -487,12 +549,12 @@ $this->headTitle("Sửa đơn nháp");
     }
     function showButtonSubmitOrder(){
         if(myProSelect.length > 0){
-            $('#btnSubmit').prop('disabled', false);
-            $('#btnSubmitSaveDraft').prop('disabled', false);
+            $('.btn-submit').prop('disabled', false);
+            $('.btn-submit-save-draft').prop('disabled', false);
         }
         else{
-            $('#btnSubmit').prop('disabled', true);
-            $('#btnSubmitSaveDraft').prop('disabled', true);
+            $('.btn-submit').prop('disabled', true);
+            $('.btn-submit-save-draft').prop('disabled', true);
         }
     }
 

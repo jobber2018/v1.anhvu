@@ -83,7 +83,7 @@ $this->headTitle($title);
                             <tr>
                                 <th></th>
                                 <th>STT</th>
-                                <th>Mã đơn</th>
+                                <th>Nhân viên</th>
                                 <th>Khách hàng</th>
                                 <th>Ngày giao</th>
                                 <th>Người giao</th>
@@ -261,7 +261,7 @@ $this->headTitle($title);
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(i++);
-                        dataItem.push(value.order_code);
+                        dataItem.push(value.owner);
                         dataItem.push(value.customer_name);
                         dataItem.push(value.delivered_date);
                         dataItem.push(value.delivered_by);

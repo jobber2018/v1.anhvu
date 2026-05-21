@@ -38,11 +38,7 @@ use Sulde\Service\Common\ConfigManager;
         </div>
         <div class="col-md-4">
             <?=$this->partial('sell/partial/order-note', ['order'=>$this->sellOrder,'userInfo'=>$this->userInfo]);?>
-        </div>
-        <div class="col-md-4">
             <?=$this->partial('sell/partial/customer-info', ['order'=>$this->sellOrder]);?>
-        </div>
-        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <table style="width: 100%">
@@ -70,10 +66,14 @@ use Sulde\Service\Common\ConfigManager;
                     </table>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4">
             <?=$this->partial('sell/partial/order-info', ['order'=>$this->sellOrder]);?>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <?=$this->partial('sell/partial/order-timeline', ['order'=>$this->sellOrder]);?>
+                </div>
+            </div>
         </div>
+        
     </div>
 </div>
 

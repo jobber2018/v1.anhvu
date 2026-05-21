@@ -61,6 +61,7 @@ $this->headTitle($title);
                             <th colspan="2" style="border-right: 1px solid #E5E5E5; text-align: center;">Giá sau giảm</th>
                             <th rowspan="2" style="border-right: 1px solid #E5E5E5;">Tồn kho</th>
                             <th rowspan="2" style="border-right: 1px solid #E5E5E5;">Bán tối thiểu</th>
+                            <th rowspan="2">Actions</th>
                         </tr>
                         <tr>
                             <th>Lẻ</th>
@@ -147,6 +148,16 @@ $this->headTitle($title);
                     createdCell:function (td, cellData, rowData, row, col){
                         $(td).html(formatPrice(cellData));
                     }
+                },{
+                    orderable:false,
+                    targets: 14,
+                    className:'dt-body-center',
+                    width: '5%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let editUrl='<?=$this->url('product-admin',['action'=>'edit'])?>';
+                        editUrl+='/'+rowData[0].id;
+                        $(td).html('<a href="'+editUrl+'" class="btn btn-sm btn-warning"><i class="fa fa-edit"></i></a>');
+                    }
                 }
 
             ],
@@ -172,6 +183,7 @@ $this->headTitle($title);
                         dataItem.push(value.pack_price_after_sale);
                         dataItem.push(value.inventory);
                         dataItem.push(value.exchange_unit+' '+value.unit_name);
+                        dataItem.push(0);
                         data.push(dataItem);
                     });
                     return data;

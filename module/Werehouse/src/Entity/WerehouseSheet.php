@@ -115,7 +115,8 @@ class WerehouseSheet
     public function isProductAlreadyExist($p_proId)
     {
         foreach ($this->getWerehouseCheck() as $werehouseCheckItem){
-            if($werehouseCheckItem->getProduct()->getId()==$p_proId) return 1;
+            if($werehouseCheckItem->getProduct()->getId()==$p_proId) 
+                return $werehouseCheckItem;
         }
         return 0;
     }

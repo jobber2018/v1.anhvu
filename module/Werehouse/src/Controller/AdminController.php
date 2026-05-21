@@ -496,8 +496,11 @@ class AdminController extends SuldeAdminController
 
                 $product = $productManager->getById($proId);
 
-                if($werehouseSheet->isProductAlreadyExist($proId))
-                    throw new Exception('Sản phẩm '.$product->getName().' đã có trong phiếu kiểm kho!');
+                $werehouseCheck=$werehouseSheet->isProductAlreadyExist($proId);
+                if($werehouseCheck) {
+                    if($werehouseCheck->getIsUpdate() == 0)
+                        throw new Exception('Sản phẩm '.$product->getName().' đã có trong phiếu kiểm kho và chưa cập nhật!');
+                }
 
                 $werehouseCheck = new WerehouseCheck();
                 $werehouseCheck->setProduct($product);

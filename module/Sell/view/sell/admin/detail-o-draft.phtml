@@ -125,7 +125,7 @@ use Sulde\Service\Common\ConfigManager;
                             <li href="#" class="list-group-item list-group-item-action flex-column align-items-start">
                                 <div class="d-flex w-100 justify-content-between">
                                     <h5 class="mb-1 title">
-                                        <a href="<?=$this->url('product-admin',['action'=>'price','id'=>$sell->getProduct()->getId()])?>">
+                                        <a href="<?=$this->url('product-admin',['action'=>'detail','id'=>$sell->getProduct()->getId()])?>">
                                             <?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?>
                                         </a>
                                         <small>Tồn kho: <?=$inventory?></small>
