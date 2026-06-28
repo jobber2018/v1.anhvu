@@ -661,14 +661,40 @@ class Product
     public function validateQty($p_qty)
     {
         $exchangeUnit = $this->getExchangeUnit();
-        $qty=$p_qty/$exchangeUnit;
+        $boxUnit = $this->getBoxUnit();
 
-        if($qty < 1) $qty=$exchangeUnit;
-        else $qty = round($qty)*$exchangeUnit;
+        /**
+         * 1: nếu sl đặt chia hết cho box_unit thì tính theo số thùng (qty=p_qty)
+         * 2: nếu sl đặt không chia hết cho box_unit (chi có dư) thì:
+         *      - Tính số thùng (qty_pack) = Sl đặt (p_qty) / sl 1 thùng (box_unit) => làm tròn xuống
+         *      - Tính sl lẻ (qty_unit) = Sl đặt (p_qty) - sl thùng (qty_pack) * box_unit 
+         *          - Nếu sl lẻ < exchange_unit thì thính theo: qty= số thùng(qty_pack) + exchange_unit
+         *          - Nếu sl lẻ >= exchange_unit thì tính theo: qty = số thùng(qty_pack) +  sl lẻ (qty_unit)/exchange_unit (làm tròn) * exchange_unit
+         */
 
-        if($qty > $this->getInventory()) $qty = $this->getInventory();
+        $packQty = floor($p_qty/$boxUnit);//lấy phần nguyên của số thùng
+        $unitQty = $p_qty - $packQty * $boxUnit;//lấy số lượng lẻ
 
-        return $qty;
+        if($unitQty==0) 
+            $qty= $p_qty;//nếu sl đặt chia hết cho box_unit thì tính theo số thùng (qty=p_qty)
+        else if($unitQty < $exchangeUnit) {
+            if($packQty==0) $qty=$exchangeUnit;//nếu sl đặt không chia hết cho box_unit (chi có dư) nhưng số thùng = 0 thì tính theo số lẻ (qty=exchange_unit)
+            else{
+                $qty= ($packQty*$boxUnit);//nếu sl đặt không chia hết cho box_unit (chi có dư) nhưng số thùng > 0 thì tính theo số thùng
+            }
+        }
+        else{
+            if($boxUnit - $unitQty < $exchangeUnit) 
+                $qty=($packQty+1)*$boxUnit;//Nếu số lẻ gần với số thùng tiếp theo thì tính theo số thùng tiếp theo
+            else
+                $qty= ($packQty*$boxUnit)+(round($unitQty/$exchangeUnit)*$exchangeUnit);//Nếu sl lẻ >= exchange_unit thì tính theo: qty = số thùng(qty_pack) +  sl lẻ (qty_unit)/exchange_unit (làm tròn) * exchange_unit
+            
+        }
+
+        if($qty > $this->getInventory()) 
+            $qty = $this->getInventory();
+
+        return (int) $qty;
     }
 
     /**

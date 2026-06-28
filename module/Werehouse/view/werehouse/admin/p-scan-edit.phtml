@@ -328,6 +328,7 @@ $this->headTitle($title);
                 type: 'POST',
                 data:{id:<?=$this->purchaseScan->getId()?>},
                 dataSrc: function (response) {
+                    console.log(response);
                     return response.data;
                 }
             }

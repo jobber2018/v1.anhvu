@@ -18,6 +18,7 @@ use GroceryCat\Service\GroceryCatManager;
 use Sell\Service\SellManager;
 use Sulde\Service\Common\Common;
 use Sulde\Service\Common\ConfigManager;
+use Sulde\Service\Common\Define;
 use Sulde\Service\ImageUpload;
 use Sulde\Service\SuldeAdminController;
 use Users\Entity\User;
@@ -49,9 +50,34 @@ class AdminController extends SuldeAdminController
      * @return ViewModel
      */
     public function listAction(){
-        $grocery = $this->groceryManager->getAll();
-//        echo count($grocery);
-        return new ViewModel(["groceryList"=>$grocery]);
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            $keyword = $this->params()->fromPost('search')['value'];
+            $length = $this->params()->fromPost('length', Define::ITEM_PAGE_COUNT);
+            $start = $this->params()->fromPost('start', 0);
+            $draw = $this->params()->fromPost('draw', 1);
+            
+            $grocerys = $this->groceryManager->search($keyword, $length, $start);
+            $groceryResults = array();
+            foreach ($grocerys as $groceryItem) {
+                $tmp['id'] = $groceryItem->getId();
+                $tmp['name'] = $groceryItem->getGroceryName();
+                $tmp['mobile'] = $groceryItem->getMobile();
+                $tmp['address'] = $groceryItem->getAddress();
+                $tmp['owner_name'] = $groceryItem->getOwnerName();
+                $tmp['staff_in_charge'] = $groceryItem->getGroceryCat() ? $groceryItem->getGroceryCat()->getUser()->getFullName() : '';
+                $tmp['check_in_date'] = Common::formatDateTime($groceryItem->getCheckInDate());
+                $tmp['pay_total']=$groceryItem->getPayTotal()/1000;
+                $groceryResults[]=$tmp;
+            }
+            $result['start']=$start;
+            $result['recordsTotal']=count($grocerys);
+            $result['recordsFiltered']=count($grocerys);
+            $result['data']=$groceryResults;
+            return new JsonModel($result);
+        }else{            
+            return new ViewModel();
+        }        
     }
 
     /**

@@ -17,8 +17,7 @@ $this->headTitle($title);
 
 <div class="page-title">
     <h3>
-        <span class="fa fa-arrow-circle-o-left"></span> Danh sách khách hàng
-        <small class="label label-info"><?=count($this->groceryList)?> khách hàng</small>
+        <span class="fa fa-arrow-circle-o-left"></span> Danh sách khách hàng        
     </h3>
 </div>
 
@@ -45,55 +44,26 @@ $this->headTitle($title);
                     <thead>
                     <tr>
                         <th></th>
+                        <th>No.</th>
+                        <th>Tên cửa hàng</th>
+                        <th>Chủ cửa hàng</th>
+                        <th>Mobile</th>
+                        <th>Nhân viên</th>
+                        <th>check in date</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <?php
-                    $i=1;
-//                    foreach ($this->groceryCatList as $grocery=>$groceryCatItem) {
-//                        $groceryList = $groceryCatItem->getGrocery();
-                        foreach ($this->groceryList as $k => $groceryItem) {
-                            //check star
-                            $star='<span class="fa fa-star-o"></span>';
-                            $payTotal = $groceryItem->getPayTotal()/50000000;
-                            if($payTotal<=1 && $payTotal>0)
-                                $star='<span class="fa fa-star-half-o"></span>';
-                            else if($payTotal>1 && $payTotal<=2)
-                                $star='<span class="fa fa-star"></span>';
-                            else if($payTotal>2 && $payTotal<=3)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
-                            else if($payTotal>3 && $payTotal<=4)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span>';
-                            else if($payTotal>4 && $payTotal<=5)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
-                            else if($payTotal>5 && $payTotal<=6)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
-                            else if($payTotal>6 && $payTotal<=7)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
-                            else if($payTotal>7 && $payTotal<=8)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
-                            else if($payTotal>8 && $payTotal<=9)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star-half-o"></span>';
-                            else if($payTotal>=10)
-                                $star='<span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span><span class="fa fa-star"></span>';
-
-                            echo '<tr>';
-                            echo '<td>';
-                            echo '<a href="'.$this->url('grocery-admin',['action'=>'detail','id'=>$groceryItem->getId()]).'"><p class="title">'.$this->escapeHtml($groceryItem->getGroceryName()).' '.$star.'</p>';
-                            echo '<p><b>'.$this->escapeHtml($groceryItem->getOwnerName()).'</b> Mobile: <b>'.$groceryItem->getMobile().'</b></p>';
-                            echo '<p><i>'.$this->escapeHtml($groceryItem->getAddress()).'</i></p>';
-                            echo '<p>Checkin: '.Common::formatDateTime($groceryItem->getCheckInDate()).'</p>';
-                            echo '</a></td>';
-                            echo '</tr>';
-                        }
-//                    }
-                    ?>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
+<link rel="stylesheet" href="/css/responsive.dataTables.min.css">
+    <script src="/joli/js/plugins/datatables/dataTables.responsive.min.js"></script>
 <style>
     #tblGrocery a{color: #0d0d0d}
     #tblGrocery .title{font-weight: bold; font-size: 14px; color: #067fad
@@ -101,23 +71,78 @@ $this->headTitle($title);
     #tblGrocery p{margin-bottom: 5px}
     #tblGrocery td{padding-bottom: 5px; padding-top: 5px}
     #tblGrocery td:first-child{padding-right: 5px; padding-bottom: 5px; padding-top: 10px}
-    #tblGrocery tr{border-bottom: 1px solid #E5E5E5}
-    .dataTables_filter{width: 100%; border-bottom: unset}
-    .dataTables_filter label {float: unset; width: 100%}
-    .dataTables_filter label input {width: 80%}
+    #tblGrocery tr{border-bottom: 1px solid #E5E5E5}    
+    .dt-layout-row select{width: 50px; display: none}
+    .dt-layout-row label{display: none}
 </style>
-<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
 <script>
     $(document).ready(function () {
-        $('#tblGrocery').DataTable({
-            paging: false,
+        let tblGrocery=$('#tblGrocery').DataTable({
+            responsive:true,
+            info:false,
+            paging: true,
+            pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
             ordering: false,
-            info: false,
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            autoWidth: false,
+            layout: {
+                topStart: null,  // ❌ tắt ô search mặc định
+                topEnd: null,    // ❌ tắt length dropdown mặc định
+                top: ['search', 'pageLength']
+            },
             language: {
-                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
+                searchPlaceholder: "Tìm kiếm theo tên, điện thoại, địa chỉ, nhân viên."
+            },
+            columnDefs: [
+                { name:'data', targets: 0, visible: false},
+                { targets: [1],width: '20px'},
+                { targets: [4,5],width: '100px',className: 'min-desktop'},
+                { targets: [3,6],width: '120px',className: 'min-desktop'},
+                { name: 'name', targets: 2, className:'dt-body-left',
+                   createdCell:function (td, cellData, rowData, row, col){
+                        let url='<?=$this->url('grocery-admin',['action'=>'detail', 'id' => '__id__'])?>';
+                        let name = '<a class="title" href="' + url.replace('__id__', rowData[0].id) + '">' + cellData + '</a>';
+                        let address = '<p><i>' + rowData[0].address + '</i></p>';
+                        let title = name + address;
+                        $(td).html(title);
+                    }                    
+                }
+            ],
+            ajax: {
+                url: '<?=$this->url('grocery-admin', ['action'=>'list'])?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=parseInt(json.start)+1;                    
+                    $.each( json.data, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(i++);
+                        dataItem.push(value.name);
+                        dataItem.push(value.owner_name);
+                        dataItem.push(value.mobile);
+                        dataItem.push(value.staff_in_charge);
+                        dataItem.push(value.check_in_date);
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
             },
             initComplete: function () {
-                $('.dataTables_filter label input').focus();
+                $(this.api().table().container()).find('input[type="search"]').attr('autocomplete', 'off');
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblGrocery.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
             }
         });
     });

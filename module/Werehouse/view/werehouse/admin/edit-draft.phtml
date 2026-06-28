@@ -431,7 +431,7 @@ $this->headTitle("Sửa đơn nháp");
 
     function addDataToList(data){
         console.log(data);
-        let hightlight=(data.active==0)?'<label class="warning-color"> | Sản phẩm không hoạt động</label>':'';
+        let hightlight=(data.active==0)?'<label class="warning-color"> | Không hoạt động</label>':'';
 
         var htmlLi ='<li id="li'+data.id+'" class="list-group-item">';
         htmlLi+='<table style="width: 90%">';

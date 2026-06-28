@@ -1074,6 +1074,7 @@ class AdminController extends SuldeAdminController
                 $tmp['name']=$purchaseScanDetailItem->getProductName();
                 $tmp['unit']=$purchaseScanDetailItem->getUnitName();
                 $tmp['qty']=$purchaseScanDetailItem->getQty();
+                $tmp['pack_unit']=$purchaseScanDetailItem->getPackUnit();
                 $tmp['button']=1;
                 $resultProductItem[]=$tmp;
             }

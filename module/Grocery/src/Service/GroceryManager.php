@@ -10,6 +10,7 @@ namespace Grocery\Service;
 
 
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Grocery\Entity\Grocery;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
@@ -189,5 +190,22 @@ class GroceryManager
             ->where($where)
             ->andWhere('g.active = 1');
         return $queryBuilder->getQuery()->getResult();
+    }
+
+    public function search($p_keyword, $p_length, $p_start)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('g')
+            ->from(Grocery::class, 'g')
+            ->where('g.active = 1')            
+            ->setFirstResult($p_start)
+            ->setMaxResults($p_length)
+            ->orderBy('g.id', 'DESC');
+
+        if($p_keyword) {
+            $queryBuilder->andWhere('g.groceryName LIKE :keyword OR g.mobile LIKE :keyword OR g.address LIKE :keyword')
+                ->setParameter('keyword', '%'.$p_keyword.'%');
+        }
+        return new Paginator($queryBuilder->getQuery());
     }
 }

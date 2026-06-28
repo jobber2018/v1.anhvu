@@ -34,10 +34,18 @@ $this->headTitle("Thông tin sản phẩm");
         </div>
     </div>
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Thông tin sản phẩm</h3>
+                    <a class="btn btn-info pull-right" href="<?=$this->url('product-admin',['action'=>'edit','id'=>$this->product->getId()])?>">
+                        <span class="fa fa-edit"></span> 
+                        Sửa thông tin
+                    </a>
+                    <a class="btn btn-warning pull-right" href="<?=$this->url('product-admin',['action'=>'edit-price','id'=>$this->product->getId()])?>">
+                        <span class="fa fa-dollar"></span> 
+                        Sửa giá
+                    </a>
                 </div>
                 <div class="panel-body">
                     <div class="row">
@@ -48,6 +56,9 @@ $this->headTitle("Thông tin sản phẩm");
                                     <a href="<?=$this->url('product-admin',['action'=>'edit','id'=>$this->product->getId()])?>">
                                     <?=$this->product->getName().' | '.$this->product->getWeight()?>
                                     </a>
+                                    <label class="pull-right">
+                                        <?=($this->product->getActive() ? '<small class="label label-info">Đang bán</small>' : '<small class="label label-danger">Ngừng bán</small>')?>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -114,7 +125,7 @@ $this->headTitle("Thông tin sản phẩm");
                                 <div class="col-md-9 col-xs-4"><?=$this->product->getBoxUnit() .' '.$this->product->getUnit()->getName()?></div>
                             </div>
                         </div>
-
+                        <hr>
                         <div class="form-group">
                             <div class="row">
                                 <label for="name" class="col-md-3 col-xs-4 control-label text-right">Giá vốn:</label>
@@ -173,7 +184,7 @@ $this->headTitle("Thông tin sản phẩm");
                                 </div>
                             </div>
                         </div>
-
+                        <hr>
                         <div class="form-group">
                             <div class="row">
                                 <label for="name" class="col-md-3 col-xs-4 control-label text-right">Tồn kho:</label>
@@ -205,6 +216,49 @@ $this->headTitle("Thông tin sản phẩm");
                                 </div>
                             </div>
                         </div>
+
+                        <hr>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 col-xs-4 control-label text-right">Bán lẻ tối thiểu:</label>
+                                <div class="col-md-9 col-xs-4">
+                                    <?=$this->product->getExchangeUnit()?>
+                                    <small class="help-block">Số lượng bán lẻ tối thiểu</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 col-xs-4 control-label text-right">Ghi chú đặt hàng:</label>
+                                <div class="col-md-9 col-xs-4">
+                                    <?=$this->product->getNoteOrder()?$this->product->getNoteOrder():'N/A'?>
+                                    <small class="help-block">Ghi chú liên quan đến việc đặt hàng</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 col-xs-4 control-label text-right">Tên nhãn trên app:</label>
+                                <div class="col-md-9 col-xs-4">
+                                    <?=$this->product->getLabelName()?$this->product->getLabelName():'N/A'?>
+                                    <small class="help-block">Tên nhãn sẽ được hiển thị trên ứng dụng</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <label for="name" class="col-md-3 col-xs-4 control-label text-right">Nhóm:</label>
+                                <div class="col-md-9 col-xs-4">
+                                    <?=$this->product->getGroupId()?$this->product->getGroupId():'N/A'?>
+                                    <small class="help-block">Nhóm sản phẩm</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <?php if($this->product->getImg()){ ?>
                             <div class="form-group">
                                 <div class="row">
@@ -219,7 +273,7 @@ $this->headTitle("Thông tin sản phẩm");
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Lịch sử tồn kho</h3>
@@ -230,8 +284,8 @@ $this->headTitle("Thông tin sản phẩm");
                         <tr>
                             <th></th>
                             <th>Thay đổi</th>
-                            <th>Ngày thay đổi</th>
-                            <th>Người thay đổi</th>
+                            <th>Ngày đổi</th>
+                            <th>Người đổi</th>
                             <th>Nghi chú</th>
                         </tr>
                         </thead>
@@ -249,12 +303,12 @@ $this->headTitle("Thông tin sản phẩm");
                         <thead>
                         <tr>
                             <th></th>
-                            <th>Trước khi đổi </th>
-                            <th>Sau khi đổi</th>
+                            <th>Trước đổi </th>
+                            <th>Sau đổi</th>
                             <th>Thay đổi</th>
-                            <th>Ngày thay đổi</th>
+                            <th>Ngày đổi</th>
                             <th>Người đổi</th>
-                            <th></th>
+                            <th>Action</th>
                         </tr>
                         </thead>
                         <tbody></tbody>
@@ -262,7 +316,10 @@ $this->headTitle("Thông tin sản phẩm");
                 </div>
             </div>
 
-            <div class="panel panel-default">
+            
+        </div>
+        <div class="col-md-4">
+<div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">Lịch sử nhập sản phẩm</h3>
                 </div>
@@ -270,8 +327,7 @@ $this->headTitle("Thông tin sản phẩm");
                     <table class="table table-hover" id="tblByHistory">
                         <thead>
                         <tr>
-                            <th>order id</th>
-                            <th>#</th>
+                            <th>order id</th>                            
                             <th>Trạng thái</th>
                             <th>NCC</th>
                             <th>Ngày nhập</th>
@@ -329,7 +385,7 @@ $this->headTitle("Thông tin sản phẩm");
 </style>
 <script>
     $(document).ready(function () {
-        $('#tblInventoryHistory').DataTable({
+        let tblInventoryHistory=$('#tblInventoryHistory').DataTable({
             info:false,
             paging: true,
             pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
@@ -385,9 +441,19 @@ $this->headTitle("Thông tin sản phẩm");
                     return data;                    
                 }
             }            
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblInventoryHistory.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
         });
         
-        $('#tblSellHistory').DataTable({
+        let tblSellHistory=$('#tblSellHistory').DataTable({
             info:false,
             paging: true,
             pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
@@ -513,18 +579,20 @@ $this->headTitle("Thông tin sản phẩm");
                     }
                 }
             }
-        });
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
 
-        $('#tblSellHistory1').DataTable({
-            paging: true,
-            pageLength:10,
-            ordering: true,
-            info: false,
-            searching:true,
-            // order: [[ 0, "DESC" ]]
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblSellHistory.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
         });
+        
 
-        $('#tblByHistory').DataTable({
+        let tblByHistory=$('#tblByHistory').DataTable({
             info:false,
             paging: true,
             pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
@@ -535,14 +603,8 @@ $this->headTitle("Thông tin sản phẩm");
             processing:true,
             searching:false,
             columnDefs: [
-                { name:'order_id', targets: 0, visible: false},
-                {
-                    orderable:false,
-                    targets: [1],
-                    className:'dt-body-right',
-                    width: '10px',                    
-                },                
-                { name: 'status', targets: 2, className:'title',
+                { name:'order_id', targets: 0, visible: false},                                
+                { name: 'status', targets: 1, className:'title', width: '120px',
                   createdCell:function (td, cellData, rowData, row, col){                            
                         if(cellData==0){
                             let url='<?=$this->url('werehouse-admin', ['action' => 'edit-draft', 'id' => '__id__'])?>';
@@ -571,7 +633,7 @@ $this->headTitle("Thông tin sản phẩm");
                     let data=[];                    
                     $.each( json.data, function( key, value ) {
                         let dataItem=[];
-                        dataItem.push(value.order_id);
+                        //dataItem.push(value.order_id);
                         dataItem.push(json.start++);                        
                         dataItem.push(value.status);
                         dataItem.push(value.supplier_name);
@@ -585,9 +647,19 @@ $this->headTitle("Thông tin sản phẩm");
                     return data;                    
                 }
             }            
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblByHistory.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
         }); 
 
-        $('#tblActivity').DataTable({
+        let tblActivity=$('#tblActivity').DataTable({
             info:false,
             paging: true,
             pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
@@ -641,6 +713,16 @@ $this->headTitle("Thông tin sản phẩm");
                     return data;                    
                 }
             }            
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblActivity.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
         });        
 
     });

@@ -60,6 +60,11 @@ $this->headTitle($title);
                         <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn đang giao</p>
                     </a>
 
+                    <a href="<?=$this->url('sell-staff',['action'=>'delivered'])?>" class="btn btn-default">
+                        <i class="fa fa-trophy" style="font-size: 25pt; padding-top: 5px"></i>
+                        <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Đơn đã giao</p>
+                    </a>
+
                     <a href="<?=$this->url('product-admin',['action'=>'recommend'])?>" class="btn btn-default">
                         <i class="glyphicon glyphicon-bullhorn" style="font-size: 25pt; padding-top: 5px"></i>
                         <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Sản phẩm gợi ý trên APP</p>
@@ -106,7 +111,7 @@ $this->headTitle($title);
         </span>
     </div>
     <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-4">
             <!-- START TABS -->
             <div class="panel panel-default tabs">
                 <ul class="nav nav-tabs" role="tablist">
@@ -121,126 +126,13 @@ $this->headTitle($title);
                         <div><b>Tổng đơn hàng: <?=$this->orderNumber?></b></div>
                         <div style="text-align: left; padding-top: 30px"><b>Doanh thu:</b> Bằng tổng giá trị các đơn hàng giao thành công đã trừ trả hàng.</div>
                     </div>
-                    <div class="tab-pane" id="tab-second">
-                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
-                        <h4 style="text-align: center">LỢI NHUẬN GỘP</h4>
-                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold; text-align: center;"><?php /*=Common::formatMoney($this->totalProfit)*/?>--</div>
-                        <?php
-                        $totalProfit=0;
-                        if(($this->totalRevenue-$this->totalProfit)>0){
-                            $totalProfit=@round(($this->totalProfit/$this->totalRevenue)*100,2);
-                        }
-                        ?>
-                        <div style="text-align: center; padding-bottom: 15px"><b>Tỷ suất LN: <?php /*=$totalProfit*/?>0%</b></div>
-                        <div style="padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid #cccccc; border-top: 1px solid #cccccc">
-                            <span><b>Doanh thu:</b> <?=Common::formatMoney($this->totalRevenue)?></span>
-                            <span class="pull-right"><b>Giá vốn:</b> <?=Common::formatMoney($this->totalRevenue-$this->totalProfit)?></span>
-                        </div>
-                        <div style="text-align: left; padding-top: 20px"><b>Lợi nhuận gộp = Doanh thu - Giá vốn * SL bán</b></div>
-                        <div>Giá vốn là giá vốn bình quân của sản phẩm được tính sau mỗi lần nhập hàng.</div>
+                    <div class="tab-pane" id="tab-second" style="text-align: center">                        
+                       <div id="morris-donut-cat" style="height: 300px; width:300px"></div>
                     </div>
                 </div>
             </div>
             <!-- END TABS -->
-
-            <!-- START DONUT CHART -->
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div id="morris-donut-cat" style="height: 300px;"></div>
-                </div>
-            </div>
-            <!-- END DONUT CHART -->
-        </div>
-
-        <div class="col-md-7">
-            <!-- START LINE CHART -->
-            <div class="panel panel-default tabs">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="active"><a href="#tab-analytic-first" style="background-color: #ff6200; color: white" role="tab" data-toggle="tab">Chú ý</a></li>
-                    <li><a href="#tab-analytic-second" style="background-color: red; color: white" role="tab" data-toggle="tab">Đặc biệt chú ý</a></li>
-                    <li><a href="#tab-analytic-3" style="background-color: #9900ff; color: white" role="tab" data-toggle="tab">Khả năng mất cao</a></li>
-                </ul>
-                <div class="panel-body tab-content">
-                    <div class="tab-pane active" id="tab-analytic-first">
-                        <div style="padding: 10px 0px; color: #ff6200">Đã đến ngày lên đơn nhưng chưa thấy khách lên đơn.</div>
-                        <table id="tbl1" class="table nowrap table-hover display">
-                            <thead>
-                            <tr>
-                                <th>Khách hàng</th>
-                                <th>Đơn gần nhất</th>
-                                <th>Tuyến</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            foreach ($this->orderAnalytic as $k=>$v) {
-                                if($v->getDiff()<10) {
-                                    echo '<tr>';
-                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-danger">'.$v->getDiff().' day ago</small></td>';
-                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
-                                    echo '</tr>';
-                                }
-                            }
-                            ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="tab-pane" id="tab-analytic-second">
-                        <div style="padding: 10px 0px; color: red">Đã quá ngày lên đơn nhưng chưa thấy khách lên đơn.</div>
-                        <table id="tbl2" class="table nowrap table-hover display">
-                            <thead>
-                            <tr>
-                                <th>Khách hàng</th>
-                                <th>Đơn gần nhất</th>
-                                <th>Tuyến</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            foreach ($this->orderAnalytic as $k=>$v) {
-                                if($v->getDiff()>=10 & $v->getDiff()<=20) {
-                                    echo '<tr>';
-                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
-                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
-                                    echo '</tr>';
-                                }
-                            }
-                            ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="tab-pane" id="tab-analytic-3">
-                        <div style="padding: 10px 0px; color: #9900ff;">Có thể khách đã lấy hàng nơi khác.</div>
-                        <table id="tbl3" class="table nowrap table-hover display">
-                            <thead>
-                            <tr>
-                                <th>Khách hàng</th>
-                                <th>Đơn gần nhất</th>
-                                <th>Tuyến</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            foreach ($this->orderAnalytic as $k=>$v) {
-                                if($v->getDiff()>20) {
-                                    echo '<tr>';
-                                    echo '<td style="text-align: left"><a href="' . $this->url('grocery-admin', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                    echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
-                                    echo '<td><small class="label label-info">Thứ '.$v->getGrocery()->getGroceryCat()->getDay().'</small>'.$v->getGrocery()->getGroceryCat()->getName().'</td>';
-                                    echo '</tr>';
-                                }
-                            }
-                            ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                </div>
-            </div>
-            <!-- END LINE CHART -->
-        </div>
+        </div>     
     </div>
 </div>
 

@@ -42,7 +42,7 @@ class ReportManager
         $queryBuilder->select('za')
             ->from(ZaloApp::class, 'za')
             ->where('za.grocery >0')
-            ->orderBy('za.created_date', 'ASC');
+            ->orderBy('za.id', 'desc');
 
         return $queryBuilder->getQuery()->getResult();
     }

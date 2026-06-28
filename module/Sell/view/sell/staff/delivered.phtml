@@ -1,0 +1,188 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách đơn đang giao";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('staff-dashboard')?>">Home</a></li>
+    <li class="active"><?=$title?></li>
+</ul>
+<!-- END BREADCRUMB -->
+<div class="page-title">
+    <h3><span class="fa fa-arrow-circle-o-left"></span> Danh sách đơn đã giao</h3>
+</div>
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- START JUSTIFIED TABS -->
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div>
+                        <label class="control-label">Tổng tiền giao: </label>
+                        <span class="price deliveredAmount"></span>
+                    </div>
+                    <div>
+                        <label class="control-label">Đã thanh toán: </label>
+                        <span class="price confirmAmount"></span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
+                        <thead>
+                        <tr>
+                            <th>visible</th>
+                            <th>STT</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng đơn</th>
+                            <th>Ngày giao</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                        </thead>
+                        <tbody>                        
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" style="text-align:right"></th>
+                                <th></th>
+                                <th colspan="2"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <!-- END JUSTIFIED TABS -->
+        </div>
+    </div>
+</div>
+<style>
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .dt-length label{
+        display: none;
+    }
+    .dt-length select{
+        width: 50px;
+        display: inline-block;
+    }
+</style>
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+<script>
+    $(document).ready(function () {
+        let stt=1;
+        let deliveredAmount=0;
+        let confirmAmount=0;
+        let tblOrder =$('#tblOrder').DataTable({
+            info:false,
+            paging: true,
+            pageLength:50,
+            ordering: false,
+            processing: false,
+            serverSide: false,
+            stateSave: true,
+            autoWidth: false,
+            order: [[0, 'desc']],
+            language: {
+                searchPlaceholder: ""
+            },
+            search: {
+                return: true
+            },
+            columnDefs: [
+                { name:'id', targets: 0, visible: false},
+                { name:'stt', targets: 1, orderable: false},
+                { name:'groceryName', targets: 2, className: 'title'},
+                { name:'totalAmountToPaid', className: 'price', targets: 3,createdCell:function (td, cellData, rowData, row, col){
+                    $(td).html(formatPrice(cellData));
+                }},
+                { name:'deliveredDate', targets: 4},
+                { name:'completed_by', targets: 5,createdCell:function (td, cellData, rowData, row, col){
+                    if(cellData!=='N/A'){
+                        $(td).html('<span class="label label-success">Đã thanh toán</span>');
+                    }
+                    else{
+                        $(td).html('<span class="label label-danger">Chưa thanh toán</span>');
+                    }
+                    // $(td).html(formatPrice(cellData));
+                }},                    
+
+            ],
+            ajax: {
+                url: '<?=$this->url('sell-staff',['action'=>'delivered'])?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=1;
+                    $.each( json, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(stt++);
+                        dataItem.push(value.groceryName);           
+                        dataItem.push(value.totalAmountToPaid);     
+                        dataItem.push(value.deliveredDate);           
+                        dataItem.push(value.completed_by);
+                        
+                        deliveredAmount+=value.totalAmountToPaid;
+
+                        if(value.completed_by!=='N/A'){
+                         confirmAmount+=value.totalAmountToPaid;   
+                        }
+
+                        data.push(dataItem);
+                    });
+                    
+                    $('.deliveredAmount').html(formatCurrency(deliveredAmount.toString()));
+                    $('.confirmAmount').html(formatCurrency(confirmAmount.toString())); 
+
+                    console.log('deliveredAmount: '+deliveredAmount);
+                    console.log('confirmAmount: '+confirmAmount);
+
+                    return data;
+                }
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
+                };
+                // Total over this page
+                pageTotal = api
+                    .column(3, { page: 'current' })
+                    .data()
+                    .reduce(function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0);
+
+                // Update footer
+                $(api.column(3).footer()).html(formatCurrency(pageTotal.toString()));
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblOrder.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+        /*
+         $('#tblOrder').on('dblclick', 'tbody tr', function () {
+            let data = tblOrder.row(this).data();
+            let id = data[0].id;
+            window.location.href = '<?=$this->url('sell-user',['action'=>'order-detail'])?>/' + id +'.html'; 
+        });
+        */
+    });
+</script>

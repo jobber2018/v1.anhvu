@@ -82,10 +82,16 @@ $form->prepare();
                                     </td>
                                     <td><?=$werehouse->getProduct()->getCode()?></td>
                                     <td>
-                                        <a href="<?=$this->url('product-admin',['action'=>'detail','id'=>$werehouse->getProduct()->getId()])?>"><span style="font-weight: bold"><?=$werehouse->getProduct()->getName()?> | <?=$werehouse->getProduct()->getWeight();?></span></a>
+                                        <?php
+                                            $productIsActive=($werehouse->getProduct()->getActive()==1)?'':'<b style="color: red"> (Không hoạt động)</b>';
+                                        ?>
+                                        <a href="<?=$this->url('product-admin',['action'=>'detail','id'=>$werehouse->getProduct()->getId()])?>"><span style="font-weight: bold"><?=$werehouse->getProduct()->getName()?> | <?=$werehouse->getProduct()->getWeight().$productIsActive;?></span></a>
                                         <p>
                                             Có thể bán: <b><?=$werehouse->getProduct()->getInventory(). " ". $werehouse->getProduct()->getUnit()->getName()?></b>
-                                            | Quy cách: <b><?=$werehouse->getBoxUnit() . " ". $werehouse->getProduct()->getUnit()->getName() . "/Thùng"?></b>
+                                            <?php
+                                                $boxUnit=($this->werehouseOrder->getStatus()==1)?$werehouse->getBoxUnit(): $werehouse->getProduct()->getBoxUnit();
+                                            ?>
+                                            | Quy cách: <b><?=$boxUnit . " ". $werehouse->getProduct()->getUnit()->getName() . "/Thùng"?></b>
                                         </p>
                                     </td>
                                     <td><?=Common::formatMoney($werehouse->getPrice())?> đ</td>

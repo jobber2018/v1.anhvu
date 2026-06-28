@@ -410,4 +410,49 @@ class StaffController extends SuldeAdminController
         return $newCarList[$randomCar];
     }
 
+    /**
+     * Lấy các đơn hàng đã giao theo nhân viên (đã giao bởi user hiện tại)
+     * @return ViewModel
+     */
+    public function deliveredAction()
+    {
+        $request = $this->getRequest();
+        if($request->isPost()) {
+            //$userId = $this->userInfo->getId();
+            $userId=23;
+            $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+            $configuration = $this->entityManager->getConfiguration();
+            $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\\Query\\Mysql\\DateFormat');
+
+            $currentMonth = date('Y-m');
+            $queryBuilder = $this->entityManager->createQueryBuilder();
+            $queryBuilder->select('so')
+                ->from(SellOrder::class, 'so')
+                ->where('so.deliveredBy = :user')
+                ->andWhere("DATE_FORMAT(so.delivered_date,'%Y-%m') = :currentMonth")
+                ->setParameter('user', $user)
+                ->setParameter('currentMonth', $currentMonth)
+                ->orderBy('so.delivered_date', 'DESC');
+
+            $sellOrder = $queryBuilder->getQuery()->getResult();
+
+            $orders = [];
+            foreach ($sellOrder as $order) {
+                $tmp = [
+                    'id' => $order->getId(),
+                    'groceryName' => $order->getGrocery()->getGroceryName(),
+                    'totalAmountToPaid' => $order->getTotalAmountToPaid(),
+                    'deliveredDate' => $order->getDeliveredDate()->format('d/m/Y H:i:s'),
+                    'completed_by' => $order->getCompletedBy() ? $order->getCompletedBy() : 'N/A',
+                ];
+                $orders[] = $tmp;            
+            }
+
+            return new JsonModel($orders);
+        }else{
+            return new ViewModel();
+        }
+    }
+
 }
