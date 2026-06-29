@@ -42,6 +42,9 @@ $this->headTitle($title);
             <div class="panel panel-default">
                 <div class="panel-heading ui-draggable-handle">
                     <h3 class="panel-title">Thông tin</h3>
+                    <button onclick="analyzeGrocery(<?=$this->groceryDetail->getId()?>)" class="btn btn-success pull-right">
+                        <span class="fa fa-lightbulb-o"></span> Phân tích
+                    </button>
                 </div>
                 <div class="panel-body">
                     <div class="grocery-info">
@@ -269,9 +272,29 @@ $this->headTitle($title);
         </div>
     </div>
 </div>
+<div class="modal fade" id="modalAnalyzeResult" tabindex="-1" role="dialog" aria-labelledby="modalAnalyzeResultLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="modalAnalyzeResultLabel">Kết quả phân tích dữ liệu</h4>
+            </div>
+            <div class="modal-body" id="analyzeResultBody">
+                <div class="text-muted">Đang tải...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 <style>
 .grocery-info div{padding-bottom: 5px; padding-top: 5px; border-bottom: 1px solid #E5E5E5}
 .grocery-info div:last-child{border-bottom: 0px}
+#analyzeResultBody table tbody tr.info > td,
+#analyzeResultBody table tbody tr.info > th {
+    background-color: #d9edf7 !important;
+}
 </style>
 <script type="text/javascript" src="/joli/js/plugins/morris/raphael-min.js"></script>
 <script type="text/javascript" src="/joli/js/plugins/morris/morris.min.js"></script>
@@ -339,6 +362,106 @@ $this->headTitle($title);
             $('#modal').modal('show');
         })
 
-
     });
+
+    function analyzeGrocery(gid){
+        run_waitMe();
+        $.ajax({
+            url: "<?=$this->url('grocery-admin',['action'=>'analyze-product'])?>",
+            type: "POST",
+            data: {gid: gid},
+            dataType: "json",
+            success: function (data) {
+                stop_waitMe();
+                var results = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+                var html = '';
+
+                if (results.length > 0) {
+                    html += '<div class="row" style="margin-bottom: 10px;">';
+                    html += '<div class="col-md-6">';
+                    html += '<div class="form-group">';
+                    html += '<label for="analyzeRiskFilter">Lọc theo mức độ rủi ro</label>';
+                    html += '<select id="analyzeRiskFilter" class="form-control" style="max-width: 220px;">';
+                    html += '<option value="ALL">Tất cả</option>';
+                    html += '<option value="HIGH">High</option>';
+                    html += '<option value="MEDIUM">Medium</option>';
+                    html += '<option value="LOW">Low</option>';
+                    html += '</select>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<div class="col-md-6">';
+                    html += '<div class="form-group">';
+                    html += '<label for="analyzeProductSearch">Tìm theo tên sản phẩm</label>';
+                    html += '<input type="text" id="analyzeProductSearch" class="form-control" placeholder="Nhập tên sản phẩm">';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '<table class="table table-striped table-bordered">';
+                    html += '<thead><tr><th>Sản phẩm</th><th>Số ngày kể từ lần mua cuối</th><th>Số lần mua</th><th>SL Mua</th><th>Chu kỳ nhập trung bình</th><th>Độ ổn định</th><th>Số ngày đến chu kỳ nhập</th><th>Quá hạn bao nhiêu ngày</th><th>Mức độ rủi ro</th><th>Điểm tổng hợp</th></tr></thead><tbody>';
+
+                    $.each(results, function(index, item) {
+                        var rowStyle = '';
+                        if (item.risk === 'HIGH') {
+                            rowStyle = 'background-color: #f2dede;';
+                        } else if (item.risk === 'MEDIUM') {
+                            rowStyle = 'background-color: #fcf8e3;';
+                        }
+
+                        html += '<tr style="' + rowStyle + '" data-risk="' + (item.risk ? item.risk : 'LOW') + '" data-name="' + (item.name ? item.name.toLowerCase() : '') + '">';
+                        html += '<td>' + (item.name ? item.name : '-') + '</td>';
+                        html += '<td>' + (item.R_days !== undefined ? item.R_days : '-') + '</td>';
+                        html += '<td>' + (item.F_orders !== undefined ? item.F_orders : '-') + '</td>';
+                        html += '<td>' + (item.M_quantity !== undefined ? item.M_quantity : '-') + '</td>';
+                        html += '<td>' + (item.avg_cycle_days !== undefined ? item.avg_cycle_days : '-') + '</td>';
+                        html += '<td>' + (item.stability !== undefined ? item.stability : '-') + '</td>';
+                        html += '<td>' + (item.next_order_in !== undefined ? item.next_order_in : '-') + '</td>';
+                        html += '<td>' + (item.overdue_days !== undefined ? item.overdue_days : '-') + '</td>';
+                        html += '<td>' + (item.risk ? item.risk : '-') + '</td>';
+                        html += '<td>' + (item.score !== undefined ? item.score : '-') + '</td>';
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+                } else {
+                    html = '<div class="alert alert-info">Không có dữ liệu phân tích.</div>';
+                }
+
+                $('#analyzeResultBody').html(html);
+                $('#analyzeResultBody table tbody tr').off('click').on('click', function () {
+                    $('#analyzeResultBody table tbody tr').removeClass('info');
+                    $(this).addClass('info');
+                });
+                $('#analyzeRiskFilter').off('change').on('change', function () {
+                    applyAnalyzeFilters();
+                });
+                $('#analyzeProductSearch').off('keyup').on('keyup', function () {
+                    applyAnalyzeFilters();
+                });
+                function applyAnalyzeFilters() {
+                    var riskFilter = $('#analyzeRiskFilter').val();
+                    var searchText = ($('#analyzeProductSearch').val() || '').toLowerCase();
+
+                    $('#analyzeResultBody table tbody tr').each(function () {
+                        var risk = $(this).data('risk');
+                        var name = ($(this).data('name') || '').toString();
+                        var matchesRisk = (riskFilter === 'ALL' || risk === riskFilter);
+                        var matchesSearch = (searchText === '' || name.indexOf(searchText) !== -1);
+
+                        if (matchesRisk && matchesSearch) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    });
+                }
+                $('#modalAnalyzeResult').modal('show');
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                stop_waitMe();
+                $('#analyzeResultBody').html('<div class="alert alert-danger">Phân tích thất bại.</div>');
+                $('#modalAnalyzeResult').modal('show');
+            }
+        });
+    }
+
 </script>

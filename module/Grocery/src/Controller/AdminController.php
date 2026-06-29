@@ -300,4 +300,300 @@ class AdminController extends SuldeAdminController
             return $view;
         }
     }
+
+    /**
+     * Phân tích sản phẩm bán chạy, tần suất mua hàng, chu kỳ mua hàng, rủi ro hết hàng
+     * @return JsonModel
+     */
+    public function analyzeProductAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            $groceryId=$request->getPost('gid');
+            $grocery = $this->groceryManager->getById($groceryId);
+            $orders = $grocery->getSellOrder();
+
+            $orderData = [];
+
+            foreach ($orders as $order) {     
+                if($order->getStatus() != Define::_ORDER_CANCEL_STATUS) {
+                    $products = [];
+                    foreach ($order->getSell() as $sell){
+                        if($sell->getProduct()->getActive()==1){
+                            $product['id']=$sell->getProduct()->getId();                    
+                            $product['name']=$sell->getProduct()->getName().' | '.$sell->getProduct()->getWeight();;
+                            $product['quantity']=$sell->getQuantity();
+                            $products[] = $product;
+                        }                    
+                    }
+
+                    $orderData[] = [                    
+                        'date' => $order->getCreatedDate()->format('Y-m-d'),
+                        'products' => $products
+                    ];
+                }                
+            }
+
+            $result = $this->analyzeProducts($orderData);
+            return new JsonModel($result);
+        }
+    }
+
+    function analyzeProducts($orders)
+    {        
+        $products = [];
+        $today = strtotime(date('Y-m-d'));
+
+        foreach ($orders as $order) {
+
+            $date = strtotime($order['date']);
+
+            foreach ($order['products'] as $product) {
+
+                $id = $product['id'];
+
+                if (!isset($products[$id])) {
+
+                    $products[$id] = [
+                        'id' => $id,
+                        'name' => $product['name'],
+
+                        'frequency' => 0,
+                        'quantity' => 0,
+
+                        'last_date' => $date,
+                        'purchase_dates' => []
+                    ];
+                }
+
+                $products[$id]['frequency']++;
+
+                $products[$id]['quantity']
+                    += $product['quantity'];
+
+                if ($date > $products[$id]['last_date']) {
+                    $products[$id]['last_date'] = $date;
+                }
+
+                $products[$id]['purchase_dates'][] = $date;
+            }
+        }
+
+        $maxFreq = max(array_column($products,'frequency'));
+        $maxQty  = max(array_column($products,'quantity'));
+
+        $result = [];
+
+        foreach ($products as $product) {
+
+            // ===================
+            // RECENCY
+            // ===================
+
+            $daysFromLast =
+                floor(
+                    ($today-$product['last_date'])
+                    /86400
+                );
+
+            $rScore =
+                1/(1+$daysFromLast);
+
+            // ===================
+            // FREQUENCY
+            // ===================
+
+            $fScore =
+                $product['frequency']
+                /$maxFreq;
+
+            // ===================
+            // MONETARY
+            // ===================
+
+            $mScore =
+                $product['quantity']
+                /$maxQty;
+
+            // ===================
+            // PURCHASE CYCLE
+            // ===================
+
+            sort($product['purchase_dates']);
+
+            $cycles = [];
+
+            for(
+                $i=1;
+                $i<count($product['purchase_dates']);
+                $i++
+            ){
+
+                $cycles[] =
+                    (
+                        $product['purchase_dates'][$i]
+                        -
+                        $product['purchase_dates'][$i-1]
+                    )/86400;
+            }
+
+            $avgCycle = 0;
+
+            if(count($cycles)>0){
+                $avgCycle =
+                    array_sum($cycles)
+                    /count($cycles);
+            }
+
+            // ===================
+            // STABILITY
+            // ===================
+
+            $stability = 0;
+
+            if(count($cycles)>1){
+
+                $variance = 0;
+
+                foreach($cycles as $c){
+                    $variance +=
+                        pow(
+                            $c-$avgCycle,
+                            2
+                        );
+                }
+
+                $variance /=
+                    count($cycles);
+
+                $std =
+                    sqrt($variance);
+
+                $stability =
+                    max(
+                        0,
+                        1-($std/$avgCycle)
+                    );
+            }
+
+            // ===================
+            // NEXT ORDER
+            // ===================
+
+            $nextOrderIn = null;
+            $overdue = 0;
+
+            if($avgCycle>0){
+
+                $expected =
+                    $product['last_date']
+                    +
+                    ($avgCycle*86400);
+
+                $nextOrderIn =
+                    floor(
+                        ($expected-$today)
+                        /86400
+                    );
+
+                if($nextOrderIn<0){
+                    $overdue =
+                        abs($nextOrderIn);
+                }
+            }
+
+            // ===================
+            // RISK
+            // ===================
+
+            $risk = 'LOW';
+
+            if($avgCycle>0){
+
+                if(
+                    $overdue
+                    >
+                    ($avgCycle*0.5)
+                ){
+                    $risk='HIGH';
+                }
+                elseif(
+                    $overdue>0
+                ){
+                    $risk='MEDIUM';
+                }
+            }
+
+            // ===================
+            // FINAL SCORE
+            // ===================
+
+            $score =
+                (
+                    $fScore*0.30
+                )+
+                (
+                    $mScore*0.20
+                )+
+                (
+                    $rScore*0.10
+                )+
+                (
+                    $stability*0.40
+                );
+
+            $result[] = [
+
+                'id' =>
+                    $product['id'],
+
+                'name' =>
+                    $product['name'],
+
+                'R_days' =>
+                    $daysFromLast,
+
+                'F_orders' =>
+                    $product['frequency'],
+
+                'M_quantity' =>
+                    $product['quantity'],
+
+                'avg_cycle_days' =>
+                    round($avgCycle,1),
+
+                'stability' =>
+                    round(
+                        $stability*100,
+                        1
+                    ),
+
+                'next_order_in' =>
+                    $nextOrderIn,
+
+                'overdue_days' =>
+                    $overdue,
+
+                'risk' =>
+                    $risk,
+
+                'score' =>
+                    round(
+                        $score*100,
+                        2
+                    )
+            ];
+        }
+
+        usort(
+            $result,
+            function($a,$b){
+                return
+                    $b['score']
+                    <=>
+                    $a['score'];
+            }
+        );
+
+        return $result;
+    }
 }
