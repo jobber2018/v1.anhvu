@@ -208,4 +208,16 @@ class GroceryManager
         }
         return new Paginator($queryBuilder->getQuery());
     }
+
+    public function getVipCustomers()
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('g')
+            ->from(Grocery::class, 'g')
+            ->where('g.active = :active')
+            ->andWhere('g.risk_report = :risk_report')
+            ->setParameter('active', 1)
+            ->setParameter('risk_report', 1);
+        return $queryBuilder->getQuery()->getResult();
+    }
 }

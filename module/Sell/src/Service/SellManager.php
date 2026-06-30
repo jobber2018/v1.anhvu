@@ -274,15 +274,25 @@ class SellManager
     }
 
     /**
-     * @return SellAnalytic
+     * @return SellOrder
      */
-    public function getOrderAnalytic()
+    public function getOrderAnalytic($p_fDate,$p_tDate)
     {
+        $configuration = $this->entityManager->getConfiguration();
+        $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\Query\Mysql\DateFormat');
+
         $queryBuilder = $this->entityManager->createQueryBuilder();
-        $queryBuilder->select('sa')
-            ->from(SellAnalytic::class, 'sa')
-            ->orderBy('sa.diff','ASC');
-//        echo $queryBuilder->getQuery()->getSQL();
+        $queryBuilder->select('so')
+            ->from(SellOrder::class, 'so')
+            ->where("so.status!=".Define::_ORDER_CANCEL_STATUS)
+            ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') >=:fromDate")
+            ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') <=:toDate")
+            ->setParameters(array(
+                'fromDate'=>$p_fDate,
+                'toDate'=>$p_tDate
+            ))
+            ->orderBy('so.created_date', 'desc');
+        //echo $queryBuilder->getQuery()->getSQL();
         return $queryBuilder->getQuery()->getResult();
     }
 

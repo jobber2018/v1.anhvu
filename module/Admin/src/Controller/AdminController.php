@@ -73,7 +73,7 @@ class AdminController extends SuldeAdminController
         $arrRevenueByProductCat=$this->groupRevenueByProductCat($arr);
 
         //order analytic
-        $orderAnalytic = $sellManager->getOrderAnalytic();
+        //$orderAnalytic = $sellManager->getOrderAnalytic();
 //        print_r($orderAnalytic);
         //$firstDayOfPreviousMonth=date("Y-n-j", strtotime("first day of previous month"));
         //echo date("Y-n-j", strtotime("last day of previous month"));
@@ -90,7 +90,7 @@ class AdminController extends SuldeAdminController
             'arrRevenueByProductCat'=>$arrRevenueByProductCat,
 //            'arrLine'=>$arrLine,
             'strReportDate'=>$strReportDate,
-            'orderAnalytic'=>$orderAnalytic
+            //'orderAnalytic'=>$orderAnalytic
         ]);
     }
 

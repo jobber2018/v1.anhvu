@@ -10637,3 +10637,7 @@ public_html/img/invoice/sell/img_68665486048543.99289207.webp
 public_html/img/invoice/sell/img_68709175668366.97351365.webp
 public_html/img/invoice/sell/img_68788175124549.86601995.webp
 public_html/img/invoice/sell/img_68788302792567.94236217.webp
+/vendor
+/logs
+.DS_Store
+*.xml

@@ -10,6 +10,7 @@
 namespace Grocery\Controller;
 
 use Admin\Service\AdminManager;
+use DateTime;
 use Grocery\Entity\GroceryCrm;
 use Grocery\Form\GroceryForm;
 use Grocery\Service\GroceryManager;
@@ -338,6 +339,75 @@ class AdminController extends SuldeAdminController
         }
     }
 
+
+    public function topRiskCustomersAction(){
+        $request = $this->getRequest();
+        //if($request->isPost()){
+        $customers=[];
+        $sellManager = new SellManager($this->entityManager);
+
+        // Ngày cuối cùng của tháng hiện tại
+        $lastDayCurrentMonth = new DateTime('last day of this month');
+        $lastDayCurrentMonth=$lastDayCurrentMonth->format('Y-m-d');
+
+        // Ngày đầu tiên của 6 tháng trước
+        $date6MonthsAgo = new DateTime('first day of 2 months ago');
+        $date6MonthsAgo=$date6MonthsAgo->format('Y-m-d');
+
+        //echo $date6MonthsAgo .'->'. $lastDayCurrentMonth;
+
+        $sellOrders = $sellManager->getOrderAnalytic($date6MonthsAgo, $lastDayCurrentMonth);
+
+        foreach ($sellOrders as $sellOrder){
+            $grocery = $sellOrder->getGrocery();
+            $customerId=$grocery->getId();
+            if (!isset($customers[$customerId])) {
+                $customers[$customerId] = [
+                    'id' => $customerId,
+                    'name' => $grocery->getGroceryName(),
+                    'vip' => $grocery->getVip(),
+                    'credit' => $grocery->getCredit(),
+                    'price_sensitive' => $grocery->getPriceSensitive(),
+                    'orders'=>[]
+                ];
+            }
+            $customers[$customerId]['orders'][]=array(
+                'date'=>$sellOrder->getCreatedDate()->format('Y-m-d'),
+                'amount'=>$sellOrder->getTotalAmountToPaid()
+            );
+            unset($sellOrder, $grocery);
+        }
+        $this->entityManager->clear();
+        //print_r($customers);
+            /*$grocerys = $this->groceryManager->getVipCustomers();
+            foreach ($grocerys as $grocery) {
+                $orders = $grocery->getSellOrder();
+                $orderData=[];
+                if($orders){
+                    foreach ($orders as $orderItem) {
+                        $order=[
+                            'date'=>$orderItem->getCreatedDate()->format('Y-m-d'),
+                            'amount'=>$orderItem->getTotalAmountToPaid()
+                        ];
+                        $orderData[]=$order;
+                    }
+
+                    $customer=[
+                        'id' => $grocery->getId(),
+                        'name' => $grocery->getGroceryName(),
+                        'vip' => $grocery->getVip(),
+                        'credit' => $grocery->getCredit(),
+                        'price_sensitive' => $grocery->getPriceSensitive(),
+                        'orders'=>$orderData
+                    ];
+
+                    $customers[]=$customer;
+                }
+            }*/
+            return new JsonModel($this->topRiskCustomers($customers,20));
+        //}
+    }
+
     function analyzeProducts($orders)
     {        
         $products = [];
@@ -595,5 +665,330 @@ class AdminController extends SuldeAdminController
         );
 
         return $result;
+    }
+
+
+    function topRiskCustomers($customers, $limit = 20)
+    {
+        $today = strtotime(date('Y-m-d'));
+
+        $result = [];
+
+        foreach ($customers as $customer) {
+
+            $orders = $customer['orders'] ?? [];
+
+            if (count($orders) < 2) {
+                continue;
+            }
+
+            // ========================
+            // sort order by date
+            // ========================
+
+            usort($orders, function ($a, $b) {
+                return strtotime($a['date'])
+                    <=>
+                    strtotime($b['date']);
+            });
+
+            $dates = [];
+            $totalRevenue = 0;
+
+            foreach ($orders as $order) {
+
+                $dates[] =
+                    strtotime($order['date']);
+
+                $totalRevenue +=
+                    ($order['amount'] ?? 0);
+            }
+
+            // ========================
+            // CHU KỲ NHẬP
+            // ========================
+
+            $cycles = [];
+
+            for (
+                $i = 1;
+                $i < count($dates);
+                $i++
+            ) {
+
+                $cycles[] =
+                    ($dates[$i]
+                        - $dates[$i - 1])
+                    / 86400;
+            }
+
+            if (count($cycles) == 0) {
+                continue;
+            }
+
+            $avgCycle =
+                array_sum($cycles)
+                / count($cycles);
+
+            /* ========================
+            stability: là chỉ số từ 0–100%, phản ánh mức độ đều đặn của chu kỳ nhập hàng.
+            Theo kinh nghiệm với ngành tạp hóa, mình sẽ chia như sau:
+            Stability | Đánh giá | Ý nghĩa
+            >85%      | Rất ổn định |Có thể dự đoán chính xác ngày nhập
+            70–85%    | Ổn định | Dùng để cảnh báo mất khách
+            50–70%    | Trung bình | Chỉ nên tham khảo
+            30–50%    | Không ổn định | Cảnh báo dễ bị nhiễu
+            <30%      | Rất thất thường | Gần như không dùng được để dự báo
+            ========================**/
+
+            $stability = 0;
+
+            if (count($cycles) > 1) {
+
+                $variance = 0;
+
+                foreach ($cycles as $cycle) {
+
+                    $variance +=
+                        pow(
+                            $cycle - $avgCycle,
+                            2
+                        );
+                }
+
+                $variance /=
+                    count($cycles);
+
+                $std =
+                    sqrt($variance);
+
+                $stability =
+                    max(
+                        0,
+                        1 - ($std / $avgCycle)
+                    );
+            }
+
+            // ========================
+            // last order
+            // ========================
+
+            $lastDate =
+                end($dates);
+
+            $lastOrderDays =
+                floor(
+                    ($today - $lastDate)
+                    / 86400
+                );
+
+            // ========================
+            // overdue: thời gian quá chu kỳ nhập
+            // ========================
+
+            $overdue =
+                max(
+                    0,
+                    $lastOrderDays
+                    - $avgCycle
+                );
+
+            // ========================
+            // risk
+            // ========================
+
+            $risk = 'LOW';
+
+            if (
+                $overdue
+                >
+                ($avgCycle * 0.5)
+            ) {
+
+                $risk = 'HIGH';
+
+            } elseif (
+                $overdue > 0
+            ) {
+
+                $risk = 'MEDIUM';
+            }
+
+            // ========================
+            // customer risk score
+            // ========================
+
+            $customerRiskScore = 0;
+
+            // overdue
+            $customerRiskScore +=
+                min(
+                    30,
+                    (
+                        $overdue
+                        /
+                        max(1, $avgCycle)
+                    ) * 30
+                );
+
+            // stability
+            $customerRiskScore +=
+                ($stability * 30);
+
+            // revenue
+            if (
+                $totalRevenue >= 100000000
+            ) {
+
+                $customerRiskScore += 20;
+
+            } elseif (
+                $totalRevenue >= 50000000
+            ) {
+
+                $customerRiskScore += 10;
+            }
+
+            // vip
+            if (
+                $customer['vip']
+                ?? false
+            ) {
+
+                $customerRiskScore += 10;
+            }
+
+            // no credit
+            if (
+                !($customer['credit']
+                    ?? false)
+            ) {
+
+                $customerRiskScore += 10;
+            }
+
+            // price sensitive
+            if (
+                $customer['price_sensitive']
+                ?? false
+            ) {
+
+                $customerRiskScore += 10;
+            }
+
+            $customerRiskScore =
+                min(
+                    100,
+                    round(
+                        $customerRiskScore
+                    )
+                );
+
+            // ========================
+            // bỏ khách an toàn
+            // ========================
+
+            if (
+                $customerRiskScore < 30
+            ) {
+                continue;
+            }
+
+            // ========================
+            // output
+            // ========================
+
+            $result[] = [
+
+                'customer_id' =>
+                    $customer['id'],
+
+                'customer_name' =>
+                    $customer['name'],
+
+                'vip' =>
+                    $customer['vip']
+                    ?? false,
+
+                'credit' =>
+                    $customer['credit']
+                    ?? false,
+
+                'price_sensitive' =>
+                    $customer['price_sensitive']
+                    ?? false,
+
+                'orders' =>
+                    count($orders),
+
+                'revenue' =>
+                    $totalRevenue,
+
+                'avg_cycle_days' =>
+                    round(
+                        $avgCycle,
+                        1
+                    ),
+
+                'stability' =>
+                    round(
+                        $stability * 100,
+                        1
+                    ),
+
+                'last_order_days' =>
+                    $lastOrderDays,
+
+                'overdue_days' =>
+                    round(
+                        $overdue,
+                        1
+                    ),
+
+                'risk' =>
+                    $risk,
+
+                'customer_risk_score' =>
+                    $customerRiskScore
+            ];
+        }
+
+        // ========================
+        // sort risk desc
+        // ========================
+
+        usort(
+            $result,
+            function ($a, $b) {
+
+                return
+                    $b['customer_risk_score']
+                    <=>
+                    $a['customer_risk_score'];
+            }
+        );
+
+        // ========================
+        // top N
+        // ========================
+
+        $result =
+            array_slice(
+                $result,
+                0,
+                $limit
+            );
+
+        return [
+
+            'date' =>
+                date('Y-m-d'),
+
+            'total' =>
+                count($result),
+
+            'customers' =>
+                $result
+        ];
     }
 }

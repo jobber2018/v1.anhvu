@@ -58,6 +58,18 @@ class Grocery
     /** @orm\Column(type="string", name="zalo_connect") */
     private $zalo_connect;
 
+    /** @orm\Column(type="integer", name="vip") */
+    private $vip;
+
+    /** @orm\Column(type="integer", name="credit") */
+    private $credit;
+
+    /** @orm\Column(type="integer", name="price_sensitive") */
+    private $price_sensitive;
+
+    /** @orm\Column(type="integer", name="risk_report") */
+    private $risk_report;
+
     /**
      * @orm\ManyToOne(targetEntity="GroceryCat\Entity\GroceryCat", inversedBy="grocery" )
      * @orm\JoinColumn(name="grocery_cat_id", referencedColumnName="id")
@@ -505,4 +517,70 @@ class Grocery
         }
         return null;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getVip()
+    {
+        return $this->vip?1:0;
+    }
+
+    /**
+     * @param mixed $vip
+     */
+    public function setVip($vip)
+    {
+        $this->vip = $vip;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCredit()
+    {
+        return $this->credit?1:0;
+    }
+
+    /**
+     * @param mixed $credit
+     */
+    public function setCredit($credit)
+    {
+        $this->credit = $credit;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPriceSensitive()
+    {
+        return $this->price_sensitive?1:0;
+    }
+
+    /**
+     * @param mixed $price_sensitive
+     */
+    public function setPriceSensitive($price_sensitive)
+    {
+        $this->price_sensitive = $price_sensitive;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRiskReport()
+    {
+        return $this->risk_report?1:0;
+    }
+
+    /**
+     * @param mixed $risk_report
+     */
+    public function setRiskReport($risk_report)
+    {
+        $this->risk_report = $risk_report;
+    }
+
+
 }
