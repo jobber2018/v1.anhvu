@@ -342,7 +342,7 @@ class AdminController extends SuldeAdminController
 
     public function topRiskCustomersAction(){
         $request = $this->getRequest();
-        //if($request->isPost()){
+        if($request->isPost()){
         $customers=[];
         $sellManager = new SellManager($this->entityManager);
 
@@ -351,29 +351,29 @@ class AdminController extends SuldeAdminController
         $lastDayCurrentMonth=$lastDayCurrentMonth->format('Y-m-d');
 
         // Ngày đầu tiên của 6 tháng trước
-        $date6MonthsAgo = new DateTime('first day of 2 months ago');
+        $date6MonthsAgo = new DateTime('first day of 11 months ago');
         $date6MonthsAgo=$date6MonthsAgo->format('Y-m-d');
 
         //echo $date6MonthsAgo .'->'. $lastDayCurrentMonth;
 
-        $sellOrders = $sellManager->getOrderAnalytic($date6MonthsAgo, $lastDayCurrentMonth);
+        $orders = $sellManager->getOrderAnalytic($date6MonthsAgo, $lastDayCurrentMonth);
 
-        foreach ($sellOrders as $sellOrder){
-            $grocery = $sellOrder->getGrocery();
-            $customerId=$grocery->getId();
+        foreach ($orders as $order){
+            $customerName = $order['customer_name'];
+            $customerId=$order['customer_id'];
             if (!isset($customers[$customerId])) {
                 $customers[$customerId] = [
                     'id' => $customerId,
-                    'name' => $grocery->getGroceryName(),
-                    'vip' => $grocery->getVip(),
-                    'credit' => $grocery->getCredit(),
-                    'price_sensitive' => $grocery->getPriceSensitive(),
+                    'name' => $customerName,
+                    'vip' => $order['vip'],
+                    'credit' => $order['credit'],
+                    'price_sensitive' => $order['price_sensitive'],
                     'orders'=>[]
                 ];
             }
             $customers[$customerId]['orders'][]=array(
-                'date'=>$sellOrder->getCreatedDate()->format('Y-m-d'),
-                'amount'=>$sellOrder->getTotalAmountToPaid()
+                'date'=>$order['created_date']->format('Y-m-d'),
+                'amount'=>$order['amount']
             );
             unset($sellOrder, $grocery);
         }
@@ -405,7 +405,7 @@ class AdminController extends SuldeAdminController
                 }
             }*/
             return new JsonModel($this->topRiskCustomers($customers,20));
-        //}
+        }
     }
 
     function analyzeProducts($orders)
@@ -678,7 +678,7 @@ class AdminController extends SuldeAdminController
 
             $orders = $customer['orders'] ?? [];
 
-            if (count($orders) < 2) {
+            if (count($orders) < 10) {
                 continue;
             }
 
@@ -800,9 +800,9 @@ class AdminController extends SuldeAdminController
             $risk = 'LOW';
 
             if (
-                $overdue
+                $overdue/$avgCycle
                 >
-                ($avgCycle * 0.5)
+                2
             ) {
 
                 $risk = 'HIGH';
@@ -837,24 +837,28 @@ class AdminController extends SuldeAdminController
 
             // revenue
             if (
-                $totalRevenue >= 100000000
+                $totalRevenue >= 150000000
             ) {
-
-                $customerRiskScore += 20;
+                $customerRiskScore += 30;
 
             } elseif (
+                $totalRevenue >= 100000000
+            ) {
+                $customerRiskScore += 20;
+            }elseif (
                 $totalRevenue >= 50000000
             ) {
-
                 $customerRiskScore += 10;
             }
+
+            if ($overdue / $avgCycle > 2)
+                $customerRiskScore+=10;
 
             // vip
             if (
                 $customer['vip']
                 ?? false
             ) {
-
                 $customerRiskScore += 10;
             }
 
@@ -863,7 +867,6 @@ class AdminController extends SuldeAdminController
                 !($customer['credit']
                     ?? false)
             ) {
-
                 $customerRiskScore += 10;
             }
 
@@ -872,7 +875,6 @@ class AdminController extends SuldeAdminController
                 $customer['price_sensitive']
                 ?? false
             ) {
-
                 $customerRiskScore += 10;
             }
 
@@ -890,6 +892,16 @@ class AdminController extends SuldeAdminController
 
             if (
                 $customerRiskScore < 30
+            ) {
+                continue;
+            }
+
+            // ========================
+            // bỏ khách overdue_days < avg_cycle_days
+            // ========================
+
+            if (
+                $overdue < $avgCycle
             ) {
                 continue;
             }

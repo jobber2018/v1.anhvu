@@ -111,28 +111,54 @@ $this->headTitle($title);
         </span>
     </div>
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <!-- START TABS -->
-            <div class="panel panel-default tabs">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="active"><a href="#tab-first" role="tab" data-toggle="tab">Doanh thu</a></li>
-                    <li><a href="#tab-second" role="tab" data-toggle="tab">Lợi nhuận</a></li>
-                </ul>
-                <div class="panel-body tab-content">
-                    <div class="tab-pane active" id="tab-first" style="text-align: center">
-                        <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
-                        <h4>DOANH THU</h4>
-                        <div style="color: #2db3dc; font-size: 18pt; font-weight: bold"><?=Common::formatMoney($this->totalRevenue)?></div>
-                        <div><b>Tổng đơn hàng: <?=$this->orderNumber?></b></div>
-                        <div style="text-align: left; padding-top: 30px"><b>Doanh thu:</b> Bằng tổng giá trị các đơn hàng giao thành công đã trừ trả hàng.</div>
-                    </div>
-                    <div class="tab-pane" id="tab-second" style="text-align: center">                        
-                       <div id="morris-donut-cat" style="height: 300px; width:300px"></div>
-                    </div>
+            <div class="panel panel-default">
+                <div class="panel-heading panel-title">Doanh thu</div>
+                <div class="panel-body">
+                    <div style="text-align: center"><span class="fa fa-signal" style="font-size: 100pt; color: #2db3dc"></span></div>
+                    <h4>DOANH THU</h4>
+                    <div style="color: #2db3dc; font-size: 18pt; font-weight: bold"><?=Common::formatMoney($this->totalRevenue)?></div>
+                    <div><b>Tổng đơn hàng: <?=$this->orderNumber?></b></div>
+                    <div style="text-align: left; padding-top: 30px"><b>Doanh thu:</b> Bằng tổng giá trị các đơn hàng giao thành công đã trừ trả hàng.</div>
+
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading panel-title">Sản phẩm</div>
+                <div class="panel-body">
+                    <div id="morris-donut-cat" style="height: 300px; width:300px"></div>
                 </div>
             </div>
             <!-- END TABS -->
-        </div>     
+        </div>
+        <div class="col-md-9">
+            <div class="panel panel-default">
+                <div class="panel-heading panel-title">
+                    Khách hàng cần chú ý hôm nay (Số liệu 12 tháng gần nhất)
+                </div>
+
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display" style="width:100%" id="tblRiskCustomers">
+                        <thead>
+                        <tr>
+                            <th>visible</th>
+                            <th>STT</th>
+                            <th>Khách hàng</th>
+                            <th>Số ngày chưa lên đơn</th>
+                            <th>Chu kỳ lên đơn (ngày)</th>
+                            <th>Đã quá chu kỳ nhập (ngày)</th>
+                            <th>Độ tin cậy chu kỳ nhập</th>
+                            <th>Doanh thu</th>
+                            <th>Risk</th>
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -171,9 +197,22 @@ $this->headTitle($title);
 <script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
 
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
 <style>
     #panelButton a{margin-bottom: 5px}
     #panelButton .btn{padding: 5px 10px; line-height:10px}
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .dt-length label{
+        display: none;
+    }
+    .dt-length select{
+        width: 50px;
+        display: inline-block;
+    }
 </style>
 
 <script>
@@ -181,6 +220,84 @@ $this->headTitle($title);
     month = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     
     $( document ).ready(function() {
+
+        let tblRiskCustomers =$('#tblRiskCustomers').DataTable({
+            info:false,
+            paging: false,
+            pageLength:20,
+            ordering: false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            autoWidth: false,
+            language: {
+                searchPlaceholder: ""
+            },
+            search: {
+                return: true
+            },
+            columnDefs: [
+                { name:'id', targets: 0, visible: false},
+                { name:'stt', targets: 1, orderable: false},
+                { name:'groceryName', targets: 2, className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                    //console.log(rowData);
+                        let url='<?=$this->url('grocery-admin',['action'=>'detail', 'id' => '__id__'])?>';
+                        let name = '<a class="title" href="' + url.replace('__id__', rowData[0].customer_id) + '">' + cellData + '</a>';
+                        $(td).html(name);
+                    }
+                },
+                {
+                    name: 'stability', targets: 6,
+                    createdCell: function (td, cellData, rowData, row, col) {
+                        if (cellData >= 85) {
+                            $(td).html('<span class="label label-success">Rất ổn định ('+cellData+'%)</span>');
+                        } else if (cellData >= 70 && cellData < 85) {
+                            $(td).html('<span class="label label-info">Ổn định định ('+cellData+'%)</span>');
+                        } else if (cellData >= 50 && cellData < 70) {
+                            $(td).html('<span class="label label-warning">Trung bình ('+cellData+'%)</span>');
+                        } else {
+                            $(td).html('<span class="label label-danger">Thất thường ('+cellData+'%)</span>');
+                        }
+                    }
+                }
+            ],
+            ajax: {
+                url: '<?=$this->url('grocery-admin',['action'=>'top-risk-customers'])?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    let data=[];
+                    let i=1;
+                    $.each( json.customers, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(i++);
+                        dataItem.push(value.customer_name);
+                        dataItem.push(value.last_order_days);
+                        dataItem.push(value.avg_cycle_days);
+                        dataItem.push(value.overdue_days);
+                        dataItem.push(value.stability);
+                        dataItem.push(formatPrice(value.revenue));
+                        dataItem.push(value.risk);
+                        data.push(dataItem);
+                    });
+
+                    return data;
+                }
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblRiskCustomers.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+
+
         $('#btnModal').click(function(){
             $('#modalDate').modal('show')
         })
@@ -189,18 +306,9 @@ $this->headTitle($title);
             location.href=url;
         })
 
-        $('#tbl3, #tbl2, #tbl1').DataTable({
-            paging: true,
-            ordering: false,
-            info: false,
-            language: {
-                searchPlaceholder: "Tìm kiếm tên, điện thoại, địa chỉ"
-            }
-        });
-
     });
     
-    var morrisCharts = function() {
+    let morrisCharts = function() {
         Morris.Donut({
             element: 'morris-donut-cat',
             data: [

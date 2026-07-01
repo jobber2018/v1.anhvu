@@ -282,8 +282,11 @@ class SellManager
         $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\Query\Mysql\DateFormat');
 
         $queryBuilder = $this->entityManager->createQueryBuilder();
-        $queryBuilder->select('so')
+        $queryBuilder->select('so.id,so.created_date,g.id as customer_id,g.groceryName as customer_name, g.vip,g.credit,g.price_sensitive,sum(pp.price*s.quantity) as amount')
             ->from(SellOrder::class, 'so')
+            ->innerJoin(Grocery::class,'g','WITH','g.id=so.grocery and g.risk_report is null')
+            ->innerJoin(Sell::class,'s','WITH','s.sellOrder=so.id')
+            ->innerJoin(ProductPrice::class,'pp','WITH','pp.id=s.price')
             ->where("so.status!=".Define::_ORDER_CANCEL_STATUS)
             ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') >=:fromDate")
             ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') <=:toDate")
@@ -291,7 +294,8 @@ class SellManager
                 'fromDate'=>$p_fDate,
                 'toDate'=>$p_tDate
             ))
-            ->orderBy('so.created_date', 'desc');
+            ->orderBy('so.created_date', 'desc')
+            ->groupBy('so.id');
         //echo $queryBuilder->getQuery()->getSQL();
         return $queryBuilder->getQuery()->getResult();
     }
