@@ -10641,3 +10641,8 @@ public_html/img/invoice/sell/img_68788302792567.94236217.webp
 /logs
 .DS_Store
 *.xml
+/.idea
+/.vscode
+*.phar
+data/DoctrineORMModule/Proxy/__CG__WerehouseEntityWerehouseSheet.php
+public_html/vendor/jquery/treeview/CHANGES.md~
