@@ -434,4 +434,29 @@ class SellManager
             ->orderBy('so.created_date','DESC');
         return $queryBuilder->getQuery()->getResult();
     }
+
+    public function getDeliveredAmountByDate($p_userId=0,$p_fromDate,$p_toDate)
+    {
+        $configuration = $this->entityManager->getConfiguration();
+        $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\Query\Mysql\DateFormat');
+
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select("DATE_FORMAT(so.delivered_date,'%Y-%m-%d') as delivered_date, sum(pp.price*s.quantity) as total_price, sum(pp.price*s.return) as total_return,sum(s.discount) as discount")
+            ->from(SellOrder::class, 'so')
+            ->innerJoin(Sell::class,'s','WITH','s.sellOrder=so.id')
+            ->innerJoin(ProductPrice::class,'pp','WITH','pp.id=s.price')
+            ->where("DATE_FORMAT(so.delivered_date,'%Y-%m-%d') >=:fromDate")
+            ->andWhere("DATE_FORMAT(so.delivered_date,'%Y-%m-%d') <=:toDate")
+            ->setParameter('fromDate', $p_fromDate)
+            ->setParameter('toDate', $p_toDate)
+            ->groupBy("delivered_date")
+            ->orderBy("delivered_date","DESC");
+
+            if($p_userId>0){
+                $queryBuilder->andWhere("so.deliveredBy =:user")
+                    ->setParameter('user', $p_userId);
+            }
+
+        return $queryBuilder->getQuery()->getResult();        
+    }
 }

@@ -19,19 +19,49 @@ $this->headTitle($title);
 
 <!-- PAGE CONTENT WRAPPER -->
 <div class="page-content-wrap">
+
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Người giao</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <select class="form-control" id="deliveredBy">
+                                <option value="23">TrinhND</option>
+                                <option value="2">TruongHM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày bắt đầu</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" autocomplete="off" value="<?=$this->fromDate?>" id="fdate" data-date-format="yyyy-mm-dd" data-date-viewmode="months">
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <label class="col-md-1 text-right" style="padding-top: 5px">Ngày kết thúc</label>
+                    <div class="col-md-2">
+                        <div class="input-group">
+                            <input type="text" class="form-control" autocomplete="off" value="<?=$this->toDate?>" id="tdate" data-date-format="yyyy-mm-dd" >
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btnSubmit" class="btn btn-success">Xem báo cáo</button>                        
+                    </div>        
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
             <!-- START JUSTIFIED TABS -->
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <div>
-                        <label class="control-label">Tổng tiền giao: </label>
-                        <span class="price deliveredAmount"></span>
-                    </div>
-                    <div>
-                        <label class="control-label">Đã thanh toán: </label>
-                        <span class="price confirmAmount"></span>
-                    </div>
+                    <div class="panel-title-box">
+                        <h3>Tiền giao theo ngày</h3>
                 </div>
                 <div class="panel-body">
                     <table class="table nowrap table-hover display" style="width:100%" id="tblOrder">
@@ -39,10 +69,8 @@ $this->headTitle($title);
                         <tr>
                             <th>visible</th>
                             <th>STT</th>
-                            <th>Khách hàng</th>
-                            <th>Tổng đơn</th>
                             <th>Ngày giao</th>
-                            <th>Trạng thái</th>
+                            <th>Tiền giao</th>                            
                         </tr>
                         </thead>
                         <tbody>                        
@@ -75,17 +103,23 @@ $this->headTitle($title);
 </style>
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
 <link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
+<script type="text/javascript" src="/joli/js/plugins/bootstrap/bootstrap-datepicker.js"></script>
+
 <script>
     $(document).ready(function () {
+
+        $("#tdate,#fdate").datepicker();
+
         let stt=1;
-        let deliveredAmount=0;
-        let confirmAmount=0;
+        //let deliveredAmount=0;
+        //let confirmAmount=0;
         let tblOrder =$('#tblOrder').DataTable({
             info:false,
             paging: true,
-            pageLength:50,
+            pageLength:30,
             ordering: false,
-            processing: false,
+            processing: true,
             serverSide: false,
             stateSave: true,
             autoWidth: false,
@@ -99,25 +133,20 @@ $this->headTitle($title);
             columnDefs: [
                 { name:'id', targets: 0, visible: false},
                 { name:'stt', targets: 1, orderable: false},
-                { name:'groceryName', targets: 2, className: 'title'},
-                { name:'totalAmountToPaid', className: 'price', targets: 3,createdCell:function (td, cellData, rowData, row, col){
+                { name:'deliveried_date', targets: 2, className: 'title'},
+                { name:'delivered_amount', className: 'price', targets: 3,createdCell:function (td, cellData, rowData, row, col){
                     $(td).html(formatPrice(cellData));
-                }},
-                { name:'deliveredDate', targets: 4},
-                { name:'completed_by', targets: 5,createdCell:function (td, cellData, rowData, row, col){
-                    if(cellData!=='N/A'){
-                        $(td).html('<span class="label label-success">Đã thanh toán</span>');
-                    }
-                    else{
-                        $(td).html('<span class="label label-danger">Chưa thanh toán</span>');
-                    }
-                    // $(td).html(formatPrice(cellData));
-                }},                    
+                }}                                
 
             ],
             ajax: {
                 url: '<?=$this->url('sell-staff',['action'=>'delivered'])?>',
                 type: 'POST',
+                data: function (d) {
+                    d.fdate = $('#fdate').val();
+                    d.tdate = $('#tdate').val();
+                    d.deliveredBy = $('#deliveredBy').val();
+                },
                 dataSrc: function (json) {
                     let data=[];
                     let i=1;
@@ -125,26 +154,11 @@ $this->headTitle($title);
                         let dataItem=[];
                         dataItem.push(value);
                         dataItem.push(stt++);
-                        dataItem.push(value.groceryName);           
-                        dataItem.push(value.totalAmountToPaid);     
-                        dataItem.push(value.deliveredDate);           
-                        dataItem.push(value.completed_by);
-                        
-                        deliveredAmount+=value.totalAmountToPaid;
-
-                        if(value.completed_by!=='N/A'){
-                         confirmAmount+=value.totalAmountToPaid;   
-                        }
+                        dataItem.push(value.delivered_date);
+                        dataItem.push(value.total_price);
 
                         data.push(dataItem);
                     });
-                    
-                    $('.deliveredAmount').html(formatCurrency(deliveredAmount.toString()));
-                    $('.confirmAmount').html(formatCurrency(confirmAmount.toString())); 
-
-                    console.log('deliveredAmount: '+deliveredAmount);
-                    console.log('confirmAmount: '+confirmAmount);
-
                     return data;
                 }
             },
@@ -177,12 +191,19 @@ $this->headTitle($title);
                 classList.add('tr-selected');
             }
         });
-        /*
-         $('#tblOrder').on('dblclick', 'tbody tr', function () {
-            let data = tblOrder.row(this).data();
-            let id = data[0].id;
-            window.location.href = '<?=$this->url('sell-user',['action'=>'order-detail'])?>/' + id +'.html'; 
-        });
-        */
+        
+        
+        $('#btnSubmit').click(function(){
+            let fdate=$('#fdate').val();
+            let tdate=$('#tdate').val();
+            if(fdate==='' || tdate===''){
+                alert('Vui lòng chọn ngày bắt đầu và ngày kết thúc');
+                return;
+            }
+            stt=1;
+            //deliveredAmount=0;
+            //confirmAmount=0;
+            tblOrder.ajax.reload();
+        })
     });
 </script>

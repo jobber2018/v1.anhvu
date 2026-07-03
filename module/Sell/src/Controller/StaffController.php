@@ -419,39 +419,59 @@ class StaffController extends SuldeAdminController
         $request = $this->getRequest();
         if($request->isPost()) {
             //$userId = $this->userInfo->getId();
-            $userId=23;
+
+            $fDate = $request->getPost('fdate',0);
+            $tDate = $request->getPost('tdate',0);
+            $userId = $request->getPost('deliveredBy',0);
+
+            if($fDate && $tDate){
+                $toDate=$tDate;
+                $fromDate=$fDate;
+            }else{
+                $toDate=date("Y-m-d");
+                $fromDate=date("Y-m-d", strtotime("first day of this month"));
+            }
+            
+            //$userId=23;
             $user = $this->entityManager->getRepository(User::class)->find($userId);
 
-            $configuration = $this->entityManager->getConfiguration();
-            $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\\Query\\Mysql\\DateFormat');
+            //$configuration = $this->entityManager->getConfiguration();
+            //$configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\\Query\\Mysql\\DateFormat');
 
             $currentMonth = date('Y-m');
+            /*
             $queryBuilder = $this->entityManager->createQueryBuilder();
             $queryBuilder->select('so')
                 ->from(SellOrder::class, 'so')
-                ->where('so.deliveredBy = :user')
-                ->andWhere("DATE_FORMAT(so.delivered_date,'%Y-%m') = :currentMonth")
-                ->setParameter('user', $user)
-                ->setParameter('currentMonth', $currentMonth)
+                ->where('so.deliveredBy = :user')                
+                ->andWhere("DATE_FORMAT(so.delivered_date,'%Y-%m-%d') >=:fromDate")
+                ->andWhere("DATE_FORMAT(so.delivered_date,'%Y-%m-%d') <=:toDate")
+                ->setParameter('user', $user)                
+                ->setParameter('fromDate', $fromDate)
+                ->setParameter('toDate', $toDate)
                 ->orderBy('so.delivered_date', 'DESC');
 
             $sellOrder = $queryBuilder->getQuery()->getResult();
-
+            */
+            $sellOrder = $this->sellManager->getDeliveredAmountByDate($userId, $fromDate, $toDate);
             $orders = [];
             foreach ($sellOrder as $order) {
                 $tmp = [
-                    'id' => $order->getId(),
-                    'groceryName' => $order->getGrocery()->getGroceryName(),
-                    'totalAmountToPaid' => $order->getTotalAmountToPaid(),
-                    'deliveredDate' => $order->getDeliveredDate()->format('d/m/Y H:i:s'),
-                    'completed_by' => $order->getCompletedBy() ? $order->getCompletedBy() : 'N/A',
+                    'id' => $order['delivered_date'],                    
+                    'total_price' => $order['total_price'],
+                    'delivered_date' => $order['delivered_date'] ?? 'N/A',
                 ];
                 $orders[] = $tmp;            
             }
 
             return new JsonModel($orders);
         }else{
-            return new ViewModel();
+            $toDate=date("Y-m-d");
+            $fromDate=date("Y-m-d", strtotime("first day of this month"));
+            return new ViewModel([
+                'toDate'=>$toDate,
+            'fromDate'=>$fromDate
+            ]);
         }
     }
 
