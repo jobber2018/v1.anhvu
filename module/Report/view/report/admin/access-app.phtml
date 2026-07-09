@@ -1,0 +1,161 @@
+<?php
+
+use Sulde\Service\Common\Common;
+use Zend\Mvc\Plugin\FlashMessenger\FlashMessenger;
+
+$title = "Danh sách truy cập app";
+$this->headTitle($title);
+?>
+
+<!-- START BREADCRUMB -->
+<ul class="breadcrumb">
+    <li><a href="<?=$this->url('admin-dashboard')?>">Home</a></li>
+    <li><a href="<?=$this->url('report-admin')?>">Report</a></li>
+    <li class="active">Danh sách khách hàng truy cập app</li>
+</ul>
+<!-- END BREADCRUMB -->
+
+
+
+<!-- PAGE CONTENT WRAPPER -->
+<div class="page-content-wrap">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    ...
+                </div>
+                <div class="panel-body">
+                    <table class="table table-hover" id="tblProduct">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>No.</th>
+                            <th>Tên khách hàng</th>
+                            <th>Số Zalo</th>
+                            <th>Tên Zalo</th>
+                            <th>Avatar</th>
+                            <th>Truy cập lần đầu</th>
+                            <th>Truy cập gần nhất</th>
+                            <th>Zalo ID</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .panel-body table tr td{
+        vertical-align: middle;
+    }
+    .warning-red{color: red}
+    .warning-yeallow{color: #ff9100
+    }
+</style>
+
+<script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.2.1.8.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/dataTables.dataTables.css"/>
+
+<script>
+    let tblProduct,stt=1;
+    $(document).ready(function () {
+        tblProduct =$('#tblProduct').DataTable({
+            info:false,
+            paging: true,
+            pageLength:<?=\Sulde\Service\Common\Define::ITEM_PAGE_COUNT?>,
+            ordering: false,
+            processing: true,
+            serverSide: true,
+            stateSave: true,
+            autoWidth: false,
+            layout: {
+                topStart: null,  // ❌ tắt ô search mặc định
+                topEnd: null,    // ❌ tắt length dropdown mặc định
+                top: ['search', 'pageLength']
+            },
+            language: {
+                searchPlaceholder: "Tìm kiếm tên, số zalo khách hàng."
+            },
+            search: {
+                return: false
+            },
+            initComplete: function() {
+                $(this.api().table().container()).find('input[type="search"]').attr('autocomplete', 'off');
+            },
+            columnDefs: [
+                { name:'id', targets: 0, visible: false},
+                { name: 'no', targets: 1,orderable:false, width: '5%',className: 'dt-body-center'},
+                { name: 'groceryName',
+                    targets: 2,
+                    orderable:false,
+                    className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let name='';
+                        if(cellData) {
+                            let url = '<?=$this->url('grocery-admin', ['action' => 'detail', 'id' => '__id__'])?>';
+                            name = '<a class="title" href="' + url.replace('__id__', rowData[0].grocery_id) + '">' + cellData + '</a>';
+                            name+='<small class="help-block font-small text-secondary">'+rowData[0].address+'</small>';
+                        }
+                        $(td).html(name);
+                    }
+                },{ name: 'zalo_phone',
+                    targets: 3,
+                    orderable:false,
+                    width: '5%',
+                },{ name: 'zalo_name',
+                    targets: 4,
+                    width: '15%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        $(td).html(cellData);
+                    }
+                },{ name: 'avatar',
+                    targets: 5,
+                    orderable:false,
+                    width: '5%',
+                    createdCell:function (td, cellData, rowData, row, col){
+                        let avatar='';
+                        if(cellData){
+                            avatar='<img style="width: 60px" src="'+cellData+'">';
+                        }
+                        $(td).html(avatar);
+                    }
+                },{targets: [7],className: 'title',width: '15%'}
+
+            ],
+            ajax: {
+                url: '<?=$this->url('report-admin',['action'=>'access-app'])?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    //console.log(json);
+                    let data=[];
+                    $.each( json, function( key, value ) {
+                        let dataItem=[];
+                        dataItem.push(value);
+                        dataItem.push(stt++);
+                        dataItem.push(value.groceryName);
+                        dataItem.push(value.phone);
+                        dataItem.push(value.name);
+                        dataItem.push(value.avatar);
+                        dataItem.push(value.created_date);
+                        dataItem.push(value.access_date);
+                        dataItem.push(value.zalo_id);
+                        data.push(dataItem);
+                    });
+                    return data;
+                }
+            }
+        }).on('click', 'tbody tr', (e) => {
+            let classList = e.currentTarget.classList;
+
+            if (classList.contains('tr-selected')) {
+                classList.remove('tr-selected');
+            }
+            else {
+                tblProduct.rows('.tr-selected').nodes().each((row) => row.classList.remove('tr-selected'));
+                classList.add('tr-selected');
+            }
+        });
+    });
+</script>

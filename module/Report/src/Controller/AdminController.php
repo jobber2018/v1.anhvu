@@ -21,6 +21,7 @@ use Report\Service\ReportManager;
 use Doctrine\ORM\EntityManager;
 use Sell\Service\SellManager;
 use Sulde\Service\Common\Common;
+use Sulde\Service\Common\Define;
 use Sulde\Service\SuldeAdminController;
 use Users\Entity\User;
 use Werehouse\Service\WerehouseManager;
@@ -560,5 +561,21 @@ class AdminController extends SuldeAdminController
             'installNotOrder'=>$installNotOrder,
             'installAppByMonth'=>$installAppByMonth
         ]);
+    }
+
+    /**
+     * get danh sach truy cap app
+     * @return void|JsonModel
+     */
+    public function accessAppAction(){
+        $request = $this->getRequest();
+        if($request->isPost()){
+            $keyword = $this->params()->fromPost('search')['value'];
+            $length = $this->params()->fromPost('length', Define::ITEM_PAGE_COUNT);
+            $start = $this->params()->fromPost('start', 0);
+            $accessApp = $this->reportManager->getAccessApp($keyword, $length, $start);
+            return new JsonModel($accessApp);
+        }
+        return new ViewModel();
     }
 }
