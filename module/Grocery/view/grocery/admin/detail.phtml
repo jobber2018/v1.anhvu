@@ -45,6 +45,9 @@ $this->headTitle($title);
                     <button onclick="analyzeGrocery(<?=$this->groceryDetail->getId()?>)" class="btn btn-success pull-right">
                         <span class="fa fa-lightbulb-o"></span> Phân tích
                     </button>
+                    <a href="<?=$this->url('grocery-admin',['action'=>'edit','id'=>$this->groceryDetail->getId()])?>" class="btn btn-warning pull-right">
+                        <span class="fa fa-edit"></span> Sửa thông tin
+                    </a>
                 </div>
                 <div class="panel-body">
                     <div class="grocery-info">
@@ -62,6 +65,20 @@ $this->headTitle($title);
                         </div>
                         <div><label>Nhân viên: </label> <?=$this->groceryDetail->getGroceryCat()->getUser()->getFullname()?></div>
                         <div><label>Ghi chú giao hàng: </label> <?=$this->groceryDetail->getDeliveryNote()?></div>
+                    </div>
+
+                    <!--Thông tin thêm-->
+                    <div class="widget widget-success widget-item-icon">   
+                        <div class="widget-item-left">
+                            <span class="fa fa-info-circle"></span>
+
+                        </div>                    
+                        <div class="widget-data">
+                            <div class="widget-subtitle"><label>Khách vip?: </label> <?=($this->groceryDetail->getVip()==1?'Có':'Không')?></div>
+                            <div class="widget-subtitle"><label>Nhạy giá?: </label> <?=$this->groceryDetail->getPriceSensitive()?'Có':'Không'?></div>
+                            <div class="widget-subtitle"><label>Gối đầu?: </label> <?=$this->groceryDetail->getCredit()?'Có':'Không'?></div>
+                            <div class="widget-subtitle"><label>Theo dõi rủi ro?: </label> <?=$this->groceryDetail->getRiskReport()?'Không':'Có'?></div>                            
+                        </div>
                     </div>
 
                     <?php
@@ -91,7 +108,8 @@ $this->headTitle($title);
                             <div class="widget-subtitle"><label>Install App: </label> <?=$appInstall?></div>
                             <div class="widget-subtitle"><label>Open App: </label> <?=$zaloAccess?></div>
                         </div>
-                    </div>
+                    </div>                    
+
                     <div>
                         <?php
                           $imgSrc=($this->groceryDetail->getImg()?$this->groceryDetail->getImg():'/img/icon-camera.png');

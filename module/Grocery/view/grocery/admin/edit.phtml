@@ -100,6 +100,50 @@ $form->prepare();
                     </div>
                 </div>
 
+                <!--Vip-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Vip?</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('vip'));
+                        echo $this->formElementErrors($form->get('vip'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--credit-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Gối đầu?</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('credit'));
+                        echo $this->formElementErrors($form->get('credit'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--price_sensitive-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Nhạy giá?</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('price_sensitive'));
+                        echo $this->formElementErrors($form->get('price_sensitive'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
+                <!--risk_report-->
+                <div class="form-group">
+                    <label for="name" class="col-md-3 control-label">Theo dõi rủi ro?</label>
+                    <div class="col-md-9">
+                        <?php
+                        echo $this->formElement($form->get('risk_report'));
+                        echo $this->formElementErrors($form->get('risk_report'),['class' => 'error']);
+                        ?>
+                    </div>
+                </div>
+
                 <!--Cach cham soc-->
                 <div class="form-group">
                     <label for="name" class="col-md-3 control-label">Cách chăm sóc:</label>

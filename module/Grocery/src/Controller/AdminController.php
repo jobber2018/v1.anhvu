@@ -189,6 +189,10 @@ class AdminController extends SuldeAdminController
                 $grocery->setZaloConnect($data["zalo_connect"]);
                 $grocery->setIsApproach($data["approach"]);
                 $grocery->setMobile(Common::verifyMobile($data["mobile"]));
+                $grocery->setPriceSensitive($data["price_sensitive"]);
+                $grocery->setRiskReport($data["risk_report"]);
+                $grocery->setVip($data["vip"]);
+                $grocery->setCredit($data["credit"]);
                 $this->entityManager->flush();
                 $this->flashMessenger()->addSuccessMessage('Cập nhật thành công '. $grocery->getGroceryName());
                 return $this->redirect()->toRoute('grocery-admin',['action'=>'detail','id'=>$grocery->getId()]);
@@ -203,7 +207,11 @@ class AdminController extends SuldeAdminController
                 'mobile'=>$grocery->getMobile(),
                 'delivery_note'=>$grocery->getDeliveryNote(),
                 'zalo_connect'=>$grocery->getZaloConnect(),
-                'approach'=>$grocery->getIsApproach()
+                'approach'=>$grocery->getIsApproach(),
+                'price_sensitive'=>$grocery->getPriceSensitive(),
+                'risk_report'=>$grocery->getRiskReport(),
+                'vip'=>$grocery->getVip(),
+                'credit'=>$grocery->getCredit()
             ];
             $form->setData($data);
         }

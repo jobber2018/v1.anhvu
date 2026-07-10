@@ -189,6 +189,66 @@ class GroceryForm extends Form
         ]);
 
         $this->add([
+            'type'=>'checkbox',
+            'name'=>'vip',
+            'attributes'=>[
+                'id'=>'vip'
+            ],
+            'options'=>[
+                'label'=>'Khách vip?',
+                'label_attributes'=>[
+                    'for' => 'vip',
+                    'class'=>'col-md-3 control-label'
+                ]
+            ]
+        ]);
+
+        $this->add([
+            'type'=>'checkbox',
+            'name'=>'credit',
+            'attributes'=>[
+                'id'=>'credit'
+            ],
+            'options'=>[
+                'label'=>'Gối đầu?',
+                'label_attributes'=>[
+                    'for' => 'credit',
+                    'class'=>'col-md-3 control-label'
+                ]
+            ]
+        ]);
+
+        $this->add([
+            'type'=>'checkbox',
+            'name'=>'price_sensitive',
+            'attributes'=>[
+                'id'=>'price_sensitive'
+            ],
+            'options'=>[
+                'label'=>'Nhạy giá?',
+                'label_attributes'=>[
+                    'for' => 'price_sensitive',
+                    'class'=>'col-md-3 control-label'
+                ]
+            ]
+        ]);
+
+        $this->add([
+            'type'=>'checkbox',
+            'name'=>'risk_report',
+            'attributes'=>[
+                'id'=>'risk_report'
+            ],
+            'options'=>[
+                'label'=>'Theo dõi rủi ro?',
+                'label_attributes'=>[
+                    'for' => 'risk_report',
+                    'class'=>'col-md-3 control-label'
+                ]
+            ]
+        ]);
+
+        $this->add([
             'type'=>'select',
             'name'=>'approach',
             'attributes'=>[
