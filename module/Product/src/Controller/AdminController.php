@@ -649,14 +649,12 @@ class AdminController extends SuldeAdminController
                     $product->setCreatedDate(new \DateTime());
 
                     if(!$data["exchange_unit"]) $product->setExchangeUnit(1);
-                    else $product->setExchangeUnit($data["exchange_unit"]);
+                    else $product->setExchangeUnit($data["exchange_unit"]);;
 
                     if($data["norm_input"])
                         $product->setNormInput($data["norm_input"]);
                     else
                         $product->setNormInput(0);
-                    $product->setExchangeUnit(1);
-
 
                     $productPrice = new ProductPrice();
                     $productPrice->setProduct($product);
