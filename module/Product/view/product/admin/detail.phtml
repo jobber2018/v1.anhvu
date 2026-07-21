@@ -462,7 +462,14 @@ $this->headTitle("Thông tin sản phẩm");
             stateSave: false,
             autoWidth: false,
             processing:true,
-            searching:false,
+            layout: {
+                topStart: null,  // ❌ tắt ô search mặc định
+                topEnd: null,    // ❌ tắt length dropdown mặc định
+                top: ['search', 'pageLength']
+            },
+            language: {
+                searchPlaceholder: "Tìm kiếm."
+            },
             columnDefs: [
                 { name:'data', targets: 0, visible: false},
                 { name: 'status', targets: 2, 
