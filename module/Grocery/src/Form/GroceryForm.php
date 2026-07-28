@@ -190,7 +190,7 @@ class GroceryForm extends Form
 
         $this->add([
             'type'=>'checkbox',
-            'name'=>'vip',
+            'name'=>'vip',            
             'attributes'=>[
                 'id'=>'vip'
             ],
