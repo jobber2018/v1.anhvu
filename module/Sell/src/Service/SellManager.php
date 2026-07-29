@@ -17,6 +17,7 @@ use Sell\Entity\DeliveryCar;
 use Sell\Entity\Sell;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\Query\ResultSetMappingBuilder;
+use GroceryCat\Entity\GroceryCat;
 use Hotels\Service\HotelManage;
 use Sell\Entity\SellAnalytic;
 use Sell\Entity\SellOrder;
@@ -24,6 +25,7 @@ use Sulde\Service\Common\Common;
 use Sulde\Service\Common\ConfigManager;
 use Sulde\Service\Common\Define;
 use Sulde\Service\Common\SessionManager;
+use UserS\Entity\User;
 
 class SellManager
 {
@@ -282,11 +284,13 @@ class SellManager
         $configuration->addCustomStringFunction('DATE_FORMAT', 'DoctrineExtensions\Query\Mysql\DateFormat');
 
         $queryBuilder = $this->entityManager->createQueryBuilder();
-        $queryBuilder->select('so.id,so.created_date,g.id as customer_id,g.groceryName as customer_name, g.vip,g.credit,g.price_sensitive,sum(pp.price*s.quantity) as amount')
+        $queryBuilder->select('so.id,so.created_date,g.id as customer_id,g.groceryName as customer_name, g.vip,g.credit,g.price_sensitive,sum(pp.price*s.quantity) as amount,u.id as user_id,u.fullname as user_name')
             ->from(SellOrder::class, 'so')
             ->innerJoin(Grocery::class,'g','WITH','g.id=so.grocery and g.risk_report is null')
             ->innerJoin(Sell::class,'s','WITH','s.sellOrder=so.id')
             ->innerJoin(ProductPrice::class,'pp','WITH','pp.id=s.price')
+            ->innerJoin(GroceryCat::class,'gc','WITH','gc.id=g.groceryCat')
+            ->innerJoin(User::class,'u','WITH','u.id=gc.user')
             ->where("so.status!=".Define::_ORDER_CANCEL_STATUS)
             ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') >=:fromDate")
             ->andWhere("DATE_FORMAT(so.created_date,'%Y-%m-%d') <=:toDate")

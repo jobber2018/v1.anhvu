@@ -372,10 +372,12 @@ class AdminController extends SuldeAdminController
             if (!isset($customers[$customerId])) {
                 $customers[$customerId] = [
                     'id' => $customerId,
-                    'name' => $customerName,
+                    'name' => $customerName,                    
                     'vip' => $order['vip'],
                     'credit' => $order['credit'],
                     'price_sensitive' => $order['price_sensitive'],
+                    'user_id' => $order['user_id'] ?? null,
+                    'user_name' => $order['user_name'] ?? null,
                     'orders'=>[]
                 ];
             }
@@ -969,7 +971,11 @@ class AdminController extends SuldeAdminController
                     $risk,
 
                 'customer_risk_score' =>
-                    $customerRiskScore
+                    $customerRiskScore,
+                'user_id' =>
+                    $customer['user_id'] ?? null,
+                'user_name' =>
+                    $customer['user_name'] ?? null,
             ];
         }
 
