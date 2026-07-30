@@ -310,6 +310,12 @@ class AdminController extends SuldeAdminController
         }
     }
 
+    public function productDiscountAction()
+    {
+        $groceryId = $this->params()->fromRoute('id', 0);
+        $grocery = $this->groceryManager->getById($groceryId);
+        return new ViewModel(['grocery'=>$grocery]);
+    }
     /**
      * Phân tích sản phẩm bán chạy, tần suất mua hàng, chu kỳ mua hàng, rủi ro hết hàng
      * @return JsonModel
@@ -318,31 +324,7 @@ class AdminController extends SuldeAdminController
         $request = $this->getRequest();
         if($request->isPost()){
             $groceryId=$request->getPost('gid');
-            $grocery = $this->groceryManager->getById($groceryId);
-            $orders = $grocery->getSellOrder();
-
-            $orderData = [];
-
-            foreach ($orders as $order) {     
-                if($order->getStatus() != Define::_ORDER_CANCEL_STATUS) {
-                    $products = [];
-                    foreach ($order->getSell() as $sell){
-                        if($sell->getProduct()->getActive()==1){
-                            $product['id']=$sell->getProduct()->getId();                    
-                            $product['name']=$sell->getProduct()->getName().' | '.$sell->getProduct()->getWeight();;
-                            $product['quantity']=$sell->getQuantity();
-                            $products[] = $product;
-                        }                    
-                    }
-
-                    $orderData[] = [                    
-                        'date' => $order->getCreatedDate()->format('Y-m-d'),
-                        'products' => $products
-                    ];
-                }                
-            }
-
-            $result = $this->analyzeProducts($orderData);
+            $result = $this->analyzeProducts($groceryId);
             return new JsonModel($result);
         }
     }
@@ -416,12 +398,36 @@ class AdminController extends SuldeAdminController
         }
     }
 
-    function analyzeProducts($orders)
-    {        
+    function analyzeProducts($p_groceryId)
+    {
+        $grocery = $this->groceryManager->getById($p_groceryId);
+        $orders = $grocery->getSellOrder();
+
+        $orderData = [];
+
+        foreach ($orders as $order) {
+            if($order->getStatus() != Define::_ORDER_CANCEL_STATUS) {
+                $products = [];
+                foreach ($order->getSell() as $sell){
+                    if($sell->getProduct()->getActive()==1){
+                        $product['id']=$sell->getProduct()->getId();
+                        $product['name']=$sell->getProduct()->getName().' | '.$sell->getProduct()->getWeight();;
+                        $product['quantity']=$sell->getQuantity();
+                        $products[] = $product;
+                    }
+                }
+
+                $orderData[] = [
+                    'date' => $order->getCreatedDate()->format('Y-m-d'),
+                    'products' => $products
+                ];
+            }
+        }
+
         $products = [];
         $today = strtotime(date('Y-m-d'));
 
-        foreach ($orders as $order) {
+        foreach ($orderData as $order) {
 
             $date = strtotime($order['date']);
 
