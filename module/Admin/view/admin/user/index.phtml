@@ -96,7 +96,25 @@ $this->headTitle($title);
                     </div>
                 </div>
             </div>
+            <!-- KHÁCH HÀNG CẦN CHÚ Ý -->
+            <div class="panel panel-default">
+                <div class="panel-heading panel-title">
+                    KHÁCH HÀNG CẦN CHÚ Ý
+                </div>
 
+                <div class="panel-body">
+                    <table class="table nowrap table-hover display" style="width:100%" id="tblRiskCustomers">
+                        <thead>
+                        <tr>
+                            <th>visible</th>                            
+                            <th>Khách hàng</th>                            
+                        </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        
             <!-- HOÀN THÀNH TRONG NGÀY -->
             <div class="panel panel-default">
                 <div class="panel-heading">
@@ -248,6 +266,59 @@ $this->headTitle($title);
 <script type="text/javascript" src="/joli/js/plugins/datatables/jquery.dataTables.min.js"></script>
 <script>
     $( document ).ready(function() {
+            let tblRiskCustomers =$('#tblRiskCustomers').DataTable({
+            info:false,
+            paging: false,
+            pageLength:20,
+            ordering: false,
+            processing: false,
+            serverSide: false,
+            stateSave: false,
+            autoWidth: false,
+            searching: false,
+            language: {
+                searchPlaceholder: ""
+            },
+            columnDefs: [
+                { name:'id', targets: 0, visible: false},                
+                { name:'groceryName', targets: 1, className: 'title',
+                    createdCell:function (td, cellData, rowData, row, col){                    
+                        let url='<?=$this->url('grocery-user',['action'=>'detail', 'id' => '__id__'])?>';
+                        let name = '<a class="title" href="' + url.replace('__id__', rowData[0].customer_id) + '">' + cellData + '</a>';
 
+                        let info='';
+                        info+='<br><small style="color: #8c8a8a">Số ngày chưa lên đơn: ' + rowData[0].last_order_days + '</small>';    
+                        info+=' | <small style="color: #1310f3">Chu kỳ lên đơn (ngày): ' + rowData[0].avg_cycle_days + '</small>';    
+                        info+='<br><small style="color: #eb0707">Đã quá chu kỳ nhập (ngày): ' + rowData[0].overdue_days + '</small>';    
+
+                        $(td).html(name+info);
+                    }
+                }
+                
+            ],
+            ajax: {
+                url: '<?=$this->url('user-dashboard',['action'=>'top-risk-customers'])?>',
+                type: 'POST',
+                dataSrc: function (json) {
+                    let data=[];                    
+                    $.each( json.customers, function( key, value ) {
+                        if(value.user_id==<?= $this->uId ?>){
+                            let dataItem=[];
+                            dataItem.push(value);                            
+                            dataItem.push(value.customer_name);
+                            //dataItem.push(value.last_order_days);
+                            //dataItem.push(value.avg_cycle_days);
+                            //dataItem.push(value.overdue_days);
+                            //dataItem.push(value.stability);
+                            //dataItem.push(formatPrice(value.revenue));
+                            //dataItem.push(value.risk);
+                            data.push(dataItem);
+                        }                        
+                    });
+
+                    return data;
+                }
+            }
+        });
     });
 </script>

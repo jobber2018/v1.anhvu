@@ -33,36 +33,7 @@ $this->headTitle($this->escapeHtml($this->groceryCat->getName()))->setSeparator(
         </div>
     </div>
     <div class="row">
-        <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div style="padding-bottom: 10px; color: red">Khách hàng bạn cần quan tâm và CRM cụ thể khi đi tuyến này!.</div>
-                    <table class="table nowrap table-hover display datatable_simple" style="width:100%">
-                        <thead>
-                        <tr>
-                            <th>Khách hàng</th>
-                            <th>Đơn gần nhất</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-
-                        <?php
-                        foreach ($this->orderAnalytic as $k=>$v) {
-//                            $day = $v->getGrocery()->getGroceryCat()->getDay();
-//                            $userIdTuyen = $v->getGrocery()->getGroceryCat()->getUser()->getId();
-                            if($v->getGrocery()->getGroceryCat()->getId() ==$this->groceryCat->getId() && $v->getDiff()>=5) {
-                                echo '<tr>';
-                                echo '<td style="text-align: left"><a href="' . $this->url('grocery-user', ['action' => 'detail', 'id' => $v->getGrocery()->getId()]) . '">' . $v->getGrocery()->getGroceryName() . '</a></td>';
-                                echo '<td>' . Common::formatDate($v->getCreatedOrder()) . ' <small class="label label-info">'.$v->getDiff().' day ago</small></td>';
-                                echo '</tr>';
-                            }
-                        }
-                        ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-body">

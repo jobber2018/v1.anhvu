@@ -87,13 +87,13 @@ class UserController extends SuldeUserController
 //        $groceryListByCat = $this->groceryManager->getListByCatPosition($groceryCatId,$clat,$clng,$textSearch);
         $groceryListByCat = $this->groceryManager->getListByCat($groceryCatId);
 
-        $sellManager = new SellManager($this->entityManager);
-        $orderAnalytic = $sellManager->getOrderAnalytic();
+        //$sellManager = new SellManager($this->entityManager);
+        //$orderAnalytic = $sellManager->getOrderAnalytic();
 
         return new ViewModel([
             "groceryList"=>$groceryListByCat,
             "groceryCat"=>$groceryCat,
-            'orderAnalytic'=>$orderAnalytic
+            //'orderAnalytic'=>$orderAnalytic
         ]);
     }
 
@@ -543,6 +543,10 @@ class UserController extends SuldeUserController
         if($request->isPost()){
             $data = $request->getPost()->toArray();
             $form->setData($data);
+            $form->getInputFilter()->get('vip')->setRequired(false);
+            $form->getInputFilter()->get('credit')->setRequired(false);
+            $form->getInputFilter()->get('price_sensitive')->setRequired(false);
+            $form->getInputFilter()->get('risk_report')->setRequired(false);
             if($form->isValid()){
                 $imageUpload = new ImageUpload('imageFile', $request->getFiles()->toArray(), 'grocery/');
                 $fileUrl = $imageUpload->upload();
