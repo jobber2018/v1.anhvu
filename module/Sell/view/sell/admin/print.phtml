@@ -34,9 +34,9 @@ use Sulde\Service\Common\Common;
                             <img id="bank-qrcode" width="83px"><br>
                         </td>
                         <td nowrap="">
-                            <label>Số TK:</label><label style="font-weight: bold; font-size: 12pt"> 800.0155.9933</label><br>
+                            <label>Số TK:</label><label style="font-weight: bold; font-size: 12pt"> 9990946021021</label><br>
                             <label style="font-weight: bold; text-decoration-line: underline ">VU THI THUY</label> <br>
-                            <label style="font-weight: bold">Ngân hàng MSB</label><br>
+                            <label style="font-weight: bold">Ngân hàng PGBank</label><br>
                             <label>Nội dung: <?=$odn?></label>
                         </td>
                     </tr>
@@ -252,6 +252,8 @@ use Sulde\Service\Common\Common;
         //$('#bank-qrcode').attr("src", "https://anhvu.store/qrcode.php?amount=<?//=$totalAmountToPaid?>//&info=<?//=$info?>//");
         $('#bank-qrcode').attr("src", "https://anhvu.store/qrcode.php?info=<?=$info?>");
         //$('#bank-qrcode').attr("src", "https://api.vietqr.io/image/970415-101877709178-ASo7x4d.jpg?amount=<?//=$totalAmountToPaid?>//&addInfo=<?//=$info?>//");
+
+        window.print();
     });
     function sortTable() {
         var table, rows, switching, i, x, y, shouldSwitch;

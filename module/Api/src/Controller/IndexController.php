@@ -605,4 +605,85 @@ class IndexController extends SuldeFrontController
         echo Common::verifyMobile('84936408678');
         return new ViewModel();
     }
+
+    public function handleWebhookAction()
+    {
+        // Thiết lập Header phản hồi dạng text thuần theo chuẩn của hãng
+        header("Content-Type: text/plain");
+        // Lấy các tham số từ Query String (URL) mà máy gửi lên
+        $sn = isset($_GET['SN']) ? $_GET['SN'] : ''; // Số Serial của máy K40
+        $table = isset($_GET['table']) ? $_GET['table'] : ''; // Loại dữ liệu (atk = attendance)
+
+        // Log lại lịch sử request để debug khi cần thiết
+        file_put_contents(APPLICATION_PATH.'/data/logs/device_logs.txt', "[" . date('Y-m-d H:i:s') . "] ".$_SERVER['REQUEST_METHOD']." SN: " . $sn ." REQUEST: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
+
+        // Trường hợp 1: Máy gửi yêu cầu GET để thiết lập cấu hình ban đầu
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            // Trả về cấu hình cơ bản cho máy (Delay: thời gian chờ, Registry: đăng ký thành công)
+            // Server có thể gửi kèm các lệnh như SET OPTIONS nếu cần đổi cấu hình máy
+            echo "OK";
+            exit;
+        }
+
+        // Trường hợp 2: Máy gửi yêu cầu POST để đẩy dữ liệu chấm công (Mục table=atk)
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            // Đọc dữ liệu thô (Raw Body) từ máy chấm công gửi lên
+            $rawData = file_get_contents("php://input");
+
+            if (!empty($rawData)) {
+                // Ghi log dữ liệu thô để kiểm tra cấu trúc
+                file_put_contents(APPLICATION_PATH.'/data/logs/device_logs.txt', $rawData . "\n", FILE_APPEND);
+
+                // Phân tách dữ liệu thô thành từng dòng (Mỗi dòng là một log chấm công)
+                $lines = explode("\n", $rawData);
+
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+
+                    /*
+                       Cấu trúc dòng dữ liệu thô của máy thường phân tách bằng dấu Tab (\t):
+                       Ví dụ: 125    2026-11-06 17:30:15    0    0    0    0
+                       Trong đó:
+                       - Phần tử 0: Mã nhân viên (User ID / Pin)
+                       - Phần tử 1: Thời gian chấm công (Y-m-d H:i:s)
+                       - Phần tử 2: Trạng thái (0: Check-In, 1: Check-Out,...)
+                       - Phần tử 3: Xác thực bằng gì (1: Vân tay, 4: Thẻ từ,...)
+                    */
+                    $fields = explode("\t", $line);
+
+                    if (count($fields) >= 2) {
+                        $userId    = $fields[0];
+                        $checkTime = $fields[1];
+                        $status    = isset($fields[2]) ? $fields[2] : 0;
+                        $authMode  = isset($fields[3]) ? $fields[3] : 0;
+
+                        // --- KẾT NỐI VÀ LƯU VÀO DATABASE CỦA BẠN TẠI ĐÂY ---
+                        // Ví dụ logic xử lý giả định:
+                        // saveToDatabase($sn, $userId, $checkTime, $status, $authMode);
+                    }
+                }
+            }
+
+            // BẮT BUỘC: Sau khi xử lý xong, phải in ra chữ "OK" (kèm số dòng nhận được nếu muốn)
+            // Nếu không có chữ OK, máy K40 sẽ hiểu là Server lỗi và sẽ gửi lại dữ liệu cũ liên tục gây trùng lặp
+            echo "OK";
+            exit;
+        }
+    }
+
+    public function viewLogsHandleWebhookAction()
+    {
+        $logFilePath = APPLICATION_PATH . '/data/logs/device_logs.txt';
+        // Đọc toàn bộ nội dung file log
+        $logContent = file_get_contents($logFilePath);
+        if (empty(trim($logContent))) {
+            echo "<div class='log-box' style='color: #888;'>File log hiện tại đang trống...</div>";
+        } else {
+            // Hiển thị nội dung log và dùng htmlspecialchars để tránh lỗi bảo mật XSS khi render chuỗi thô
+            echo "<pre class='log-box'>" . htmlspecialchars($logContent) . "</pre>";
+        }
+        exit;
+    }
 }
