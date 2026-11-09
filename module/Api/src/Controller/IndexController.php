@@ -673,7 +673,7 @@ class IndexController extends SuldeFrontController
         }
     }
 
-    public function viewLogsHandleWebhookAction()
+    public function viewLogsHandleWebhookAction() 
     {
         $logFilePath = APPLICATION_PATH . '/data/logs/device_logs.txt';
         // Đọc toàn bộ nội dung file log

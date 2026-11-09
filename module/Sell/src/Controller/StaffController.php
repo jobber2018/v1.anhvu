@@ -58,7 +58,9 @@ class StaffController extends SuldeAdminController
         $sellOrder = $this->sellManager->getSellOrderById($sellOrderID);
         if($sellOrder->getStatus()!=Define::_ORDER_DELIVERING_STATUS)
             return $this->redirect()->toRoute('sell-staff',['action'=>'select-delivery-car']);
-        return new ViewModel(['sellOrder'=>$sellOrder,'grocery'=>$sellOrder->getGrocery()]);
+
+        $sellOrderDetail=$this->sellManager->getSellOrderDetail($sellOrderID);
+        return new ViewModel(['sellOrder'=>$sellOrder,'sellOrderDetail'=>$sellOrderDetail,'grocery'=>$sellOrder->getGrocery()]);
     }
 
     public function deliveryConfirmAction()

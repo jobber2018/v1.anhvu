@@ -12,6 +12,7 @@ namespace Sell\Service;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Grocery\Entity\Grocery;
+use Product\Entity\Product;
 use Product\Entity\ProductPrice;
 use Sell\Entity\DeliveryCar;
 use Sell\Entity\Sell;
@@ -462,5 +463,17 @@ class SellManager
             }
 
         return $queryBuilder->getQuery()->getResult();        
+    }
+
+    public function getSellOrderDetail($p_sell_order_id)
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder();
+        $queryBuilder->select('s')
+            ->from(Sell::class, 's')
+            ->innerJoin(Product::class,'p','WITH','s.product=p.id')
+            ->where("s.sellOrder=:sell_order_id")
+            ->setParameter('sell_order_id', $p_sell_order_id)
+            ->orderBy("p.sort","ASC");
+        return $queryBuilder->getQuery()->getResult();
     }
 }

@@ -39,8 +39,8 @@ use Sulde\Service\Common\Common;
 <body>
 <div id="wrapper">
     <div id="header">
-        <img src="/img/icons/icon-grocery-yeallow.png" width="25px"> <span> Chuẩn bị giao</span>(<span id="yeallow"></span>)
-        <img src="/img/icons/icon-grocery-blue.png" width="25px"> <span> Đang giao</span> (<span id="blue"></span> đơn)
+        <img src="/img/icons/icon-grocery-blue.png" width="25px"> <span> Giao sáng</span> (<span id="blue"></span> đơn)
+        <img src="/img/icons/icon-grocery-yeallow.png" width="25px"> <span> Giao chiều</span> (<span id="yeallow"></span> đơn)
     </div>
     <div id="map-canvas"></div>
 </div>
@@ -88,7 +88,7 @@ use Sulde\Service\Common\Common;
                 echo 'item["cd"]=\''.Common::getTimeAgo($sellOrderItem->getCreatedDate()).'\';'.PHP_EOL;
                 echo 'item["zalo"]=\''.($sellOrderItem->getGrocery()->getZaloAppItem()?'App: Đã cài':'App: Chưa cài').'\';'.PHP_EOL;
 
-                if($sellOrderItem->getStatus()==2){
+                if($sellOrderItem->getDeliveryCarTime()=='AM'){
                     $icon = 'blue.png';
                     $blue=$blue+1;
                 }else{
@@ -151,12 +151,13 @@ use Sulde\Service\Common\Common;
                     scaledSize: new google.maps.Size(35, 35)
                 }
             });
-            var url='/user/grocery/panel/'+data.id+'.html';
+            //var url='/user/grocery/panel/'+data.id+'.html';
+            var url='#';
             var content = `<div id="content">`;
             if(data.img)
                 content += `<p><img src="${data.img}" style="max-width: 320px"><p>`;
 
-            content += `<a target="_blank" style="font-weight: bold" href="${url}">${data.name} | ${data.zalo}</a>`;
+            content += `<label style="font-weight: bold">${data.name} | ${data.zalo}</label>`;
             content += `<br>Ngày tạo: ${data.cd}`;
             content += `<br>Tổng đơn: ${data.tp}`;
             content += `<br><span style="font-weight: bold; color: white; background-color: #ee1e2d"> ${data.note} </span>`;

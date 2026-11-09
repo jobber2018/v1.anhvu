@@ -1,0 +1,82 @@
+<?php
+use Sulde\Service\Common\Common;
+?>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Lấy mã thô tài khoản ngân hàng</title>
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- END META SECTION -->
+</head>
+<body>
+<div> <!--style="border: 1px solid red; width: 793.7px; height: 1100px"-->
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                Mã thô tài khoản ngân hàng trong console.
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="/joli/js/plugins/jquery/jquery-ui.min.js"></script>
+<script>
+    $( document ).ready(function() {
+
+        // Hàm tính mã kiểm tra CRC16 ở cuối chuỗi (Bắt buộc phải có để App ngân hàng nhận diện)
+        function crc16(str) {
+            let crc = 0xFFFF;
+            for (let c = 0; c < str.length; c++) {
+                crc ^= str.charCodeAt(c) << 8;
+                for (let i = 0; i < 8; i++) {
+                    if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+                    else crc = crc << 1;
+                }
+            }
+            return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        // Hàm sinh chuỗi VietQR Payload
+        function generateVietQRPayload(bin, accountNumber) {
+            // 1. Định danh phiên bản mã QR (Tag 00)
+            const f00 = "000201";
+            // 2. Phương thức khởi tạo: 11 = Tĩnh, 12 = Động (Tag 01)
+            const f01 = "010211";
+
+            // 3. Thông tin tài khoản thụ hưởng (Tag 38)
+            const providerId = "0010A000000727"; // Định danh NAPAS công khai
+
+            // Tag 38.01: Chứa mã BIN ngân hàng và Số tài khoản
+            const subTag00 = `0006${bin}`;
+            const subTag01 = `01${accountNumber.length.toString().padStart(2, '0')}${accountNumber}`;
+            const merchantValue = subTag00 + subTag01;
+
+            const f38_value = providerId + `01${merchantValue.length.toString().padStart(2, '0')}${merchantValue}`;
+            const f38 = `38${f38_value.length.toString().padStart(2, '0')}${f38_value}`;
+
+            // 4. Mã tiền tệ: 704 = Việt Nam Đồng (Tag 53)
+            const f53 = "5303704";
+            // 5. Quốc gia: VN (Tag 58)
+            const f58 = "5802VN";
+
+            // Ghép các trường lại với nhau và thêm phần mồi CRC (Tag 63)
+            const rawPayload = f00 + f01 + f38 + f53 + f58 + "6304";
+
+            // Tính toán checksum và nối vào đuôi
+            const fullPayload = rawPayload + crc16(rawPayload);
+            return fullPayload;
+        }
+
+        // === THỬ NGHIỆM ===
+        const bankBIN = "970430"; // Ví dụ: PG bank (https://www.vietqr.io/qr-dong#cu-phap)
+        const stk = "9990946021021";
+        const myVietQRString = generateVietQRPayload(bankBIN, stk);
+
+        console.log("Chuỗi VietQR của bạn:", myVietQRString);
+        // Kết quả sẽ xuất ra chuỗi dạng: 00020101021138450010A000000727012700069704300113999094602102153037045802VN6304B566
+    })
+</script>
+</body>
+</html>

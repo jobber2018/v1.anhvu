@@ -90,6 +90,10 @@ $this->headTitle($title);
                         <span class="fa fa-map-marker" style="font-size: 25pt; padding-top: 5px"></span>
                         <p style="padding-top: 5px; margin-bottom: 5px; font-weight: bold">Cập nhật vị trí</p>
                     </a>
+                    <a style="margin-top: 5px" href="tel://<?=$this->sellOrder->getGrocery()->getMobile()?>" class="btn btn-default">
+                        <p><span class="fa fa-phone" style="font-size: 25pt; padding-top: 5px"></span> </p>
+                        <b>Gọi điện</b>
+                    </a>
                     <div style="color: red; font-weight: bold; margin-top: 10px"><?=$zaloAppNotify?></div>
                 </div>
             </div>
@@ -98,19 +102,32 @@ $this->headTitle($title);
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <!-- Ô tìm kiếm sản phẩm -->
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="productSearchInput" placeholder="Nhập tên sản phẩm để tìm..."
+                               style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+
+                    <!-- Thông báo khi không tìm thấy kết quả -->
+                    <div id="noProductMsg" style="display: none; padding: 15px; text-align: center; color: #777; font-style: italic; background: #f9f9f9; border: 1px dashed #ccc; border-radius: 4px; margin-bottom: 15px;">
+                        Không tìm thấy sản phẩm nào phù hợp!
+                    </div>
+
                     <ul id="productList" class="list-group">
                         <?php
                         $totalProductDiscount=0;
-                        foreach ($this->sellOrder->getSell() as $sell){
+                        $i=1;
+                        foreach ($this->sellOrderDetail as $sell){
                             $totalProductDiscount+=$sell->getDiscount();
                             ?>
                             <li href="#" class="list-group-item">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1 title"><?=$sell->getProduct()->getCode()?> | <?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></h5>
+                                    <h5 class="mb-1 title"><?=$sell->getProduct()->getName()?> | <?=$sell->getProduct()->getWeight()?></h5>
                                 </div>
                                 <table style="width: 100%">
                                     <tbody>
                                     <tr>
+                                        <td><?=$i++?>: </td> 
                                         <td style="padding-right: 5px; width: 40px">
                                             <img src="<?=$sell->getProduct()->getImg()?>" style="max-width:40px; max-height:30px">
                                         </td>
@@ -220,6 +237,62 @@ $this->headTitle($title);
                         alert('<?=$this->translate("Turn on location services to use this function.")?>');
                     }
                 );
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hàm chuẩn hóa tiếng Việt: xóa dấu, chuyển chữ thường để tìm kiếm chính xác
+        function cleanText(str) {
+            if (!str) return '';
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Y|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+            return str.toLowerCase().trim();
+        }
+
+        const searchInput = document.getElementById('productSearchInput');
+        const noResultMsg = document.getElementById('noProductMsg');
+
+        // Lắng nghe sự kiện người dùng gõ vào ô tìm kiếm
+        searchInput.addEventListener('input', function(e) {
+            const keyword = cleanText(e.target.value);
+            // Chọn tất cả các phần tử li sản phẩm nằm trong #productList
+            const products = document.querySelectorAll('#productList .list-group-item');
+            let hasMatch = false;
+
+            products.forEach(function(product) {
+                // Lấy thẻ h5 chứa thông tin tiêu đề sản phẩm
+                const titleElement = product.querySelector('.title');
+
+                if (titleElement) {
+                    const productText = cleanText(titleElement.textContent);
+                    // So khớp từ khóa với chuỗi text của sản phẩm
+                    if (productText.includes(keyword)) {
+                        product.style.setProperty('display', 'block', 'important'); // Hiện sản phẩm
+                        hasMatch = true;
+                    } else {
+                        product.style.setProperty('display', 'none', 'important');  // Ẩn sản phẩm
+                    }
+                }
+            });
+
+            // Hiển thị hoặc ẩn thông báo "Không tìm thấy"
+            if (hasMatch || keyword === '') {
+                noResultMsg.style.display = 'none';
+            } else {
+                noResultMsg.style.display = 'block';
             }
         });
     });
